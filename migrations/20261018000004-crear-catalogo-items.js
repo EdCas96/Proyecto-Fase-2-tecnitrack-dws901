@@ -16,7 +16,6 @@ module.exports = {
       nombre: {
         type: Sequelize.STRING(120),
         allowNull: false,
-        unique: 'uq_catalogo_items_nombre',
       },
       tipo: {
         type: Sequelize.ENUM('Servicio', 'Repuesto'),
@@ -43,6 +42,8 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
+
+    await queryInterface.addIndex('catalogo_items', ['nombre'], { name: 'uq_catalogo_items_nombre', unique: true });
 
     await queryInterface.sequelize.query(
       'ALTER TABLE catalogo_items ADD CONSTRAINT chk_catalogo_items_precio CHECK (precio_referencia >= 0)',

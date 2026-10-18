@@ -20,7 +20,6 @@ module.exports = {
       correo: {
         type: Sequelize.STRING(120),
         allowNull: false,
-        unique: 'uq_usuarios_correo',
       },
       password_hash: {
         type: Sequelize.STRING(255),
@@ -48,6 +47,7 @@ module.exports = {
       },
     });
 
+    await queryInterface.addIndex('usuarios', ['correo'], { name: 'uq_usuarios_correo', unique: true });
     await queryInterface.addIndex('usuarios', ['rol', 'activo'], { name: 'idx_usuarios_rol_activo' });
   },
 

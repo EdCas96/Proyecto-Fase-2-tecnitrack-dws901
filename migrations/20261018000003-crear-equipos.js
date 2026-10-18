@@ -36,7 +36,6 @@ module.exports = {
       numero_serie: {
         type: Sequelize.STRING(80),
         allowNull: true,
-        unique: 'uq_equipos_numero_serie',
       },
       created_at: {
         type: Sequelize.DATE,
@@ -49,6 +48,9 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
+
+    // UNIQUE admite varios NULL: equipos sin número de serie visible
+    await queryInterface.addIndex('equipos', ['numero_serie'], { name: 'uq_equipos_numero_serie', unique: true });
   },
 
   async down(queryInterface) {

@@ -29,7 +29,6 @@ module.exports = {
       folio: {
         type: Sequelize.STRING(20),
         allowNull: false,
-        unique: 'uq_tickets_folio',
       },
       equipo_id: {
         type: Sequelize.INTEGER.UNSIGNED,
@@ -75,6 +74,7 @@ module.exports = {
       },
     });
 
+    await queryInterface.addIndex('tickets', ['folio'], { name: 'uq_tickets_folio', unique: true });
     await queryInterface.addIndex('tickets', ['estado'], { name: 'idx_tickets_estado' });
     await queryInterface.addIndex('tickets', ['tecnico_id', 'estado'], { name: 'idx_tickets_tecnico_estado' });
 
