@@ -39,6 +39,7 @@ const volcado = execFileSync(mysqldump, argumentos, {
 
 const COLUMNA = 'pendiente_ticket_id';
 const sql = volcado
+  .replace(/\r\n/g, '\n') // mysqldump en Windows escribe CRLF
   .split('\n')
   .map((linea) => {
     if (!linea.startsWith('INSERT INTO `cotizaciones`')) return linea;
