@@ -44,6 +44,7 @@ CREATE TABLE `catalogo_items` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_catalogo_items_nombre` (`nombre`),
   CONSTRAINT `chk_catalogo_items_precio` CHECK (`precio_referencia` >= 0)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -174,6 +175,7 @@ CREATE TABLE `equipos` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_equipos_numero_serie` (`numero_serie`),
   KEY `cliente_id` (`cliente_id`),
   CONSTRAINT `equipos_ibfk_1` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -354,6 +356,7 @@ CREATE TABLE `tickets` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_tickets_folio` (`folio`),
   KEY `equipo_id` (`equipo_id`),
   KEY `idx_tickets_estado` (`estado`),
   KEY `idx_tickets_tecnico_estado` (`tecnico_id`,`estado`),
@@ -391,6 +394,7 @@ CREATE TABLE `usuarios` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_usuarios_correo` (`correo`),
   KEY `idx_usuarios_rol_activo` (`rol`,`activo`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -401,7 +405,7 @@ CREATE TABLE `usuarios` (
 
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
-INSERT INTO `usuarios` (`id`, `nombre`, `correo`, `password_hash`, `rol`, `activo`, `created_at`, `updated_at`) VALUES (1,'Administrador Principal','admin@tecnitrack.com','$2b$10$FJ6LXiFCYMJU0UJlQxoqZ.J3F6ACm6ZSCEbaef1fuvo0AuoJQ4YMO','admin',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(2,'Luis Fernández','luis.fernandez@tecnitrack.com','$2b$10$R2UeHojXsEs23.XXenc1mOEmLhaMTtEoOC/dJcIW3tkdw/XcCtq7.','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(3,'Jorge Pineda','jorge.pineda@tecnitrack.com','$2b$10$lg1S.UFs0yQ0x2678LeYA.2TdBhKvsLshhXfGYVWZhes.YPJ/i7Xu','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(4,'Óscar Meléndez','oscar.melendez@tecnitrack.com','$2b$10$Jf3b/XTLjRkjU55OJoEzgevk7zpS8CgEvde3.FNzAKxWKcc6pUqLa','tecnico',0,'2026-08-25 08:00:00','2026-08-25 08:00:00');
+INSERT INTO `usuarios` (`id`, `nombre`, `correo`, `password_hash`, `rol`, `activo`, `created_at`, `updated_at`) VALUES (1,'Administrador Principal','admin@tecnitrack.com','$2b$10$Gu8G.HANnPdvggrKnycmYOs4ZxmBBgWpfJAsF9cSHvz6tPZp.r.Oy','admin',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(2,'Luis Fernández','luis.fernandez@tecnitrack.com','$2b$10$M7dfSn5sPIAYRf1R6SBzruiUrLH889M9Ll5ePkFbIioFeJ19KYmkq','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(3,'Jorge Pineda','jorge.pineda@tecnitrack.com','$2b$10$PNS9JAaT1mCs7snVObLpsu0Ksir2Q8.8kFVOXVvB6b2vNpdo/h.ru','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(4,'Óscar Meléndez','oscar.melendez@tecnitrack.com','$2b$10$gUkpvU1fM0y3So/Z/WpyzeuuXt7GhAd7X88/bm7vHMFABdal3eU9W','tecnico',0,'2026-08-25 08:00:00','2026-08-25 08:00:00');
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 
