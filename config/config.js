@@ -11,7 +11,9 @@ const base = {
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD || null,
   dialect: 'mysql',
-  dialectOptions: { charset: 'utf8mb4' },
+  dialectOptions: { charset: 'utf8mb4', decimalNumbers: true },
+  // Hora de El Salvador (UTC-6, sin horario de verano)
+  timezone: '-06:00',
   define: {
     underscored: true,
     charset: 'utf8mb4',
