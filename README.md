@@ -79,22 +79,79 @@ Con `NODE_ENV=test` la aplicación lee `.env.test`; en cualquier otro caso, `.en
 | `npm run db:create:test` | Crea la base de datos de pruebas (`tecnitrack_test`) |
 | `npm run db:migrate` | Ejecuta las migraciones pendientes |
 | `npm run db:seed` | Carga todos los seeders |
-| `npm run db:reset` | Revierte todas las migraciones, migra de nuevo y siembra |
+| `npm run db:reset` | Revierte seeders y migraciones, migra de nuevo y siembra (deja la base como recién instalada) |
+| `npm run db:sql` | Regenera `database/tecnitrack.sql` a partir de la base de desarrollo |
 | `npm test` | Ejecuta las pruebas (Jest + Supertest) contra `tecnitrack_test` |
 | `npm run test:watch` | Ejecuta las pruebas en modo observación |
 
+## Base de datos
+
+### Opción A: migraciones y seeders (recomendada)
+
+```bash
+npm run db:create     # crea la base tecnitrack (utf8mb4)
+npm run db:migrate    # crea las 10 tablas
+npm run db:seed       # carga los datos de ejemplo
+```
+
+Para volver a empezar desde cero en cualquier momento: `npm run db:reset`.
+
+No hace falta preparar la base de pruebas a mano: antes de cada `npm test`, `tests/setup/globalSetup.js` crea `tecnitrack_test` si no existe y reconstruye su esquema con las migraciones.
+
+### Opción B: importar el script SQL
+
+`database/tecnitrack.sql` contiene la creación de la base, las tablas y los datos de ejemplo:
+
+```bash
+mysql -u root -p < database/tecnitrack.sql
+```
+
+En XAMPP también se puede importar desde phpMyAdmin (pestaña **Importar**). **Atención:** el script borra la base `tecnitrack` si ya existe.
+
+Para regenerarlo después de cambiar migraciones o seeders:
+
+```bash
+npm run db:reset
+npm run db:sql
+```
+
+`db:sql` ejecuta `mysqldump` y quita de los INSERT la columna generada `cotizaciones.pendiente_ticket_id`, para que el script también se pueda importar en MySQL 8. Busca `mysqldump` en la variable `MYSQLDUMP_PATH`, después en `C:\xampp\mysql\bin\` y, si no lo encuentra ahí, en el PATH. El comando equivalente sin limpiar es:
+
+```bash
+mysqldump -u root -p --databases tecnitrack --add-drop-database --skip-dump-date --default-character-set=utf8mb4 --routines --triggers --complete-insert > database/tecnitrack.sql
+```
+
+### Tablas
+
+`usuarios`, `clientes`, `equipos`, `catalogo_items`, `tickets`, `ticket_fotos`, `ticket_historiales`, `cotizaciones`, `cotizacion_items`, `notificaciones`. La relación con los requerimientos está en [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md).
+
 ## Usuarios de prueba
 
-*Por completar cuando se implementen los seeders de usuarios.*
+Todos usan la contraseña **`Tecni2026!`**.
 
-| Rol | Correo | Contraseña |
-|---|---|---|
-| admin | — | — |
-| tecnico | — | — |
+| Rol | Nombre | Correo | Estado |
+|---|---|---|---|
+| admin | Administrador Principal | `admin@tecnitrack.com` | Activo |
+| tecnico | Luis Fernández | `luis.fernandez@tecnitrack.com` | Activo |
+| tecnico | Jorge Pineda | `jorge.pineda@tecnitrack.com` | Activo |
+| tecnico | Óscar Meléndez | `oscar.melendez@tecnitrack.com` | **Inactivo** (no puede iniciar sesión, RN-07) |
+
+### Datos de ejemplo para el portal del cliente
+
+| Folio | Cliente (teléfono) | Equipo | Estado | Técnico | Cotización |
+|---|---|---|---|---|---|
+| TT-2026-0035 | María Elena Hernández (7123-4567) | Laptop Dell Inspiron 15 | Entregado | Luis Fernández | Aprobada $25.00 |
+| TT-2026-0037 | Ana Lucía Martínez (7345-6720) | Impresora Epson L3250 | En reparación | Jorge Pineda | Aprobada $45.00 |
+| TT-2026-0038 | Carlos Alberto Ramírez (7234-8912) | Computadora HP Pavilion TP01 | Cancelado | Jorge Pineda | Rechazada $85.00 |
+| TT-2026-0039 | María Elena Hernández (7123-4567) | Laptop Dell Inspiron 15 | Listo | Jorge Pineda | Aprobada $45.00 |
+| TT-2026-0040 | Ana Lucía Martínez (7345-6720) | Laptop Lenovo ThinkPad E14 | Esperando aprobación | Luis Fernández | **Pendiente** $60.00 (desde el 12/09/2026, ya supera `DIAS_LIMITE_COTIZACION`) |
+| TT-2026-0041 | Carlos Alberto Ramírez (7234-8912) | Computadora HP Pavilion TP01 | Diagnosticado | Luis Fernández | — |
+| TT-2026-0042 | María Elena Hernández (7123-4567) | Laptop Dell Inspiron 15 | Recibido | Sin asignar | — |
 
 ## Documentación
 
 - [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md): capas, carpetas y recorrido de una petición.
 - [`docs/DEPENDENCIAS.md`](docs/DEPENDENCIAS.md): para qué sirve cada dependencia.
-- [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md): historias de usuario, reglas, código y pruebas.
+- [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md): historias de usuario, requerimientos, tablas, código y pruebas.
+- [`docs/CAMBIOS_FASE2.md`](docs/CAMBIOS_FASE2.md): solicitudes de cambio respecto a la Fase 1.
 - [`docs/INCIDENCIAS.md`](docs/INCIDENCIAS.md): incidencias, limitaciones y pendientes.

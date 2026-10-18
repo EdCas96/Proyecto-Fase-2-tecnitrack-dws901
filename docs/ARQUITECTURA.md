@@ -14,19 +14,19 @@ routes  ->  middlewares  ->  controllers  ->  services  ->  models  ->  MySQL
 |---|---|
 | `server.js` | Punto de entrada. Prueba la conexión a MySQL (`sequelize.authenticate()`) y levanta el puerto. No contiene configuración de Express. |
 | `app.js` | Configura Express (vistas, helmet, estáticos, parsers, rutas, manejo de errores) y exporta `app` para que las pruebas lo usen sin abrir un puerto. |
-| `config/` | `env.js` carga `.env` o `.env.test`; `config.js` es la configuración que lee sequelize-cli; `database.js` crea la instancia única de Sequelize. |
+| `config/` | `env.js` carga `.env` o `.env.test`; `config.js` es la configuración que lee sequelize-cli (incluye zona horaria UTC-6 y `sql_mode` estricto en cada conexión); `database.js` crea la instancia única de Sequelize. |
 | `routes/` | Asocian cada URL y método HTTP con sus middlewares y su controlador. Envuelven los controladores con `asyncHandler`. |
 | `middlewares/` | Lógica transversal antes del controlador: autenticación, autorización por rol, CSRF, validación, carga de archivos, rate limit, 404 y manejo central de errores. |
 | `controllers/` | Leen la petición (`req.params`, `req.body`, `req.session`), llaman al servicio y responden (render o redirección). **No** contienen reglas de negocio ni consultas a modelos. |
 | `services/` | Lógica de negocio como **clases** (`TicketService`, `CotizacionService`, `FolioService`, `AuthService`, `MaquinaEstadosTicket`…). Aplican las reglas RN-xx, abren transacciones y lanzan errores propios. |
-| `models/` | Modelos de Sequelize: columnas, validaciones de datos y asociaciones entre tablas. |
+| `models/` | Modelos de Sequelize como clases (`static inicializar()` y `static asociar()`): columnas, validaciones con mensajes en español y asociaciones. `models/index.js` los registra y exporta junto con `sequelize`. |
 | `migrations/` | Cambios versionados del esquema de la base de datos (crear tablas, índices, llaves foráneas). |
 | `seeders/` | Datos iniciales y de ejemplo (usuarios de prueba, catálogo, etc.). |
 | `views/` | Plantillas EJS: `layouts/` (estructura común), `partials/` (fragmentos reutilizables) y una carpeta por área: `admin/`, `tecnico/`, `cliente/`, `auth/`, `errores/`. |
 | `public/` | Archivos estáticos servidos tal cual: `css/`, `js/` y `uploads/` (fotos subidas, no versionadas). |
-| `utils/` | Utilidades sin estado: `asyncHandler.js` y las clases de error en `utils/errors/`. |
-| `tests/` | `unit/` prueba clases y servicios aislados; `integration/` prueba rutas completas con Supertest contra `tecnitrack_test`. |
-| `database/` | Script SQL del esquema completo (entregable de referencia, generado a partir de las migraciones). |
+| `utils/` | Utilidades sin estado: `asyncHandler.js`, `constantes.js` (estados, roles, tipos, formato de folio) y las clases de error en `utils/errors/`. |
+| `tests/` | `unit/` prueba clases y servicios aislados; `integration/` prueba modelos y rutas completas con Supertest contra `tecnitrack_test`; `helpers/` tiene fábricas de datos y limpieza de tablas; `setup/globalSetup.js` reconstruye el esquema de pruebas con las migraciones. |
+| `database/` | `tecnitrack.sql`: script completo (base, tablas y datos de ejemplo) generado con `npm run db:sql` (`generar-sql.js`) a partir de las migraciones y seeders. |
 | `docs/` | Documentación del proyecto. |
 
 ## Errores
