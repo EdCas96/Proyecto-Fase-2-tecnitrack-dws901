@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "db:create": "sequelize-cli db:create",
-    "db:create:test": "cross-env NODE_ENV=test sequelize-cli db:create",
+    "db:create": "sequelize-cli db:create --charset utf8mb4 --collate utf8mb4_unicode_ci",
+    "db:create:test": "cross-env NODE_ENV=test sequelize-cli db:create --charset utf8mb4 --collate utf8mb4_unicode_ci",
     "db:migrate": "sequelize-cli db:migrate",
     "db:seed": "sequelize-cli db:seed:all",
     "db:reset": "sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && sequelize-cli db:seed:all",
