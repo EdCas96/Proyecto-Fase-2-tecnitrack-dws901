@@ -1,0 +1,18 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno locales (usar .env.example y .env.test.example como plantilla)
+.env
+.env.test
+
+# Cobertura de pruebas
+coverage/
+
+# Fotos subidas por los usuarios (solo se versiona la carpeta)
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+*.log

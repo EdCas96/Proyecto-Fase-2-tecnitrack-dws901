@@ -1,0 +1,17 @@
+/**
+ * Carga las variables de entorno una sola vez para toda la aplicación.
+ * Con NODE_ENV=test se lee .env.test (base de datos tecnitrack_test); en otro caso, .env.
+ */
+const path = require('path');
+const dotenv = require('dotenv');
+
+const archivo = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+dotenv.config({ path: path.resolve(__dirname, '..', archivo), quiet: true });
+
+module.exports = {
+  entorno: process.env.NODE_ENV || 'development',
+  puerto: Number(process.env.PORT) || 3000,
+  secretoSesion: process.env.SESSION_SECRET,
+  diasLimiteCotizacion: Number(process.env.DIAS_LIMITE_COTIZACION) || 7,
+  maxFotoMb: Number(process.env.MAX_FOTO_MB) || 5,
+};
