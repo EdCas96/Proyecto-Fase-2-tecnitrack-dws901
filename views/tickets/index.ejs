@@ -48,7 +48,7 @@
           <td><%= ticket.folio %></td>
           <td><%= ticket.equipo.cliente.nombre %></td>
           <td><%= descripcionEquipo(ticket.equipo) %></td>
-          <td><%- include('../partials/badgeEstado', { estado: ticket.estado }) %></td>
+          <td><%- include('../partials/badgeEstado', { estado: ticket.estado }) %><%- include('../partials/avisoPendiente', { fecha: ticket.get('pendienteDesde') }) %></td>
           <% if (admin) { %><td><%= ticket.tecnico ? ticket.tecnico.nombre : 'Sin asignar' %></td><% } %>
           <td><%= formatoFecha(ticket.fecha_ingreso) %></td>
           <td><a class="btn btn-secondary" href="/tickets/<%= ticket.id %>">Ver detalle</a></td>

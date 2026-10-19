@@ -2,6 +2,8 @@
  * Funciones auxiliares disponibles en todas las vistas EJS (app.locals).
  */
 const { COLOR_ESTADO, ETIQUETA_ESTADO } = require('./constantes');
+const { estaVencida, diasTranscurridos } = require('./cotizaciones');
+const { diasLimiteCotizacion } = require('../config/env');
 
 /** Clase de color del badge de un estado de ticket o cotización. */
 const colorEstado = (estado) => COLOR_ESTADO[estado] || 'gris';
@@ -98,6 +100,15 @@ const formatoFechaHora = (valor) => (valor ? FORMATO_FECHA_HORA.format(new Date(
 /** Descripción corta de un equipo: "Laptop Dell Inspiron 15". */
 const descripcionEquipo = (equipo) => (equipo ? `${equipo.tipo} ${equipo.marca} ${equipo.modelo}` : '—');
 
+/**
+ * RN-05: la cotización Pendiente enviada en esa fecha ya superó DIAS_LIMITE_COTIZACION
+ * (se muestra "Pendiente de respuesta"; nunca se cancela sola).
+ */
+const pendienteDeRespuesta = (fecha) => Boolean(fecha) && estaVencida(fecha, diasLimiteCotizacion);
+
+/** Días completos transcurridos desde una fecha. */
+const diasDesde = (fecha) => diasTranscurridos(fecha);
+
 /** Color del badge del tipo de ítem del catálogo (como en el prototipo). */
 const colorTipoCatalogo = (tipo) => (tipo === 'Servicio' ? 'azul' : 'gris');
 
@@ -115,6 +126,8 @@ module.exports = {
   formatoFecha,
   formatoFechaHora,
   descripcionEquipo,
+  pendienteDeRespuesta,
+  diasDesde,
   colorTipoCatalogo,
   MENUS,
 };

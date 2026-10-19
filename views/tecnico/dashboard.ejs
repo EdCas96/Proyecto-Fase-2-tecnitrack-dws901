@@ -4,6 +4,13 @@
   <h1>Bienvenido, <%= usuario.nombre %></h1>
 </div>
 
+<% if (respuestasSinLeer) { %>
+  <div class="alert alert-confirmacion" role="alert">
+    <strong><%= respuestasSinLeer === 1 ? 'Un cliente respondió' : `${respuestasSinLeer} clientes respondieron` %></strong> una cotización.
+    <a href="/notificaciones">Ver notificaciones</a>
+  </div>
+<% } %>
+
 <section class="kpi-grid" aria-label="Mis tickets por estado">
   <% ['Recibido', 'Diagnosticado', 'Esperando_aprobacion', 'En_reparacion', 'Esperando_repuesto', 'Listo'].forEach((estado) => { %>
     <a class="kpi-card" href="/tickets?estado=<%= estado %>">
@@ -37,7 +44,7 @@
           <td><%= ticket.folio %></td>
           <td><%= ticket.equipo.cliente.nombre %></td>
           <td><%= descripcionEquipo(ticket.equipo) %></td>
-          <td><%- include('../partials/badgeEstado', { estado: ticket.estado }) %></td>
+          <td><%- include('../partials/badgeEstado', { estado: ticket.estado }) %><%- include('../partials/avisoPendiente', { fecha: ticket.get('pendienteDesde') }) %></td>
           <td><%= formatoFecha(ticket.fecha_ingreso) %></td>
           <td><%= formatoFecha(ticket.fecha_estimada) %></td>
           <td><a class="btn btn-secondary" href="/tickets/<%= ticket.id %>">Ver detalle</a></td>
