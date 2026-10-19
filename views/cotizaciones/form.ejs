@@ -1,0 +1,83 @@
+<%#
+  Cotización de un ticket (prototipo: tecnico/cotizacion-form.html). Filas con ítem del catálogo
+  ACTIVO, cantidad, precio unitario y subtotal. El total en vivo lo calcula public/js/cotizacion.js
+  solo para mostrarlo: el servidor recalcula todo con los precios del catálogo.
+%>
+<% const editando = Boolean(cotizacion); %>
+<%# Si el formulario regresó con errores, se vuelven a mostrar las filas que se habían elegido %>
+<% const lista = (valor) => (Array.isArray(valor) ? valor : (valor === undefined ? [] : [valor])); %>
+<% const enviadas = lista(datos.catalogo_id).map((id, i) => ({ catalogo_id: id, cantidad: lista(datos.cantidad)[i] || 1 })); %>
+<% let filas = enviadas.length ? enviadas : (editando ? cotizacion.items.map((i) => ({ catalogo_id: i.catalogo_id, cantidad: i.cantidad })) : []); %>
+<% if (!filas.length) filas = [{ catalogo_id: '', cantidad: 1 }]; %>
+<% const { equipo } = ticket; %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1><%= titulo %></h1>
+  <p class="text-small">Cliente: <%= equipo.cliente.nombre %> · Equipo: <%= descripcionEquipo(equipo) %></p>
+</div>
+
+<% if (adicional) { %>
+  <div class="alert alert-confirmacion" role="note">
+    Cotización adicional: el ticket está «<%= etiquetaEstado(ticket.estado) %>». Al enviarla pasará a «Esperando aprobación» hasta que el cliente responda.
+  </div>
+<% } %>
+
+<form method="post" action="<%= editando ? `/cotizaciones/${cotizacion.id}` : '/cotizaciones' %>" id="form-cotizacion" novalidate
+      data-confirmar="<%= editando ? '¿Guardar los cambios de la cotización? El cliente verá el nuevo total.' : '¿Enviar la cotización al cliente? El ticket pasará a «Esperando aprobación».' %>">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <% if (editando) { %><input type="hidden" name="_method" value="PUT"><% } else { %>
+    <input type="hidden" name="ticket_id" value="<%= ticket.id %>">
+  <% } %>
+
+  <div class="table-wrapper">
+    <table class="table-standard tabla-cotizacion">
+      <thead>
+        <tr>
+          <th>Ítem del catálogo</th>
+          <th>Cantidad</th>
+          <th>Precio unitario</th>
+          <th>Subtotal</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="lineas-cotizacion">
+        <% filas.forEach((fila) => { %>
+          <tr class="linea-cotizacion">
+            <td>
+              <select name="catalogo_id" aria-label="Ítem del catálogo" required>
+                <option value="">Seleccione un ítem</option>
+                <% catalogo.forEach((item) => { %>
+                  <option value="<%= item.id %>" data-precio="<%= Number(item.precio_referencia).toFixed(2) %>"<%= String(fila.catalogo_id) === String(item.id) ? ' selected' : '' %>><%= item.nombre %> (<%= item.tipo %>)</option>
+                <% }) %>
+              </select>
+            </td>
+            <td><input type="number" name="cantidad" value="<%= fila.cantidad %>" min="1" max="999" step="1" aria-label="Cantidad" required></td>
+            <td class="precio-unitario">—</td>
+            <td class="subtotal">—</td>
+            <td><button type="button" class="btn btn-destructive quitar-linea">Quitar</button></td>
+          </tr>
+        <% }) %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" class="text-right"><strong>Total</strong></td>
+          <td><strong id="total-cotizacion">$0.00</strong></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <%- include('../partials/errorCampo', { campo: 'items' }) %>
+  <p class="form-ayuda tarjeta-aviso">Los precios son los del catálogo de hoy y el total lo calcula el sistema al guardar. Solo aparecen los ítems activos.</p>
+
+  <div class="page-actions">
+    <button type="button" class="btn btn-secondary" id="agregar-linea">Agregar ítem</button>
+  </div>
+
+  <div class="state-actions">
+    <button type="submit" class="btn btn-primary"><%= editando ? 'Guardar cambios' : 'Enviar cotización al cliente' %></button>
+    <a class="btn btn-secondary" href="/tickets/<%= ticket.id %>">Cancelar</a>
+  </div>
+</form>
+
+<script src="/js/cotizacion.js" defer></script>
