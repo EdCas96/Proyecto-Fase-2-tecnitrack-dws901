@@ -1,0 +1,2 @@
+<%# Mensaje de error junto a un campo. Uso: include('../partials/errorCampo', { campo: 'telefono' }) %>
+<% if (errores[campo]) { %><p class="campo-error" id="error-<%= campo %>"><%= errores[campo] %></p><% } %>

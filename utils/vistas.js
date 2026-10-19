@@ -35,6 +35,56 @@ const etiquetaRol = (usuario) => (usuario.rol === 'admin' ? 'Administrador' : `T
 const esRutaActiva = (rutaActual, prefijo) => rutaActual === prefijo
   || (prefijo !== '/' && rutaActual.startsWith(`${prefijo}/`));
 
+/** Solo el admin ve los botones de crear, editar y eliminar (el técnico consulta). */
+const esAdmin = (usuario) => Boolean(usuario && usuario.rol === 'admin');
+
+/**
+ * Migas de pan que empiezan en el panel del rol:
+ * migasDe(usuario, { texto: 'Clientes', url: '/clientes' }, { texto: 'Nuevo cliente' }).
+ */
+const migasDe = (usuario, ...migas) => [
+  esAdmin(usuario) ? { texto: 'Administrador', url: '/admin' } : { texto: 'Técnico', url: '/tecnico' },
+  ...migas,
+];
+
+/** URL de otra página del listado conservando los filtros (?q=...&tipo=...). */
+function urlPagina(rutaBase, filtros = {}, pagina = 1) {
+  const parametros = new URLSearchParams();
+  Object.entries(filtros).forEach(([clave, valor]) => {
+    if (valor !== undefined && valor !== null && valor !== '') parametros.set(clave, valor);
+  });
+  if (pagina > 1) parametros.set('pagina', pagina);
+  const query = parametros.toString();
+  return query ? `${rutaBase}?${query}` : rutaBase;
+}
+
+/**
+ * Valor de un campo del formulario: primero lo que el usuario escribió (si la
+ * validación falló y se regresó al formulario), si no, el del registro.
+ */
+function valorCampo(datos, registro, campo) {
+  if (datos && datos[campo] !== undefined) return datos[campo];
+  if (registro && registro[campo] !== undefined && registro[campo] !== null) return registro[campo];
+  return '';
+}
+
+/** Precio en dólares: 25 -> "$25.00". */
+const formatoPrecio = (valor) => `$${Number(valor || 0).toFixed(2)}`;
+
+/** Color del badge del tipo de ítem del catálogo (como en el prototipo). */
+const colorTipoCatalogo = (tipo) => (tipo === 'Servicio' ? 'azul' : 'gris');
+
 module.exports = {
-  colorEstado, etiquetaEstado, esRutaActiva, menuPorRol, etiquetaRol, MENUS,
+  colorEstado,
+  etiquetaEstado,
+  esRutaActiva,
+  menuPorRol,
+  etiquetaRol,
+  esAdmin,
+  migasDe,
+  urlPagina,
+  valorCampo,
+  formatoPrecio,
+  colorTipoCatalogo,
+  MENUS,
 };

@@ -1,0 +1,15 @@
+<%#
+  Botón que envía un formulario POST con CSRF y, si hace falta, method-override.
+  Uso: include('../partials/botonAccion', {
+    accion: '/clientes/3', metodo: 'DELETE', texto: 'Eliminar', clase: 'btn-destructive',
+    confirmar: '¿Eliminar al cliente?', campos: { activo: 'false' } })
+  Con "confirmar", public/js/confirmar.js pide confirmación antes de enviar.
+%>
+<form class="form-en-linea" method="post" action="<%= accion %>"<% if (locals.confirmar) { %> data-confirmar="<%= confirmar %>"<% } %>>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <% if (locals.metodo && metodo !== 'POST') { %><input type="hidden" name="_method" value="<%= metodo %>"><% } %>
+  <% Object.entries(locals.campos || {}).forEach(([nombre, valor]) => { %>
+    <input type="hidden" name="<%= nombre %>" value="<%= valor %>">
+  <% }) %>
+  <button type="submit" class="btn <%= locals.clase || 'btn-secondary' %>"><%= texto %></button>
+</form>
