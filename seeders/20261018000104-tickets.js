@@ -7,12 +7,13 @@
  *
  * Usuarios: 1 admin, 2 Luis Fernández, 3 Jorge Pineda.
  * Equipos: 1 Dell (María), 2 HP (Carlos), 3 Lenovo (Ana), 4 Epson (Ana).
+ * fecha_estimada (SC-03): fecha de entrega prometida al cliente; el ticket cancelado no tiene.
  */
 const f = (fechaHora) => new Date(`${fechaHora}:00-06:00`);
 
 const TICKETS = [
   {
-    id: 1, folio: 'TT-2026-0035', equipo_id: 1, tecnico_id: 2, estado: 'Entregado',
+    id: 1, folio: 'TT-2026-0035', fecha_estimada: '2026-09-05', equipo_id: 1, tecnico_id: 2, estado: 'Entregado',
     diagnostico_inicial: 'El equipo se sobrecalienta y el ventilador hace mucho ruido; se apaga solo tras 20 minutos de uso.',
     fecha_ingreso: f('2026-09-01T08:30'), fecha_entrega: f('2026-09-05T16:00'),
     historial: [
@@ -26,7 +27,7 @@ const TICKETS = [
     fotos: ['/img/equipo-placeholder-1.svg'],
   },
   {
-    id: 2, folio: 'TT-2026-0037', equipo_id: 4, tecnico_id: 3, estado: 'En_reparacion',
+    id: 2, folio: 'TT-2026-0037', fecha_estimada: '2026-09-14', equipo_id: 4, tecnico_id: 3, estado: 'En_reparacion',
     diagnostico_inicial: 'Imprime con franjas horizontales y no reconoce el cartucho negro.',
     fecha_ingreso: f('2026-09-05T10:00'), fecha_entrega: null,
     historial: [
@@ -50,7 +51,7 @@ const TICKETS = [
     fotos: ['/img/equipo-placeholder-2.svg'],
   },
   {
-    id: 4, folio: 'TT-2026-0039', equipo_id: 1, tecnico_id: 3, estado: 'Listo',
+    id: 4, folio: 'TT-2026-0039', fecha_estimada: '2026-09-12', equipo_id: 1, tecnico_id: 3, estado: 'Listo',
     diagnostico_inicial: 'Se reinicia sola al abrir varios programas a la vez; posible falla de memoria RAM.',
     fecha_ingreso: f('2026-09-08T09:00'), fecha_entrega: null,
     historial: [
@@ -65,7 +66,7 @@ const TICKETS = [
     fotos: ['/img/equipo-placeholder-1.svg'],
   },
   {
-    id: 5, folio: 'TT-2026-0040', equipo_id: 3, tecnico_id: 2, estado: 'Esperando_aprobacion',
+    id: 5, folio: 'TT-2026-0040', fecha_estimada: '2026-09-18', equipo_id: 3, tecnico_id: 2, estado: 'Esperando_aprobacion',
     diagnostico_inicial: 'Se calienta en exceso y funciona lento; el cliente solicita ampliar la memoria.',
     fecha_ingreso: f('2026-09-10T10:30'), fecha_entrega: null,
     historial: [
@@ -76,7 +77,7 @@ const TICKETS = [
     fotos: ['/img/equipo-placeholder-2.svg'],
   },
   {
-    id: 6, folio: 'TT-2026-0041', equipo_id: 2, tecnico_id: 2, estado: 'Diagnosticado',
+    id: 6, folio: 'TT-2026-0041', fecha_estimada: '2026-09-19', equipo_id: 2, tecnico_id: 2, estado: 'Diagnosticado',
     diagnostico_inicial: 'No arranca el sistema operativo; muestra pantalla azul al iniciar.',
     fecha_ingreso: f('2026-09-11T09:45'), fecha_entrega: null,
     historial: [
@@ -86,7 +87,7 @@ const TICKETS = [
     fotos: ['/img/equipo-placeholder-1.svg', '/img/equipo-placeholder-2.svg'],
   },
   {
-    id: 7, folio: 'TT-2026-0042', equipo_id: 1, tecnico_id: null, estado: 'Recibido',
+    id: 7, folio: 'TT-2026-0042', fecha_estimada: '2026-09-20', equipo_id: 1, tecnico_id: null, estado: 'Recibido',
     diagnostico_inicial: 'La batería no carga y algunas teclas del teclado no responden.',
     fecha_ingreso: f('2026-09-12T16:10'), fecha_entrega: null,
     historial: [[null, 'Recibido', 1, '2026-09-12T16:10']],
@@ -124,6 +125,13 @@ module.exports = {
     await queryInterface.bulkInsert('tickets', tickets);
     await queryInterface.bulkInsert('ticket_historiales', historial);
     await queryInterface.bulkInsert('ticket_fotos', fotos);
+
+    // RN-03: el contador de folios continúa después del último folio de ejemplo
+    const ultimo = Math.max(...TICKETS.map((t) => Number(t.folio.slice(8))));
+    await queryInterface.sequelize.query(
+      'INSERT INTO folio_contadores (anio, ultimo) VALUES (2026, ?) ON DUPLICATE KEY UPDATE ultimo = GREATEST(ultimo, VALUES(ultimo))',
+      { replacements: [ultimo] },
+    );
   },
 
   async down(queryInterface) {

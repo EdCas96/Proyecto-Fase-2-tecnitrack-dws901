@@ -36,6 +36,26 @@ class EquipoService {
     return equipo;
   }
 
+  /**
+   * Equipos de un cliente como opciones del select del nuevo ticket (RNF-01).
+   * @implements HU-02, RNF-01
+   * @param {number|string} clienteId
+   * @returns {Promise<Array<{id: number, descripcion: string}>>}
+   */
+  static async opcionesDeCliente(clienteId) {
+    const id = idValido(clienteId);
+    if (!id) return [];
+    const equipos = await Equipo.findAll({
+      where: { cliente_id: id },
+      attributes: ['id', 'tipo', 'marca', 'modelo', 'numero_serie'],
+      order: [['id', 'ASC']],
+    });
+    return equipos.map((e) => ({
+      id: e.id,
+      descripcion: `${e.tipo} ${e.marca} ${e.modelo}${e.numero_serie ? ` (${e.numero_serie})` : ''}`,
+    }));
+  }
+
   /** Solo los campos permitidos, recortados; número de serie vacío = null. */
   static limpiarDatos(datos = {}) {
     return {

@@ -16,6 +16,7 @@
  * | /usuarios        | usuarios.js        | admin                           |
  * | /reportes        | reportes.js        | admin                           |
  * | /notificaciones  | notificaciones.js  | admin y técnico                 |
+ * | /fotos           | fotos.js           | quien puede ver el ticket       |
  *
  * El control de acceso lo pone cada router con middlewares/auth.js
  * (requireAuth, checkRole, soloLecturaPara, requireCliente).
@@ -46,6 +47,9 @@ const router = Router();
 router.get('/', redirectIfAuth, asyncHandler(InicioController.mostrar));
 
 Object.entries(MODULOS).forEach(([prefijo, modulo]) => router.use(prefijo, modulo));
+
+// Fotos de tickets con control de permisos (no es un módulo con páginas propias)
+router.use('/fotos', require('./fotos'));
 
 module.exports = router;
 module.exports.PREFIJOS = Object.keys(MODULOS);

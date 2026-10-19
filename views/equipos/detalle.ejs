@@ -1,0 +1,26 @@
+<%# Detalle de un equipo con su historial de tickets (RF-05) %>
+<% const admin = esAdmin(usuarioActual); %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1><%= descripcionEquipo(equipo) %></h1>
+</div>
+
+<div class="detail-grid">
+  <section class="detail-card">
+    <h2>Datos del equipo</h2>
+    <div class="detail-list">
+      <div><span class="detail-label">Cliente</span><span class="detail-value"><a href="/clientes/<%= equipo.cliente.id %>"><%= equipo.cliente.nombre %></a></span></div>
+      <div><span class="detail-label">Tipo</span><span class="detail-value"><%= equipo.tipo %></span></div>
+      <div><span class="detail-label">Marca</span><span class="detail-value"><%= equipo.marca %></span></div>
+      <div><span class="detail-label">Modelo</span><span class="detail-value"><%= equipo.modelo %></span></div>
+      <div><span class="detail-label">Número de serie</span><span class="detail-value"><%= equipo.numero_serie || '—' %></span></div>
+    </div>
+    <% if (admin) { %>
+      <div class="detalle-acciones">
+        <a class="btn btn-secondary" href="/equipos/<%= equipo.id %>/editar">Editar equipo</a>
+      </div>
+    <% } %>
+  </section>
+</div>
+
+<%- include('../partials/historialTickets', { tickets, mostrarEquipo: false }) %>

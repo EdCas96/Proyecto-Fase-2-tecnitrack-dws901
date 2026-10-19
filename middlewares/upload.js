@@ -19,12 +19,14 @@ const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
 const { ValidationError } = require('../utils/errors');
-const { maxFotoMb } = require('../config/env');
+const { maxFotoMb, directorioFotos } = require('../config/env');
 
 const MAX_FOTOS = 5;
-const DIRECTORIO_FOTOS = path.join(__dirname, '..', 'public', 'uploads', 'tickets');
-/** Ruta pública con la que se sirven (express.static de public/). */
-const URL_FOTOS = '/uploads/tickets';
+/**
+ * Carpeta de las fotos, FUERA de public/: no tienen URL pública; se sirven con
+ * GET /fotos/:id, que verifica permisos (FotoService). Ver config/env.js.
+ */
+const DIRECTORIO_FOTOS = directorioFotos;
 
 const TIPOS_PERMITIDOS = {
   'image/jpeg': ['.jpg', '.jpeg'],
@@ -80,8 +82,19 @@ async function leerCabecera(ruta) {
   }
 }
 
+/** Borra del disco los archivos subidos (req.files de Multer). */
 async function borrarArchivos(archivos = []) {
-  await Promise.all(archivos.map((a) => fs.promises.rm(a.path, { force: true })));
+  await Promise.all((archivos || []).map((a) => fs.promises.rm(a.path, { force: true })));
+}
+
+/**
+ * Manejador de errores para los routers que suben fotos: si la petición falla
+ * después de Multer (validación, regla de negocio...), borra las fotos ya
+ * guardadas para no dejar archivos huérfanos y pasa el error.
+ */
+async function limpiarFotosSiFalla(err, req, res, next) {
+  await borrarArchivos(req.files);
+  next(err);
 }
 
 /**
@@ -145,13 +158,14 @@ function crearSubidaFotos({
   };
 }
 
-/** Middleware listo para las rutas de tickets: campo "fotos", carpeta public/uploads/tickets. */
+/** Middleware listo para las rutas de tickets: campo "fotos", carpeta DIRECTORIO_FOTOS. */
 const subirFotos = crearSubidaFotos();
 
 module.exports = {
   subirFotos,
   crearSubidaFotos,
+  borrarArchivos,
+  limpiarFotosSiFalla,
   MAX_FOTOS,
-  URL_FOTOS,
   DIRECTORIO_FOTOS,
 };

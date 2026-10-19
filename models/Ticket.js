@@ -51,6 +51,12 @@ class Ticket extends Model {
           defaultValue: DataTypes.NOW,
           validate: { isDate: { msg: 'La fecha de ingreso no es válida.' } },
         },
+        // SC-03: fecha estimada de entrega que ve el cliente en el portal (HU-04)
+        fecha_estimada: {
+          type: DataTypes.DATEONLY,
+          allowNull: true,
+          validate: { isDate: { msg: 'La fecha estimada no es válida.' } },
+        },
         fecha_entrega: {
           type: DataTypes.DATE,
           allowNull: true,

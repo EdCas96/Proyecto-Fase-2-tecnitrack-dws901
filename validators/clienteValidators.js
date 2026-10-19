@@ -59,4 +59,6 @@ const reglasNuevoCliente = [
 /** @implements HU-01, RF-02 */
 const reglasEquipo = reglasCamposEquipo();
 
-module.exports = { reglasCliente, reglasNuevoCliente, reglasEquipo };
+module.exports = {
+  reglasCliente, reglasNuevoCliente, reglasEquipo, reglasCamposEquipo,
+};

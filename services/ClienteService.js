@@ -69,6 +69,15 @@ class ClienteService {
   }
 
   /**
+   * Todos los clientes (id, nombre, teléfono) para el select con filtro del
+   * formulario de nuevo ticket (RNF-01).
+   * @implements HU-02, RNF-01
+   */
+  static async listarParaSeleccion() {
+    return Cliente.findAll({ attributes: ['id', 'nombre', 'telefono'], order: [['nombre', 'ASC'], ['id', 'ASC']] });
+  }
+
+  /**
    * @implements HU-01, RF-01
    * @param {number|string} id
    * @param {{conEquipos?: boolean}} [opciones] Incluye los equipos con su cantidad de tickets.

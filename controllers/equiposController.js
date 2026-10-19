@@ -1,5 +1,6 @@
 const ClienteService = require('../services/ClienteService');
 const EquipoService = require('../services/EquipoService');
+const TicketService = require('../services/TicketService');
 const { TIPOS_EQUIPO } = require('../utils/constantes');
 const { migasDe } = require('../utils/vistas');
 
@@ -37,6 +38,23 @@ class EquiposController {
     const equipo = await EquipoService.crear(req.body.cliente_id, req.body);
     req.flash('exito', `Equipo ${equipo.marca} ${equipo.modelo} agregado correctamente.`);
     res.redirect(303, `/clientes/${equipo.cliente_id}`);
+  }
+
+  /** GET /equipos/:id — datos del equipo e historial de sus tickets (RF-05). */
+  static async detalle(req, res) {
+    const equipo = await EquipoService.obtenerPorId(req.params.id);
+    const tickets = await TicketService.listarPorEquipo(equipo.id, req.usuario);
+    res.render('equipos/detalle', {
+      titulo: `${equipo.marca} ${equipo.modelo}`,
+      migas: migasDe(
+        req.usuario,
+        { texto: 'Clientes', url: '/clientes' },
+        { texto: equipo.cliente.nombre, url: `/clientes/${equipo.cliente.id}` },
+        { texto: `${equipo.marca} ${equipo.modelo}` },
+      ),
+      equipo,
+      tickets,
+    });
   }
 
   /** GET /equipos/:id/editar */

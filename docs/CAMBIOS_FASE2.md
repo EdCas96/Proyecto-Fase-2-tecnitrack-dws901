@@ -69,7 +69,7 @@ Se aplica en tres niveles:
 |---|---|
 | Base de datos | `VARCHAR(20) NOT NULL`, índice único `uq_tickets_folio`, `CHECK (folio REGEXP '^TT-[0-9]{4}-[0-9]{4,}$')` |
 | Modelo | Validación `is: REGEX_FOLIO` (`utils/constantes.js`) con mensaje en español |
-| Servicio | `FolioService` (pendiente) generará el siguiente correlativo del año dentro de una transacción |
+| Servicio | `FolioService` genera el siguiente correlativo del año dentro de la transacción del ticket, con bloqueo de fila (ver SC-05) |
 
 ### Justificación
 1. **Unifica documento y prototipo**, que ya mostraba `TT-2026-00xx`.
@@ -83,6 +83,91 @@ Se aplica en tres niveles:
 - **Reglas:** RN-03 se redacta con el nuevo formato.
 - **Historias:** HU-02 (asignación del folio) y HU-04 (consulta por folio).
 - **Datos de ejemplo:** los seeders usan los folios del prototipo (TT-2026-0035 a TT-2026-0042).
+
+---
+
+## SC-03 — Fecha estimada de entrega en `tickets`
+
+| Campo | Detalle |
+|---|---|
+| **Fecha** | 19/10/2026 |
+| **Solicitante** | Eduardo Francisco Castro Ramírez (desarrollador) |
+| **Tipo** | Ampliación del modelo de datos |
+| **Estado** | Aprobado e implementado (`migrations/20261019000012-agregar-fecha-estimada-tickets.js`) |
+
+### Situación anterior
+HU-04 pide que el cliente vea en el portal la **fecha estimada** de entrega de su equipo, pero la tabla `tickets` solo tenía `fecha_ingreso` y `fecha_entrega` (la real). No había dónde guardar la fecha prometida.
+
+### Cambio
+Nueva columna en `tickets`:
+
+| Columna | Tipo | Nulo | Descripción |
+|---|---|---|---|
+| `fecha_estimada` | DATE | **Sí** | Fecha de entrega estimada que se muestra al cliente. Opcional: el técnico la puede indicar al crear el ticket. |
+
+Se agrega con una **migración nueva** (las anteriores no se editan, para que una base ya migrada se actualice con `npm run db:migrate`). El modelo `Ticket` la valida como fecha y los seeders traen fechas de ejemplo.
+
+### Justificación
+1. **HU-04 no se puede cumplir sin ella:** el portal debe mostrar cuándo estará listo el equipo.
+2. **Es distinta de `fecha_entrega`:** esa guarda cuándo se entregó realmente (al pasar a `Entregado`) y sirve para el reporte de HU-08; la estimada es una promesa al cliente.
+3. **Es opcional** para no frenar el registro (RNF-01): a veces la fecha se sabe hasta después del diagnóstico.
+
+### Impacto
+- **Tablas:** `tickets` (+1 columna nullable; los datos existentes quedan en NULL).
+- **Historias:** HU-02 (se captura al crear el ticket) y HU-04 (se muestra en el portal).
+- **Código:** `models/Ticket.js`, `TicketService.crear`, `PortalService`, vistas del ticket y del portal.
+
+---
+
+## SC-04 — Comentario en `ticket_historiales`
+
+| Campo | Detalle |
+|---|---|
+| **Fecha** | 19/10/2026 |
+| **Solicitante** | Eduardo Francisco Castro Ramírez (desarrollador) |
+| **Tipo** | Ampliación del modelo de datos |
+| **Estado** | Aprobado e implementado (`migrations/20261019000013-agregar-comentario-historial.js`) |
+
+### Situación anterior
+Cuando el admin cancela un ticket debe indicar un **motivo**, y una **reasignación de técnico** también debe quedar en el historial. `ticket_historiales` (SC-01) solo guardaba estados, usuario y fecha.
+
+### Cambio
+Nueva columna `comentario` VARCHAR(255), **nullable**, en `ticket_historiales`:
+- **Cancelación:** guarda el motivo escrito por el admin (obligatorio en ese caso, lo valida `TicketService`).
+- **Reasignación:** se registra una fila con el mismo `estado_anterior` y `estado_nuevo` y la nota "Reasignado de X a Y".
+- En los demás cambios queda en NULL.
+
+### Impacto
+- **Tablas:** `ticket_historiales` (+1 columna nullable).
+- **Historias / reglas:** HU-06; cancelación por decisión del admin (flujo de estados de CLAUDE.md).
+- **Reporte (HU-08):** las filas de reasignación no cambian de estado, así que no alteran el cálculo de tiempos entre estados.
+
+---
+
+## SC-05 — Tabla `folio_contadores`
+
+| Campo | Detalle |
+|---|---|
+| **Fecha** | 19/10/2026 |
+| **Solicitante** | Eduardo Francisco Castro Ramírez (desarrollador) |
+| **Tipo** | Tabla técnica (no es una entidad del negocio) |
+| **Estado** | Aprobado e implementado (`migrations/20261019000014-crear-folio-contadores.js`) |
+
+### Situación anterior
+RN-03 exige folios correlativos por año. Calcular "el folio más alto + 1" con una consulta normal tiene una condición de carrera: dos técnicos que crean un ticket al mismo tiempo leerían el mismo máximo y obtendrían el mismo folio (el índice único rechazaría al segundo con un error).
+
+### Cambio
+Tabla `folio_contadores` (`anio` SMALLINT PK, `ultimo` INT). `FolioService`, dentro de la transacción que crea el ticket:
+1. Asegura que exista la fila del año (`INSERT IGNORE`).
+2. La **bloquea** con `SELECT ... FOR UPDATE`: otra creación simultánea espera a que la primera confirme o revierta.
+3. Incrementa `ultimo` y arma el folio `TT-AAAA-NNNN`.
+
+El índice único `uq_tickets_folio` sigue como respaldo. La migración inicializa el contador con el folio más alto existente de cada año, y un año nuevo empieza en `0001`.
+
+### Impacto
+- **Tablas:** +1 tabla técnica.
+- **Reglas:** RN-03.
+- **Código:** `services/FolioService.js`; el seeder de tickets actualiza el contador de 2026.
 
 ---
 

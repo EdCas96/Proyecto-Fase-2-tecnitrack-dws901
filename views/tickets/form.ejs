@@ -1,0 +1,131 @@
+<%#
+  Nuevo ticket (prototipo: tecnico/ticket-nuevo.html). Pensado para completarse en menos de 2 minutos (RNF-01):
+  cliente con filtro, equipos del cliente elegido, pocos campos obligatorios y vista previa de las fotos.
+  Es multipart (fotos): el token CSRF va en la query string del action.
+  public/js/nuevo-ticket.js muestra/oculta las secciones, filtra clientes y carga los equipos.
+%>
+<% const modoCliente = datos.modo_cliente === 'nuevo' ? 'nuevo' : 'existente'; %>
+<% const modoEquipo = modoCliente === 'nuevo' || datos.modo_equipo === 'nuevo' ? 'nuevo' : 'existente'; %>
+<% const v = (campo) => valorCampo(datos, null, campo); %>
+<% const invalido = (campo) => (errores[campo] ? ` aria-invalid="true" aria-describedby="error-${campo}"` : ''); %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1>Nuevo ticket</h1>
+  <p class="text-small">Campos obligatorios: cliente, equipo, diagnóstico y al menos una foto.</p>
+</div>
+
+<form class="form-container" id="form-ticket" method="post" action="/tickets?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data" novalidate>
+  <fieldset class="form-section">
+    <legend>Cliente</legend>
+    <div class="opciones-modo" role="radiogroup" aria-label="Cliente">
+      <label><input type="radio" name="modo_cliente" value="existente"<%= modoCliente === 'existente' ? ' checked' : '' %>> Cliente existente</label>
+      <label><input type="radio" name="modo_cliente" value="nuevo"<%= modoCliente === 'nuevo' ? ' checked' : '' %>> Registrar cliente nuevo</label>
+    </div>
+
+    <div class="seccion-modo" data-modo-cliente="existente">
+      <div class="form-group">
+        <label for="filtro-cliente">Buscar cliente por nombre o teléfono</label>
+        <input type="search" id="filtro-cliente" placeholder="Escribe para filtrar la lista" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="cliente_id">Cliente</label>
+        <select id="cliente_id" name="cliente_id"<%- invalido('cliente_id') %>>
+          <option value="">Seleccione un cliente</option>
+          <% clientes.forEach((cliente) => { %>
+            <option value="<%= cliente.id %>"<%= String(v('cliente_id')) === String(cliente.id) ? ' selected' : '' %>><%= cliente.nombre %> — <%= cliente.telefono %></option>
+          <% }) %>
+        </select>
+        <%- include('../partials/errorCampo', { campo: 'cliente_id' }) %>
+      </div>
+    </div>
+
+    <div class="seccion-modo" data-modo-cliente="nuevo">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cliente_nombre">Nombre completo</label>
+          <input type="text" id="cliente_nombre" name="cliente_nombre" maxlength="100" placeholder="Ej. Rosa Idalia Gómez" value="<%= v('cliente_nombre') %>"<%- invalido('cliente_nombre') %>>
+          <%- include('../partials/errorCampo', { campo: 'cliente_nombre' }) %>
+        </div>
+        <div class="form-group">
+          <label for="cliente_telefono">Teléfono</label>
+          <input type="tel" id="cliente_telefono" name="cliente_telefono" placeholder="Ej. 7456-1230" value="<%= v('cliente_telefono') %>"<%- invalido('cliente_telefono') %>>
+          <%- include('../partials/errorCampo', { campo: 'cliente_telefono' }) %>
+        </div>
+        <div class="form-group">
+          <label for="cliente_correo">Correo (opcional)</label>
+          <input type="email" id="cliente_correo" name="cliente_correo" maxlength="120" placeholder="Ej. rosa.gomez@example.com" value="<%= v('cliente_correo') %>"<%- invalido('cliente_correo') %>>
+          <%- include('../partials/errorCampo', { campo: 'cliente_correo' }) %>
+        </div>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="form-section">
+    <legend>Equipo</legend>
+    <div class="opciones-modo" role="radiogroup" aria-label="Equipo" data-solo-cliente-existente>
+      <label><input type="radio" name="modo_equipo" value="existente"<%= modoEquipo === 'existente' ? ' checked' : '' %>> Equipo del cliente</label>
+      <label><input type="radio" name="modo_equipo" value="nuevo"<%= modoEquipo === 'nuevo' ? ' checked' : '' %>> Registrar equipo nuevo</label>
+    </div>
+
+    <div class="seccion-modo" data-modo-equipo="existente">
+      <div class="form-group">
+        <label for="equipo_id">Equipo</label>
+        <select id="equipo_id" name="equipo_id" data-seleccionado="<%= v('equipo_id') %>"<%- invalido('equipo_id') %>>
+          <option value="">Primero elige un cliente</option>
+          <% equiposCliente.forEach((equipo) => { %>
+            <option value="<%= equipo.id %>"<%= String(v('equipo_id')) === String(equipo.id) ? ' selected' : '' %>><%= equipo.descripcion %></option>
+          <% }) %>
+        </select>
+        <%- include('../partials/errorCampo', { campo: 'equipo_id' }) %>
+      </div>
+    </div>
+
+    <div class="seccion-modo" data-modo-equipo="nuevo">
+      <%- include('../partials/camposEquipo', { prefijo: 'equipo_', equipo: null }) %>
+    </div>
+  </fieldset>
+
+  <div class="form-group">
+    <label for="diagnostico_inicial">Diagnóstico inicial</label>
+    <textarea id="diagnostico_inicial" name="diagnostico_inicial" rows="4" maxlength="5000" placeholder="Describa el problema reportado por el cliente..."<%- invalido('diagnostico_inicial') %>><%= v('diagnostico_inicial') %></textarea>
+    <%- include('../partials/errorCampo', { campo: 'diagnostico_inicial' }) %>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="fecha_estimada">Fecha estimada de entrega (opcional)</label>
+      <input type="date" id="fecha_estimada" name="fecha_estimada" min="<%= hoy %>" value="<%= v('fecha_estimada') %>"<%- invalido('fecha_estimada') %>>
+      <%- include('../partials/errorCampo', { campo: 'fecha_estimada' }) %>
+    </div>
+    <% if (tecnicos.length) { %>
+      <div class="form-group">
+        <label for="tecnico_id">Técnico asignado</label>
+        <select id="tecnico_id" name="tecnico_id"<%- invalido('tecnico_id') %>>
+          <option value="">Sin asignar</option>
+          <% tecnicos.forEach((tecnico) => { %>
+            <option value="<%= tecnico.id %>"<%= String(v('tecnico_id')) === String(tecnico.id) ? ' selected' : '' %>><%= tecnico.nombre %></option>
+          <% }) %>
+        </select>
+        <%- include('../partials/errorCampo', { campo: 'tecnico_id' }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="form-group">
+    <label for="fotos">Fotos del equipo (de 1 a 5; JPG, PNG o WEBP)</label>
+    <div class="file-dropzone">
+      <p>Seleccione o arrastre aquí las fotos del equipo al ingreso</p>
+      <input type="file" id="fotos" name="fotos" accept="image/jpeg,image/png,image/webp" multiple<%- invalido('fotos') %>>
+    </div>
+    <div class="vista-previa-fotos photo-gallery" id="vista-previa-fotos" aria-live="polite"></div>
+    <%- include('../partials/errorCampo', { campo: 'fotos' }) %>
+    <% if (Object.keys(errores).length) { %><p class="form-ayuda">Por seguridad, vuelve a seleccionar las fotos.</p><% } %>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Crear ticket</button>
+    <a class="btn btn-secondary" href="<%= esAdmin(usuarioActual) ? '/tickets' : '/tecnico' %>">Cancelar</a>
+  </div>
+</form>
+
+<script src="/js/nuevo-ticket.js" defer></script>

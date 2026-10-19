@@ -45,7 +45,7 @@
     <tbody>
       <% equipos.forEach((equipo) => { %>
         <tr>
-          <td><%= equipo.tipo %></td>
+          <td><a href="/equipos/<%= equipo.id %>"><%= equipo.tipo %></a></td>
           <td><%= equipo.marca %></td>
           <td><%= equipo.modelo %></td>
           <td><%= equipo.numero_serie || '—' %></td>
@@ -67,3 +67,5 @@
     </tbody>
   </table>
 </div>
+
+<%- include('../partials/historialTickets', { tickets, mostrarEquipo: true }) %>

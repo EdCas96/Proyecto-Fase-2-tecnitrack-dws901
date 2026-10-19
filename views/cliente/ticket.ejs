@@ -1,4 +1,7 @@
-<%# Estado del ticket del cliente (prototipo: cliente/ticket-estado.html). Historial y cotización: HU-05 %>
+<%#
+  Estado del ticket del cliente (prototipo: cliente/ticket-estado.html): estado actual,
+  fecha estimada, equipo e historial. La cotización y aprobar/rechazar se agregan en el paso 7 (HU-05).
+%>
 <div class="status-hero">
   <p class="breadcrumb">Ticket <%= ticket.folio %> · <%= ticket.cliente %></p>
   <h1>Estado actual</h1>
@@ -9,10 +12,27 @@
   <div class="detail-card">
     <div class="detail-list">
       <div><span class="detail-label">Equipo</span><span class="detail-value"><%= ticket.equipo %></span></div>
-      <div><span class="detail-label">Fecha de ingreso</span><span class="detail-value"><%= new Date(ticket.fechaIngreso).toLocaleDateString('es-SV') %></span></div>
+      <div><span class="detail-label">Fecha de ingreso</span><span class="detail-value"><%= formatoFecha(ticket.fechaIngreso) %></span></div>
+      <% if (ticket.fechaEntrega) { %>
+        <div><span class="detail-label">Fecha de entrega</span><span class="detail-value"><%= formatoFecha(ticket.fechaEntrega) %></span></div>
+      <% } else if (ticket.estado !== 'Cancelado') { %>
+        <div><span class="detail-label">Fecha estimada de entrega</span><span class="detail-value"><%= ticket.fechaEstimada ? formatoFecha(ticket.fechaEstimada) : 'Por confirmar' %></span></div>
+      <% } %>
     </div>
   </div>
 </div>
+
+<div class="section-header">
+  <h2>Historial de tu ticket</h2>
+</div>
+<ul class="timeline">
+  <% ticket.historial.forEach((cambio) => { %>
+    <li class="timeline-item">
+      <span class="timeline-date"><%= formatoFecha(cambio.fecha) %></span>
+      <span class="timeline-title"><%= etiquetaEstado(cambio.estado) %></span>
+    </li>
+  <% }) %>
+</ul>
 
 <form class="acciones-portal" method="post" action="/portal/salir">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">

@@ -192,6 +192,30 @@ INSERT INTO `equipos` (`id`, `cliente_id`, `tipo`, `marca`, `modelo`, `numero_se
 UNLOCK TABLES;
 
 --
+-- Table structure for table `folio_contadores`
+--
+
+DROP TABLE IF EXISTS `folio_contadores`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `folio_contadores` (
+  `anio` smallint(5) unsigned NOT NULL,
+  `ultimo` int(10) unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`anio`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `folio_contadores`
+--
+
+LOCK TABLES `folio_contadores` WRITE;
+/*!40000 ALTER TABLE `folio_contadores` DISABLE KEYS */;
+INSERT INTO `folio_contadores` (`anio`, `ultimo`) VALUES (2026,42);
+/*!40000 ALTER TABLE `folio_contadores` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `notificaciones`
 --
 
@@ -269,7 +293,7 @@ CREATE TABLE `sequelize_meta` (
 
 LOCK TABLES `sequelize_meta` WRITE;
 /*!40000 ALTER TABLE `sequelize_meta` DISABLE KEYS */;
-INSERT INTO `sequelize_meta` (`name`) VALUES ('20261018000001-crear-usuarios.js'),('20261018000002-crear-clientes.js'),('20261018000003-crear-equipos.js'),('20261018000004-crear-catalogo-items.js'),('20261018000005-crear-tickets.js'),('20261018000006-crear-ticket-fotos.js'),('20261018000007-crear-ticket-historiales.js'),('20261018000008-crear-cotizaciones.js'),('20261018000009-crear-cotizacion-items.js'),('20261018000010-crear-notificaciones.js'),('20261018000011-crear-sesiones.js');
+INSERT INTO `sequelize_meta` (`name`) VALUES ('20261018000001-crear-usuarios.js'),('20261018000002-crear-clientes.js'),('20261018000003-crear-equipos.js'),('20261018000004-crear-catalogo-items.js'),('20261018000005-crear-tickets.js'),('20261018000006-crear-ticket-fotos.js'),('20261018000007-crear-ticket-historiales.js'),('20261018000008-crear-cotizaciones.js'),('20261018000009-crear-cotizacion-items.js'),('20261018000010-crear-notificaciones.js'),('20261018000011-crear-sesiones.js'),('20261019000012-agregar-fecha-estimada-tickets.js'),('20261019000013-agregar-comentario-historial.js'),('20261019000014-crear-folio-contadores.js');
 /*!40000 ALTER TABLE `sequelize_meta` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -340,6 +364,7 @@ CREATE TABLE `ticket_historiales` (
   `estado_anterior` enum('Recibido','Diagnosticado','Esperando_aprobacion','En_reparacion','Esperando_repuesto','Listo','Entregado','Cancelado') DEFAULT NULL,
   `estado_nuevo` enum('Recibido','Diagnosticado','Esperando_aprobacion','En_reparacion','Esperando_repuesto','Listo','Entregado','Cancelado') NOT NULL,
   `usuario_id` int(10) unsigned DEFAULT NULL,
+  `comentario` varchar(255) DEFAULT NULL,
   `fecha` datetime NOT NULL DEFAULT current_timestamp(),
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -358,7 +383,7 @@ CREATE TABLE `ticket_historiales` (
 
 LOCK TABLES `ticket_historiales` WRITE;
 /*!40000 ALTER TABLE `ticket_historiales` DISABLE KEYS */;
-INSERT INTO `ticket_historiales` (`id`, `ticket_id`, `estado_anterior`, `estado_nuevo`, `usuario_id`, `fecha`, `created_at`, `updated_at`) VALUES (1,1,NULL,'Recibido',2,'2026-09-01 08:30:00','2026-09-01 08:30:00','2026-09-01 08:30:00'),(2,1,'Recibido','Diagnosticado',2,'2026-09-01 14:00:00','2026-09-01 14:00:00','2026-09-01 14:00:00'),(3,1,'Diagnosticado','Esperando_aprobacion',2,'2026-09-02 09:00:00','2026-09-02 09:00:00','2026-09-02 09:00:00'),(4,1,'Esperando_aprobacion','En_reparacion',NULL,'2026-09-02 15:20:00','2026-09-02 15:20:00','2026-09-02 15:20:00'),(5,1,'En_reparacion','Listo',2,'2026-09-04 11:00:00','2026-09-04 11:00:00','2026-09-04 11:00:00'),(6,1,'Listo','Entregado',2,'2026-09-05 16:00:00','2026-09-05 16:00:00','2026-09-05 16:00:00'),(7,2,NULL,'Recibido',3,'2026-09-05 10:00:00','2026-09-05 10:00:00','2026-09-05 10:00:00'),(8,2,'Recibido','Diagnosticado',3,'2026-09-06 11:30:00','2026-09-06 11:30:00','2026-09-06 11:30:00'),(9,2,'Diagnosticado','Esperando_aprobacion',3,'2026-09-07 09:15:00','2026-09-07 09:15:00','2026-09-07 09:15:00'),(10,2,'Esperando_aprobacion','En_reparacion',NULL,'2026-09-09 10:40:00','2026-09-09 10:40:00','2026-09-09 10:40:00'),(11,3,NULL,'Recibido',3,'2026-09-05 11:30:00','2026-09-05 11:30:00','2026-09-05 11:30:00'),(12,3,'Recibido','Diagnosticado',3,'2026-09-05 16:00:00','2026-09-05 16:00:00','2026-09-05 16:00:00'),(13,3,'Diagnosticado','Esperando_aprobacion',3,'2026-09-06 09:00:00','2026-09-06 09:00:00','2026-09-06 09:00:00'),(14,3,'Esperando_aprobacion','Cancelado',NULL,'2026-09-07 10:05:00','2026-09-07 10:05:00','2026-09-07 10:05:00'),(15,4,NULL,'Recibido',3,'2026-09-08 09:00:00','2026-09-08 09:00:00','2026-09-08 09:00:00'),(16,4,'Recibido','Diagnosticado',3,'2026-09-08 15:00:00','2026-09-08 15:00:00','2026-09-08 15:00:00'),(17,4,'Diagnosticado','Esperando_aprobacion',3,'2026-09-09 08:30:00','2026-09-09 08:30:00','2026-09-09 08:30:00'),(18,4,'Esperando_aprobacion','En_reparacion',NULL,'2026-09-09 12:00:00','2026-09-09 12:00:00','2026-09-09 12:00:00'),(19,4,'En_reparacion','Esperando_repuesto',3,'2026-09-09 14:00:00','2026-09-09 14:00:00','2026-09-09 14:00:00'),(20,4,'Esperando_repuesto','En_reparacion',3,'2026-09-10 10:00:00','2026-09-10 10:00:00','2026-09-10 10:00:00'),(21,4,'En_reparacion','Listo',3,'2026-09-11 17:00:00','2026-09-11 17:00:00','2026-09-11 17:00:00'),(22,5,NULL,'Recibido',2,'2026-09-10 10:30:00','2026-09-10 10:30:00','2026-09-10 10:30:00'),(23,5,'Recibido','Diagnosticado',2,'2026-09-11 09:00:00','2026-09-11 09:00:00','2026-09-11 09:00:00'),(24,5,'Diagnosticado','Esperando_aprobacion',2,'2026-09-12 08:45:00','2026-09-12 08:45:00','2026-09-12 08:45:00'),(25,6,NULL,'Recibido',2,'2026-09-11 09:45:00','2026-09-11 09:45:00','2026-09-11 09:45:00'),(26,6,'Recibido','Diagnosticado',2,'2026-09-12 10:20:00','2026-09-12 10:20:00','2026-09-12 10:20:00'),(27,7,NULL,'Recibido',1,'2026-09-12 16:10:00','2026-09-12 16:10:00','2026-09-12 16:10:00');
+INSERT INTO `ticket_historiales` (`id`, `ticket_id`, `estado_anterior`, `estado_nuevo`, `usuario_id`, `comentario`, `fecha`, `created_at`, `updated_at`) VALUES (1,1,NULL,'Recibido',2,NULL,'2026-09-01 08:30:00','2026-09-01 08:30:00','2026-09-01 08:30:00'),(2,1,'Recibido','Diagnosticado',2,NULL,'2026-09-01 14:00:00','2026-09-01 14:00:00','2026-09-01 14:00:00'),(3,1,'Diagnosticado','Esperando_aprobacion',2,NULL,'2026-09-02 09:00:00','2026-09-02 09:00:00','2026-09-02 09:00:00'),(4,1,'Esperando_aprobacion','En_reparacion',NULL,NULL,'2026-09-02 15:20:00','2026-09-02 15:20:00','2026-09-02 15:20:00'),(5,1,'En_reparacion','Listo',2,NULL,'2026-09-04 11:00:00','2026-09-04 11:00:00','2026-09-04 11:00:00'),(6,1,'Listo','Entregado',2,NULL,'2026-09-05 16:00:00','2026-09-05 16:00:00','2026-09-05 16:00:00'),(7,2,NULL,'Recibido',3,NULL,'2026-09-05 10:00:00','2026-09-05 10:00:00','2026-09-05 10:00:00'),(8,2,'Recibido','Diagnosticado',3,NULL,'2026-09-06 11:30:00','2026-09-06 11:30:00','2026-09-06 11:30:00'),(9,2,'Diagnosticado','Esperando_aprobacion',3,NULL,'2026-09-07 09:15:00','2026-09-07 09:15:00','2026-09-07 09:15:00'),(10,2,'Esperando_aprobacion','En_reparacion',NULL,NULL,'2026-09-09 10:40:00','2026-09-09 10:40:00','2026-09-09 10:40:00'),(11,3,NULL,'Recibido',3,NULL,'2026-09-05 11:30:00','2026-09-05 11:30:00','2026-09-05 11:30:00'),(12,3,'Recibido','Diagnosticado',3,NULL,'2026-09-05 16:00:00','2026-09-05 16:00:00','2026-09-05 16:00:00'),(13,3,'Diagnosticado','Esperando_aprobacion',3,NULL,'2026-09-06 09:00:00','2026-09-06 09:00:00','2026-09-06 09:00:00'),(14,3,'Esperando_aprobacion','Cancelado',NULL,NULL,'2026-09-07 10:05:00','2026-09-07 10:05:00','2026-09-07 10:05:00'),(15,4,NULL,'Recibido',3,NULL,'2026-09-08 09:00:00','2026-09-08 09:00:00','2026-09-08 09:00:00'),(16,4,'Recibido','Diagnosticado',3,NULL,'2026-09-08 15:00:00','2026-09-08 15:00:00','2026-09-08 15:00:00'),(17,4,'Diagnosticado','Esperando_aprobacion',3,NULL,'2026-09-09 08:30:00','2026-09-09 08:30:00','2026-09-09 08:30:00'),(18,4,'Esperando_aprobacion','En_reparacion',NULL,NULL,'2026-09-09 12:00:00','2026-09-09 12:00:00','2026-09-09 12:00:00'),(19,4,'En_reparacion','Esperando_repuesto',3,NULL,'2026-09-09 14:00:00','2026-09-09 14:00:00','2026-09-09 14:00:00'),(20,4,'Esperando_repuesto','En_reparacion',3,NULL,'2026-09-10 10:00:00','2026-09-10 10:00:00','2026-09-10 10:00:00'),(21,4,'En_reparacion','Listo',3,NULL,'2026-09-11 17:00:00','2026-09-11 17:00:00','2026-09-11 17:00:00'),(22,5,NULL,'Recibido',2,NULL,'2026-09-10 10:30:00','2026-09-10 10:30:00','2026-09-10 10:30:00'),(23,5,'Recibido','Diagnosticado',2,NULL,'2026-09-11 09:00:00','2026-09-11 09:00:00','2026-09-11 09:00:00'),(24,5,'Diagnosticado','Esperando_aprobacion',2,NULL,'2026-09-12 08:45:00','2026-09-12 08:45:00','2026-09-12 08:45:00'),(25,6,NULL,'Recibido',2,NULL,'2026-09-11 09:45:00','2026-09-11 09:45:00','2026-09-11 09:45:00'),(26,6,'Recibido','Diagnosticado',2,NULL,'2026-09-12 10:20:00','2026-09-12 10:20:00','2026-09-12 10:20:00'),(27,7,NULL,'Recibido',1,NULL,'2026-09-12 16:10:00','2026-09-12 16:10:00','2026-09-12 16:10:00');
 /*!40000 ALTER TABLE `ticket_historiales` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -377,6 +402,7 @@ CREATE TABLE `tickets` (
   `estado` enum('Recibido','Diagnosticado','Esperando_aprobacion','En_reparacion','Esperando_repuesto','Listo','Entregado','Cancelado') NOT NULL DEFAULT 'Recibido',
   `diagnostico_inicial` text NOT NULL,
   `fecha_ingreso` datetime NOT NULL DEFAULT current_timestamp(),
+  `fecha_estimada` date DEFAULT NULL,
   `fecha_entrega` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -398,7 +424,7 @@ CREATE TABLE `tickets` (
 
 LOCK TABLES `tickets` WRITE;
 /*!40000 ALTER TABLE `tickets` DISABLE KEYS */;
-INSERT INTO `tickets` (`id`, `folio`, `equipo_id`, `tecnico_id`, `estado`, `diagnostico_inicial`, `fecha_ingreso`, `fecha_entrega`, `created_at`, `updated_at`) VALUES (1,'TT-2026-0035',1,2,'Entregado','El equipo se sobrecalienta y el ventilador hace mucho ruido; se apaga solo tras 20 minutos de uso.','2026-09-01 08:30:00','2026-09-05 16:00:00','2026-09-01 08:30:00','2026-09-05 16:00:00'),(2,'TT-2026-0037',4,3,'En_reparacion','Imprime con franjas horizontales y no reconoce el cartucho negro.','2026-09-05 10:00:00',NULL,'2026-09-05 10:00:00','2026-09-09 10:40:00'),(3,'TT-2026-0038',2,3,'Cancelado','Muy lento al iniciar; el disco duro hace ruido de golpeteo.','2026-09-05 11:30:00',NULL,'2026-09-05 11:30:00','2026-09-07 10:05:00'),(4,'TT-2026-0039',1,3,'Listo','Se reinicia sola al abrir varios programas a la vez; posible falla de memoria RAM.','2026-09-08 09:00:00',NULL,'2026-09-08 09:00:00','2026-09-11 17:00:00'),(5,'TT-2026-0040',3,2,'Esperando_aprobacion','Se calienta en exceso y funciona lento; el cliente solicita ampliar la memoria.','2026-09-10 10:30:00',NULL,'2026-09-10 10:30:00','2026-09-12 08:45:00'),(6,'TT-2026-0041',2,2,'Diagnosticado','No arranca el sistema operativo; muestra pantalla azul al iniciar.','2026-09-11 09:45:00',NULL,'2026-09-11 09:45:00','2026-09-12 10:20:00'),(7,'TT-2026-0042',1,NULL,'Recibido','La batería no carga y algunas teclas del teclado no responden.','2026-09-12 16:10:00',NULL,'2026-09-12 16:10:00','2026-09-12 16:10:00');
+INSERT INTO `tickets` (`id`, `folio`, `equipo_id`, `tecnico_id`, `estado`, `diagnostico_inicial`, `fecha_ingreso`, `fecha_estimada`, `fecha_entrega`, `created_at`, `updated_at`) VALUES (1,'TT-2026-0035',1,2,'Entregado','El equipo se sobrecalienta y el ventilador hace mucho ruido; se apaga solo tras 20 minutos de uso.','2026-09-01 08:30:00','2026-09-05','2026-09-05 16:00:00','2026-09-01 08:30:00','2026-09-05 16:00:00'),(2,'TT-2026-0037',4,3,'En_reparacion','Imprime con franjas horizontales y no reconoce el cartucho negro.','2026-09-05 10:00:00','2026-09-14',NULL,'2026-09-05 10:00:00','2026-09-09 10:40:00'),(3,'TT-2026-0038',2,3,'Cancelado','Muy lento al iniciar; el disco duro hace ruido de golpeteo.','2026-09-05 11:30:00',NULL,NULL,'2026-09-05 11:30:00','2026-09-07 10:05:00'),(4,'TT-2026-0039',1,3,'Listo','Se reinicia sola al abrir varios programas a la vez; posible falla de memoria RAM.','2026-09-08 09:00:00','2026-09-12',NULL,'2026-09-08 09:00:00','2026-09-11 17:00:00'),(5,'TT-2026-0040',3,2,'Esperando_aprobacion','Se calienta en exceso y funciona lento; el cliente solicita ampliar la memoria.','2026-09-10 10:30:00','2026-09-18',NULL,'2026-09-10 10:30:00','2026-09-12 08:45:00'),(6,'TT-2026-0041',2,2,'Diagnosticado','No arranca el sistema operativo; muestra pantalla azul al iniciar.','2026-09-11 09:45:00','2026-09-19',NULL,'2026-09-11 09:45:00','2026-09-12 10:20:00'),(7,'TT-2026-0042',1,NULL,'Recibido','La batería no carga y algunas teclas del teclado no responden.','2026-09-12 16:10:00','2026-09-20',NULL,'2026-09-12 16:10:00','2026-09-12 16:10:00');
 /*!40000 ALTER TABLE `tickets` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -430,7 +456,7 @@ CREATE TABLE `usuarios` (
 
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
-INSERT INTO `usuarios` (`id`, `nombre`, `correo`, `password_hash`, `rol`, `activo`, `created_at`, `updated_at`) VALUES (1,'Administrador Principal','admin@tecnitrack.com','$2b$10$HjY.nMGqdXZrUhnlUkqkGOX8nlXsCnNCreAbLtEiBC7Y3wU06Yx1W','admin',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(2,'Luis Fernández','luis.fernandez@tecnitrack.com','$2b$10$O01qlvpCU77bzxn81aMiEOJSwknuGhNgm4a5gBbHLyjq5jUMVQgJm','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(3,'Jorge Pineda','jorge.pineda@tecnitrack.com','$2b$10$3GskVWFgHrMEF4e2/p0Qme8RVBniBr9QNjdPYpuWzOeM1vKtEynCe','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(4,'Óscar Meléndez','oscar.melendez@tecnitrack.com','$2b$10$jk9df6Rm94YTIeeagWpXAuGr.eHbNr.w5.ORNVSkXsa/Np06bMmiS','tecnico',0,'2026-08-25 08:00:00','2026-08-25 08:00:00');
+INSERT INTO `usuarios` (`id`, `nombre`, `correo`, `password_hash`, `rol`, `activo`, `created_at`, `updated_at`) VALUES (1,'Administrador Principal','admin@tecnitrack.com','$2b$10$wTHM/q23lRZ7P2LbEtrY9ekGCRV0GyC5bC39ezDacdAdbR8kpvU5S','admin',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(2,'Luis Fernández','luis.fernandez@tecnitrack.com','$2b$10$ora/trqt2ocNqvDW1dRt.uarWs5z6lWfYkyqNTTKvLNij2L7vXuNS','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(3,'Jorge Pineda','jorge.pineda@tecnitrack.com','$2b$10$8NCa9CYIbAglcTEiMaV.felnITTuQ5fm87dYOciDGFrhJUPCNjqja','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(4,'Óscar Meléndez','oscar.melendez@tecnitrack.com','$2b$10$i11p64TAh2W3dmKM5VDsKO6Me/FohQE.krGy7a/9FiPTT59cvlhSC','tecnico',0,'2026-08-25 08:00:00','2026-08-25 08:00:00');
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 

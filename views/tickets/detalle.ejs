@@ -1,0 +1,173 @@
+<%#
+  Detalle del ticket (prototipos: admin/ticket-detalle.html y tecnico/ticket-detalle.html).
+  Los botones de estado se habilitan solo para las transiciones válidas (MaquinaEstadosTicket);
+  los demás se ven deshabilitados para mostrar el flujo completo.
+%>
+<% const admin = esAdmin(usuarioActual); %>
+<% const { equipo } = ticket; const { cliente } = equipo; %>
+<% const cotizacion = ticket.cotizaciones[0]; %>
+<% const indiceActual = flujo.indexOf(ticket.estado); %>
+<% const cancelado = ticket.estado === 'Cancelado'; %>
+<%# Por qué cada paso no manual está deshabilitado (texto de ayuda del botón) %>
+<% const AYUDA = {
+  Esperando_aprobacion: 'Se activa al crear una cotización (paso 7).',
+  En_reparacion: ticket.estado === 'Esperando_aprobacion' ? 'Se activa cuando el cliente aprueba la cotización.' : 'Requiere una cotización aprobada (RN-01).',
+}; %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1>Ticket <%= ticket.folio %> <%- include('../partials/badgeEstado', { estado: ticket.estado }) %></h1>
+</div>
+
+<div class="detail-grid">
+  <section class="detail-card">
+    <h2>Datos del cliente</h2>
+    <div class="detail-list">
+      <div><span class="detail-label">Nombre</span><span class="detail-value"><a href="/clientes/<%= cliente.id %>"><%= cliente.nombre %></a></span></div>
+      <div><span class="detail-label">Teléfono</span><span class="detail-value"><%= cliente.telefono %></span></div>
+      <div><span class="detail-label">Correo</span><span class="detail-value"><%= cliente.correo || '—' %></span></div>
+    </div>
+  </section>
+
+  <section class="detail-card">
+    <h2>Datos del equipo</h2>
+    <div class="detail-list">
+      <div><span class="detail-label">Tipo</span><span class="detail-value"><%= equipo.tipo %></span></div>
+      <div><span class="detail-label">Marca</span><span class="detail-value"><%= equipo.marca %></span></div>
+      <div><span class="detail-label">Modelo</span><span class="detail-value"><a href="/equipos/<%= equipo.id %>"><%= equipo.modelo %></a></span></div>
+      <div><span class="detail-label">Número de serie</span><span class="detail-value"><%= equipo.numero_serie || '—' %></span></div>
+    </div>
+  </section>
+
+  <section class="detail-card">
+    <h2>Cotización asociada</h2>
+    <div class="detail-list">
+      <% if (cotizacion) { %>
+        <div><span class="detail-label">Monto total</span><span class="detail-value"><%= formatoPrecio(cotizacion.total) %></span></div>
+        <div><span class="detail-label">Estado</span><span class="detail-value"><%- include('../partials/badgeEstado', { estado: cotizacion.estado }) %></span></div>
+        <div><span class="detail-label">Fecha</span><span class="detail-value"><%= formatoFecha(cotizacion.fecha) %></span></div>
+        <% if (ticket.cotizaciones.length > 1) { %>
+          <div><span class="detail-label">Cotizaciones anteriores</span><span class="detail-value"><%= ticket.cotizaciones.length - 1 %></span></div>
+        <% } %>
+      <% } else { %>
+        <p class="text-small">Este ticket aún no tiene cotización.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="detail-card">
+    <h2>Asignación y fechas</h2>
+    <div class="detail-list">
+      <div><span class="detail-label">Técnico asignado</span><span class="detail-value"><%= ticket.tecnico ? ticket.tecnico.nombre : 'Sin asignar' %></span></div>
+      <div><span class="detail-label">Fecha de ingreso</span><span class="detail-value"><%= formatoFechaHora(ticket.fecha_ingreso) %></span></div>
+      <div><span class="detail-label">Fecha estimada</span><span class="detail-value"><%= formatoFecha(ticket.fecha_estimada) %></span></div>
+      <% if (ticket.fecha_entrega) { %>
+        <div><span class="detail-label">Fecha de entrega</span><span class="detail-value"><%= formatoFechaHora(ticket.fecha_entrega) %></span></div>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+<div class="section-header">
+  <h2>Diagnóstico inicial</h2>
+</div>
+<section class="detail-card tarjeta-aviso texto-largo"><%= ticket.diagnostico_inicial %></section>
+
+<div class="section-header">
+  <h2>Historial de estados</h2>
+</div>
+<ul class="timeline">
+  <% ticket.historial.forEach((cambio) => { %>
+    <% const reasignacion = cambio.estado_anterior && cambio.estado_anterior === cambio.estado_nuevo; %>
+    <li class="timeline-item">
+      <span class="timeline-date"><%= formatoFechaHora(cambio.fecha) %></span>
+      <span class="timeline-title"><%= reasignacion ? 'Cambio de técnico' : etiquetaEstado(cambio.estado_nuevo) %></span>
+      <span class="text-small">
+        <%= cambio.usuario ? cambio.usuario.nombre : 'Cliente (desde el portal)' %><% if (cambio.comentario) { %> · <%= cambio.comentario %><% } %>
+      </span>
+    </li>
+  <% }) %>
+</ul>
+
+<div class="section-header">
+  <h2>Fotos del equipo</h2>
+</div>
+<div class="photo-gallery">
+  <% ticket.fotos.forEach((foto, i) => { %>
+    <a href="/fotos/<%= foto.id %>" target="_blank" rel="noopener">
+      <img class="photo-thumb" src="/fotos/<%= foto.id %>" alt="Foto <%= i + 1 %> del equipo al ingreso" loading="lazy">
+    </a>
+  <% }) %>
+  <% if (!ticket.fotos.length) { %><p class="text-small">Sin fotos.</p><% } %>
+</div>
+
+<div class="section-header">
+  <h2>Avanzar estado del ticket</h2>
+  <p class="text-small">El flujo debe respetarse en orden: solo se habilitan los pasos válidos desde el estado actual.</p>
+</div>
+
+<div class="stepper" aria-label="Flujo del ticket">
+  <% flujo.forEach((estado, i) => { %>
+    <% const clase = cancelado ? 'is-locked' : (i < indiceActual ? 'is-done' : (i === indiceActual ? 'is-current' : 'is-locked')); %>
+    <span class="stepper-step <%= clase %>"<% if (clase === 'is-current') { %> aria-current="step"<% } %>><%= clase === 'is-done' ? '✓ ' : (clase === 'is-current' ? '● ' : '') %><%= etiquetaEstado(estado) %></span>
+  <% }) %>
+  <% if (cancelado) { %><span class="stepper-step is-current">● Cancelado</span><% } %>
+</div>
+
+<div class="state-actions">
+  <% flujo.filter((estado) => estado !== 'Recibido' && estado !== ticket.estado).forEach((estado) => { %>
+    <% if (permitidos.includes(estado)) { %>
+      <%- include('../partials/botonAccion', {
+        accion: `/tickets/${ticket.id}/estado`, metodo: 'PATCH', clase: 'btn-primary',
+        texto: `Pasar a "${etiquetaEstado(estado)}"`, campos: { estado },
+        confirmar: estado === 'Entregado' ? `¿Confirmas que el equipo se entregó al cliente? El ticket ${ticket.folio} quedará cerrado.` : undefined,
+      }) %>
+    <% } else { %>
+      <button type="button" class="btn btn-secondary" disabled title="<%= AYUDA[estado] || 'No disponible desde el estado actual.' %>"><%= etiquetaEstado(estado) %></button>
+    <% } %>
+  <% }) %>
+</div>
+
+<% if (admin && (puedeCancelar || tecnicos.length)) { %>
+  <div class="section-header">
+    <h2>Acciones del administrador</h2>
+  </div>
+  <div class="detail-grid">
+    <% if (tecnicos.length) { %>
+      <form class="detail-card" method="post" action="/tickets/<%= ticket.id %>/tecnico">
+        <h2>Reasignar técnico</h2>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="_method" value="PATCH">
+        <div class="form-group">
+          <label for="tecnico_id">Técnico</label>
+          <select id="tecnico_id" name="tecnico_id"<% if (errores.tecnico_id) { %> aria-invalid="true" aria-describedby="error-tecnico_id"<% } %>>
+            <% tecnicos.forEach((tecnico) => { %>
+              <option value="<%= tecnico.id %>"<%= ticket.tecnico_id === tecnico.id ? ' selected' : '' %>><%= tecnico.nombre %></option>
+            <% }) %>
+          </select>
+          <%- include('../partials/errorCampo', { campo: 'tecnico_id' }) %>
+        </div>
+        <button type="submit" class="btn btn-primary">Reasignar y notificar</button>
+      </form>
+    <% } %>
+
+    <% if (puedeCancelar) { %>
+      <form class="detail-card" method="post" action="/tickets/<%= ticket.id %>/estado"
+            data-confirmar="¿Cancelar el ticket <%= ticket.folio %>? Esta acción no se puede deshacer.">
+        <h2>Cancelar ticket</h2>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="_method" value="PATCH">
+        <input type="hidden" name="estado" value="Cancelado">
+        <div class="form-group">
+          <label for="motivo">Motivo de la cancelación</label>
+          <textarea id="motivo" name="motivo" rows="2" maxlength="255" required placeholder="Ej. El cliente retiró el equipo sin reparar"<% if (errores.motivo) { %> aria-invalid="true" aria-describedby="error-motivo"<% } %>><%= datos.motivo || '' %></textarea>
+          <%- include('../partials/errorCampo', { campo: 'motivo' }) %>
+        </div>
+        <button type="submit" class="btn btn-destructive">Cancelar ticket</button>
+      </form>
+    <% } %>
+  </div>
+<% } %>
+
+<div class="form-actions acciones-pie">
+  <a class="btn btn-secondary" href="<%= admin ? '/tickets' : '/tecnico' %>">Volver</a>
+</div>

@@ -31,10 +31,24 @@ Problemas encontrados durante el desarrollo y cómo se resolvieron.
 | 23 | 19/10/2026 | 5 · CRUD | Las columnas DECIMAL (precio) llegan como número (`45.5`) y no como texto (`'45.50'`), por `decimalNumbers: true` en `config/config.js`. Las primeras pruebas del catálogo esperaban texto. | Se mantiene la configuración (los cálculos de cotizaciones usarán números) y las vistas muestran el precio con `formatoPrecio` (`$45.50`). |
 | 24 | 19/10/2026 | 5 · CRUD | Para comprobar que el listado usa LIMIT/OFFSET se intentó capturar el SQL cambiando `sequelize.options.logging` en la prueba, pero Sequelize ya había copiado esa opción y no registró nada. | La prueba espía `Cliente.findAndCountAll` y verifica que recibe `{ limit: 10, offset: 20 }` y devuelve solo 10 filas. |
 | 25 | 19/10/2026 | 5 · CRUD | La prueba de "el técnico no ve botones" buscaba la palabra `Editar` en toda la página y fallaba porque otra prueba había creado un cliente llamado "Para Editar". | La prueba busca botones (`class="btn..."`), no texto suelto. |
+| 26 | 19/10/2026 | 6 · Tickets | La prueba de **5 creaciones simultáneas** falló con un *deadlock*: la primera versión de `FolioService` hacía `INSERT IGNORE` del contador y luego `SELECT ... FOR UPDATE`. El `INSERT IGNORE` sobre una fila existente toma un bloqueo compartido; las cinco transacciones lo obtenían y luego todas esperaban el exclusivo. | El contador se incrementa con `INSERT ... ON DUPLICATE KEY UPDATE ultimo = ultimo + 1`, que toma directamente el bloqueo exclusivo de la fila, y después se lee con `SELECT ... FOR UPDATE`. La prueba se repitió varias veces sin fallos: los folios salen distintos y consecutivos. |
+| 27 | 19/10/2026 | 6 · Tickets | Las fotos se guardaban en `public/uploads/tickets/`: cualquiera con la URL podía verlas sin sesión. | Se movieron a `storage/fotos-tickets/` (fuera de `public/`) y se sirven con `GET /fotos/:id`, que verifica permisos (`FotoService`). La prueba «no son archivos públicos» comprueba que la URL estática ya no existe. |
+| 28 | 19/10/2026 | 6 · Tickets | La cancelación del admin exige un motivo y la reasignación debe quedar en el historial, pero `ticket_historiales` no tenía dónde guardar texto. | Nueva migración con la columna `comentario` (SC-04). Las reasignaciones se registran con el mismo estado anterior y nuevo; el portal las omite. |
+| 29 | 19/10/2026 | 6 · Tickets | Si la validación del formulario fallaba **después** de que Multer guardó las fotos (ej. diagnóstico vacío), los archivos quedaban huérfanos en el disco. | Manejador de errores `limpiarFotosSiFalla` al final del router de tickets; además `TicketService.crear` las borra si la transacción falla. Lo verifican tres pruebas que cuentan los archivos de la carpeta. |
+| 30 | 19/10/2026 | 6 · Tickets | `fecha_estimada` (DATE) se mostraba **un día antes**: `new Date('2026-09-18')` se interpreta a medianoche UTC, que en El Salvador todavía es el día 17. | `formatoFecha` muestra las fechas `AAAA-MM-DD` sin convertirlas a Date; las fechas con hora se formatean en la zona `America/El_Salvador`. |
+| 31 | 19/10/2026 | 6 · Tickets | Al editar archivos con scripts de la terminal (Git Bash en Windows), algunas barras invertidas de expresiones regulares se perdieron (`\d` quedó como `d`), igual que en la incidencia 20. Afectó a `formatoFecha` y a una prueba de `FolioService`. | Se detectó al probar cada cambio; los archivos con expresiones regulares se editan directamente y no con scripts de la terminal. |
+| 32 | 19/10/2026 | 6 · Tickets | Una prueba de búsqueda fallaba porque el *placeholder* del buscador ("Ej. TT-2026-0040 o Ana") contiene un folio. | Las pruebas revisan las celdas de la tabla (`<td>TT-...</td>`), no el texto de toda la página. |
 
 ## Limitaciones conocidas
 
 Comportamientos o restricciones que se aceptan en esta fase.
+
+- **Esperando aprobación todavía no se alcanza desde la interfaz:** el ticket entra a ese estado al crear una cotización y sale con la respuesta del cliente; las dos cosas llegan en el paso 7. Mientras tanto, la máquina de estados las rechaza como transiciones manuales con un mensaje que lo explica.
+- **La fecha estimada solo se captura al crear el ticket;** todavía no hay pantalla para cambiarla después.
+- **El select de clientes del nuevo ticket carga todos los clientes** y los filtra en el navegador. Es rápido para el tamaño de un taller (cientos de clientes); con miles convendría una búsqueda en el servidor.
+- **Las fotos no se redimensionan:** se guardan tal como se suben (máximo `MAX_FOTO_MB` cada una) y la galería las muestra reducidas con CSS.
+- **Una base de un paso anterior** queda con `fecha_estimada` vacía en los tickets de ejemplo después de `npm run db:migrate`; `npm run db:reset` carga las fechas de ejemplo.
+- **Un folio reservado en una transacción que se revierte no se pierde:** el incremento del contador también se revierte, así que no quedan huecos. Si se borran tickets a mano en la base, sus números no se reutilizan.
 
 - **Versiones mínimas del motor:** los `CHECK` solo se aplican desde MySQL 8.0.16 o MariaDB 10.2.1 (en versiones anteriores se ignoran, aunque las validaciones del modelo siguen activas). La columna generada que garantiza RN-09 requiere MySQL 5.7 o MariaDB 10.2 en adelante.
 - **`database/tecnitrack.sql` se generó con MariaDB 10.4.** Se probó su importación en MariaDB; en MySQL 8 no se ha probado en esta máquina.
@@ -60,12 +74,15 @@ Comportamientos o restricciones que se aceptan en esta fase.
 
 Tareas identificadas que aún no se han realizado.
 
-- [ ] `FolioService` (RN-03): generar el siguiente correlativo del año dentro de una transacción, sin duplicados ante peticiones simultáneas.
-- [ ] `MaquinaEstadosTicket` y `TicketService` (RN-01, RN-02, RN-04), registrando cada cambio en `ticket_historiales`.
+- [x] `FolioService` (RN-03): correlativo del año dentro de la transacción, sin duplicados ante creaciones simultáneas (SC-05).
+- [x] `MaquinaEstadosTicket` y `TicketService` (RN-01, RN-02, RN-04), registrando cada cambio en `ticket_historiales`.
 - [ ] Probar la importación de `database/tecnitrack.sql` en MySQL 8.
 - [x] Autenticación (Paso 4): `POST /login` y `POST /logout`, middlewares de sesión y rol, y rate limit en el login y el portal. `iniciarSesion()` y `crearAgenteAutenticado()` ya se usan en `tests/integration/auth.test.js`.
 - [x] CRUD de usuarios (HU-09): crear y restablecer contraseña usan `AuthService.hashPassword` (que aplica `validarFortaleza`).
 - [ ] Usar `CatalogoService.listarActivos` en el formulario de cotización (paso 7, HU-03).
+- [ ] Paso 7: al crear una cotización, pasar el ticket a Esperando aprobación (`MaquinaEstadosTicket` con origen `cotizacion`) y, con la respuesta del cliente, a En reparación o Cancelado (origen `cliente`, historial con `usuario_id` NULL).
+- [ ] Pantalla de notificaciones del técnico (HU-10): las notificaciones de asignación y cancelación ya se guardan.
+- [ ] Permitir editar la fecha estimada de un ticket abierto.
 - [ ] Obligar al técnico a cambiar la contraseña temporal en su primer inicio de sesión (no lo pide la Fase 2; hoy el admin se la comunica).
-- [ ] Portal: mostrar historial y cotización, y aprobar o rechazar (HU-05, RN-05, RN-06).
+- [ ] Portal: mostrar la cotización y aprobar o rechazar (el historial y la fecha estimada ya se muestran) (HU-05, RN-05, RN-06).
 - [x] Versionar el prototipo y el Documento Maestro de la Fase 1: se movieron a `docs/fase1/prototipo/` y `docs/fase1/` para dejar limpia la raíz del proyecto.

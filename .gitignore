@@ -8,9 +8,9 @@ node_modules/
 # Cobertura de pruebas
 coverage/
 
-# Fotos subidas por los usuarios (solo se versiona la carpeta)
-public/uploads/*
-!public/uploads/.gitkeep
+# Fotos subidas por los usuarios: fuera de public/, se sirven con permiso (solo se versiona la carpeta)
+storage/*
+!storage/.gitkeep
 
 # Sistema / editor
 .DS_Store

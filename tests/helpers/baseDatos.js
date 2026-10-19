@@ -21,6 +21,7 @@ const TABLAS = [
   'catalogo_items',
   'usuarios',
   'sesiones',
+  'folio_contadores',
 ];
 
 /** Deja todas las tablas vacías (el esquema lo crea tests/setup/globalSetup.js). */

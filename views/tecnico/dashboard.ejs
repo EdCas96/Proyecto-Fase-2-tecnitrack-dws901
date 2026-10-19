@@ -1,10 +1,54 @@
-<%# Panel del técnico (provisional: la lista de sus tickets llega con TicketService) %>
+<%# Panel del técnico: "Mis tickets" abiertos (prototipo: tecnico/dashboard.html). Solo los suyos (RN-02) %>
 <div class="section-header">
   <%- include('../partials/breadcrumbs') %>
   <h1>Bienvenido, <%= usuario.nombre %></h1>
 </div>
 
-<section class="detail-card tarjeta-aviso">
-  <p>Aquí verás los tickets que tienes asignados.</p>
-  <p class="text-small">La lista de tickets se agrega en los siguientes pasos.</p>
+<section class="kpi-grid" aria-label="Mis tickets por estado">
+  <% ['Recibido', 'Diagnosticado', 'Esperando_aprobacion', 'En_reparacion', 'Esperando_repuesto', 'Listo'].forEach((estado) => { %>
+    <a class="kpi-card" href="/tickets?estado=<%= estado %>">
+      <span class="kpi-value"><%= porEstado[estado] || 0 %></span>
+      <span class="kpi-label"><%= etiquetaEstado(estado) %></span>
+    </a>
+  <% }) %>
 </section>
+
+<div class="page-actions">
+  <h2>Mis tickets abiertos</h2>
+  <a class="btn btn-primary" href="/tickets/nuevo">Nuevo ticket</a>
+</div>
+
+<div class="table-wrapper">
+  <table class="table-standard">
+    <thead>
+      <tr>
+        <th>Folio</th>
+        <th>Cliente</th>
+        <th>Equipo</th>
+        <th>Estado</th>
+        <th>Fecha de ingreso</th>
+        <th>Fecha estimada</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% paginacion.registros.forEach((ticket) => { %>
+        <tr>
+          <td><%= ticket.folio %></td>
+          <td><%= ticket.equipo.cliente.nombre %></td>
+          <td><%= descripcionEquipo(ticket.equipo) %></td>
+          <td><%- include('../partials/badgeEstado', { estado: ticket.estado }) %></td>
+          <td><%= formatoFecha(ticket.fecha_ingreso) %></td>
+          <td><%= formatoFecha(ticket.fecha_estimada) %></td>
+          <td><a class="btn btn-secondary" href="/tickets/<%= ticket.id %>">Ver detalle</a></td>
+        </tr>
+      <% }) %>
+      <% if (!paginacion.registros.length) { %>
+        <tr><td colspan="7" class="tabla-vacia">No tienes tickets abiertos asignados.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/paginacion', { rutaBase: '/tecnico' }) %>
+<p class="table-pagination"><a href="/tickets">Ver todos mis tickets (incluidos entregados y cancelados)</a></p>
