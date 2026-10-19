@@ -4,6 +4,7 @@
  * cancelación, reasignación, fotos protegidas y portal del cliente.
  */
 const fs = require('fs');
+const { Op } = require('sequelize');
 const path = require('path');
 const {
   Ticket, TicketHistorial, TicketFoto, Cliente, Notificacion, Cotizacion,
@@ -68,12 +69,15 @@ describe('Dashboards', () => {
   test('el admin ve los KPIs del prototipo y los tickets recientes', async () => {
     const respuesta = await admin.agente.get('/admin');
 
-    // Seeders: 6 abiertos, 2 esperando aprobación (una vencida, RN-05), 1 listo; el entregado es de septiembre
+    // Seeders: 6 abiertos, 2 esperando aprobación (una vencida, RN-05), 1 listo
     expect(respuesta.text).toMatch(/kpi-value">6<\/span>\s*<span class="kpi-label">Tickets abiertos/);
     expect(respuesta.text).toMatch(/kpi-value">2<\/span>\s*<span class="kpi-label">Esperando aprobación/);
     expect(respuesta.text).toMatch(/kpi-value">1<\/span>\s*<span class="kpi-label">Cotizaciones pendientes de respuesta/);
     expect(respuesta.text).toMatch(/kpi-value">1<\/span>\s*<span class="kpi-label">Listos para entregar/);
-    expect(respuesta.text).toMatch(/kpi-value">0<\/span>\s*<span class="kpi-label">Entregados este mes/);
+    // Las entregas de TT-2026-0044 y 0045 se siembran "hace unas horas": se cuentan según el inicio del mes actual
+    const inicioMes = new Date(`${new Intl.DateTimeFormat('en-CA', { timeZone: 'America/El_Salvador' }).format(new Date()).slice(0, 7)}-01T00:00:00-06:00`);
+    const entregadosMes = await Ticket.count({ where: { estado: 'Entregado', fecha_entrega: { [Op.gte]: inicioMes } } });
+    expect(respuesta.text).toMatch(new RegExp(`kpi-value">${entregadosMes}</span>\\s*<span class="kpi-label">Entregados este mes`));
     expect(respuesta.text).toContain('TT-2026-0042');
   });
 
@@ -97,7 +101,7 @@ describe('Crear tickets (HU-02, RF-03, RN-03)', () => {
     ], false);
 
     expect(respuesta.status).toBe(303);
-    const ticket = await Ticket.findOne({ where: { folio: 'TT-2026-0044' }, include: ['historial', 'fotos'] });
+    const ticket = await Ticket.findOne({ where: { folio: 'TT-2026-0046' }, include: ['historial', 'fotos'] });
     expect(respuesta.headers.location).toBe(`/tickets/${ticket.id}`);
     expect(ticket).toMatchObject({ estado: 'Recibido', tecnico_id: USUARIOS.luis.id, equipo_id: 3, fecha_estimada: MANANA });
     expect(ticket.historial).toHaveLength(1);
@@ -107,7 +111,7 @@ describe('Crear tickets (HU-02, RF-03, RN-03)', () => {
     ticket.fotos.forEach((foto) => expect(fotosEnDisco()).toContain(foto.url_foto));
 
     const detalle = await luis.agente.get(respuesta.headers.location);
-    expect(detalle.text).toContain('Ticket TT-2026-0044 creado en estado «Recibido».');
+    expect(detalle.text).toContain('Ticket TT-2026-0046 creado en estado «Recibido».');
   });
 
   test('el admin registra cliente y equipo nuevos en el mismo formulario y asigna un técnico (que recibe aviso)', async () => {
@@ -306,7 +310,7 @@ describe('Listado y detalle (RN-02, RF-05)', () => {
 
 describe('Flujo de estados (HU-06, RN-01, RN-04)', () => {
   test('Recibido -> Diagnosticado registra el historial con el usuario', async () => {
-    const ticket = await Ticket.findOne({ where: { folio: 'TT-2026-0044' } });
+    const ticket = await Ticket.findOne({ where: { folio: 'TT-2026-0046' } });
 
     const respuesta = await cambiarEstado(luis, ticket.id, { estado: 'Diagnosticado' });
 
@@ -466,7 +470,7 @@ describe('Fotos protegidas', () => {
   let foto;
 
   beforeAll(async () => {
-    const ticket = await Ticket.findOne({ where: { folio: 'TT-2026-0044' } });
+    const ticket = await Ticket.findOne({ where: { folio: 'TT-2026-0046' } });
     foto = await TicketFoto.findOne({ where: { ticket_id: ticket.id } });
   });
 
