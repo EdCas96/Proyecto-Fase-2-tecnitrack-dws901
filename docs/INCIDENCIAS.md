@@ -2,7 +2,7 @@
 
 Registro del Sprint II (Fase 2): los problemas que aparecieron y cómo se resolvieron, lo que se acepta como limitación en esta entrega y lo que queda para el siguiente sprint.
 
-1. [Incidencias resueltas](#1-incidencias-resueltas) (42)
+1. [Incidencias resueltas](#1-incidencias-resueltas) (43)
 2. [Limitaciones conocidas](#2-limitaciones-conocidas)
 3. [Tareas pendientes para el siguiente sprint](#3-tareas-pendientes-para-el-siguiente-sprint)
 
@@ -54,6 +54,7 @@ Problemas encontrados durante el desarrollo, en orden, con su resolución. Varia
 | 40 | 21/10/2026 | 8 · Cierre | `npm audit` reportó 26 vulnerabilidades (4 altas). Altas: `mysql2` 3.10.2 (fuga de credenciales con `mysql_clear_password` y descompresión sin límite), incluido como copia propia de `express-mysql-session`; y `braces` / `chokidar` / `nodemon` (dev). | `overrides` en `package.json` hace que `express-mysql-session` use el mismo `mysql2` 3.24.6 del proyecto (misma versión mayor). `nodemon` se reemplazó por `node --watch` (incluido en Node 20+), porque `braces` 3.0.3 ya es la última versión y no tiene corrección. Resultado: **0 altas y 0 críticas**; se repitieron todas las pruebas. |
 | 41 | 21/10/2026 | 8 · Cierre | ESLint marcó un carácter BOM literal dentro de `ReporteService` (invisible en el editor), dos variables sin usar en una prueba y un comentario `eslint-disable` innecesario. | El BOM se escribe con `String.fromCharCode(0xfeff)`; se quitaron las variables y el comentario. `npm run lint` queda sin errores ni avisos. |
 | 42 | 21/10/2026 | 8 · Cierre | Revisión final: `EnConstruccionController` y su vista ya no los usaba ninguna ruta; `CotizacionService.diasDesdeEnvio` no se usaba; el controlador de tickets decidía si una cotización se podía editar; la portada pública mostraba el entorno del servidor ("development") y el texto de prueba "TecniTrack funcionando". | Se eliminaron el código sin uso; la regla pasó a `CotizacionService.puedeEditar`; la portada muestra la descripción del sistema. No se encontraron `console.log` de depuración, TODOs, secretos rastreados ni rutas sin proteger (cada router declara `requireAuth` y su rol; las públicas son login y portal). |
+| 43 | 21/10/2026 | 8 · Cierre | **Verificación de reproducibilidad:** se clonó el repositorio en una carpeta temporal y se siguió el README paso a paso con bases distintas (`tecnitrack_repro` y `tecnitrack_repro_test`). Instalación, migraciones (15), seeders (6), arranque y login funcionaron, pero una prueba fallaba porque exigía que la base de pruebas se llamara exactamente `tecnitrack_test`. | La prueba compara con el `DB_NAME` de `.env.test` y verifica que termine en `_test`. Repetido en el clon: 533 pruebas pasan, `npm run lint` sin errores y la misma cobertura. Después se borraron la carpeta y las bases temporales. |
 
 ## 2. Limitaciones conocidas
 
