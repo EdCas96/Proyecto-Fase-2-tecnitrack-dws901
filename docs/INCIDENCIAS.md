@@ -20,6 +20,11 @@ Problemas encontrados durante el desarrollo y cómo se resolvieron.
 | 12 | 18/10/2026 | 3 · Middlewares | Por defecto, express-mysql-session crea su propia tabla `sessions` al arrancar, fuera de las migraciones. | La tabla `sesiones` se crea con la migración `20261018000011-crear-sesiones.js` y el almacén usa `createDatabaseTable: false`. |
 | 13 | 18/10/2026 | 3 · Middlewares | `npm run db:sql` exportaría las sesiones activas de quien genera el script (datos locales y privados). | `generar-sql.js` omite los INSERT de `sesiones`; se verificó que el script sale idéntico con y sin sesiones activas. |
 | 14 | 18/10/2026 | 3 · Middlewares | Multer usa el mismo código `LIMIT_UNEXPECTED_FILE` para "más fotos que el máximo" y para "campo de archivo desconocido". | `upload.js` distingue los dos casos por el nombre del campo y da un mensaje distinto para cada uno. |
+| 15 | 18/10/2026 | 4 · Autenticación | El rate limit cuenta solo intentos **fallidos** (`skipSuccessfulRequests`, que mira el código de respuesta). Si el login fallido redirigiera con flash (303), ningún intento contaría como fallo y el límite nunca se activaría. | Un login (o una consulta del portal) fallido vuelve a mostrar el formulario con **401** y el mensaje genérico. La prueba «tras 5 logins fallidos, el sexto responde 429» lo verifica. |
+| 16 | 18/10/2026 | 4 · Autenticación | El helper de pruebas leía el token CSRF de `GET /`, pero con sesión abierta `/` y `/login` ahora redirigen al panel (`redirectIfAuth`) y la respuesta no trae la etiqueta `<meta name="csrf-token">`. | `obtenerTokenCsrf()` usa por defecto `/portal`, que siempre se renderiza, con o sin sesión. |
+| 17 | 18/10/2026 | 4 · Autenticación | Los routers montados en el Paso 3 eran públicos y sus pruebas esperaban 200; al protegerlos, las pruebas antiguas de migas, menú y method-override fallarían o probarían otra cosa (el 401 en lugar del middleware). | Las pruebas sin sesión verifican ahora la redirección a `/login`; las de menú y migas pasaron a `auth.test.js` con sesión de admin, y la de method-override usa una ruta pública inexistente. |
+| 18 | 18/10/2026 | 4 · Autenticación | Al cerrar sesión con flash no se puede dejar el mensaje "Cerraste sesión": `session.destroy()` elimina la sesión donde se guardaría. | El logout redirige a `/login?sesion=cerrada` y el login muestra el mensaje a partir de ese parámetro. |
+| 19 | 18/10/2026 | 4 · Autenticación | Si el correo no existe, no hay hash con el cual comparar y la respuesta sería más rápida que con un correo real (permitiría adivinar qué correos están registrados midiendo el tiempo). | `AuthService.login` compara contra un hash señuelo cuando el correo no existe, así que `bcrypt.compare` siempre se ejecuta. |
 
 ## Limitaciones conocidas
 
@@ -29,7 +34,12 @@ Comportamientos o restricciones que se aceptan en esta fase.
 - **`database/tecnitrack.sql` se generó con MariaDB 10.4.** Se probó su importación en MariaDB; en MySQL 8 no se ha probado en esta máquina.
 - **Datos de ejemplo fieles al prototipo:** la laptop Dell (DL-88291) tiene a la vez el ticket TT-2026-0039 en estado Listo y el TT-2026-0042 en Recibido, tal como aparece en las pantallas de la Fase 1. Ninguna regla de negocio lo impide.
 - **La cotización Pendiente de ejemplo (TT-2026-0040) es del 12/09/2026,** así que siempre superará `DIAS_LIMITE_COTIZACION` y servirá para demostrar RN-05.
-- **Las rutas de los módulos son públicas por ahora:** solo muestran una página "en construcción". El control de acceso por sesión y rol llega en el Paso 4.
+- **Los módulos (salvo login, portal y paneles) siguen mostrando "en construcción",** pero ya están protegidos por sesión y rol según la matriz de permisos.
+- **El filtro "el técnico solo ve sus tickets" (RN-02) aún no se aplica a nivel de registro:** hoy el técnico entra a `/tickets` porque su rol lo permite; el filtro por `tecnico_id` se agrega con `TicketService`.
+- **El rate limit guarda los contadores en memoria** (por proceso). Si el servidor se reinicia, se vacían; con varias instancias detrás de un balanceador habría que usar un almacén compartido. En producción, `trust proxy` permite identificar la IP real del cliente.
+- **El personal y el portal comparten la cookie de sesión:** si en el mismo navegador alguien con sesión de técnico entra al portal, su sesión de técnico se cierra (la sesión se regenera con solo `clienteTicketId`), y viceversa.
+- **`requireAuth` consulta la base en cada petición** para revisar que el usuario siga activo (RN-07). Es una consulta por llave primaria, barata para el tamaño del taller.
+- **Tras cerrar sesión, la página de login vuelve a crear una sesión anónima** (necesaria para el token CSRF del formulario). No contiene datos del usuario anterior.
 - **Cada visitante que abre una página obtiene una sesión en MySQL,** aunque no inicie sesión. Es necesario porque el token CSRF se liga al id de sesión. Las sesiones vencidas (8 h) se borran automáticamente cada 15 minutos; los estáticos no crean sesión.
 - **`connect-flash` 0.1.1** (última versión, de 2013) usa `util.isArray`, y Node 24 muestra un aviso de deprecación (DEP0044) al ejecutar las pruebas. No afecta el funcionamiento; si una versión futura de Node elimina esa función, habrá que reemplazar la librería por un middleware propio de unas pocas líneas.
 - **El almacén de sesiones abre su propio pool de conexiones** (mysql2), separado del de Sequelize. En las pruebas, `cerrarConexiones()` cierra los dos.
@@ -42,5 +52,7 @@ Tareas identificadas que aún no se han realizado.
 - [ ] `FolioService` (RN-03): generar el siguiente correlativo del año dentro de una transacción, sin duplicados ante peticiones simultáneas.
 - [ ] `MaquinaEstadosTicket` y `TicketService` (RN-01, RN-02, RN-04), registrando cada cambio en `ticket_historiales`.
 - [ ] Probar la importación de `database/tecnitrack.sql` en MySQL 8.
-- [ ] Autenticación (Paso 4): `POST /auth/login` y `POST /auth/logout`, middlewares de sesión y rol, y rate limit en el login y el portal. Entonces podrán usarse `iniciarSesion()` y `crearAgenteAutenticado()` de `tests/helpers/agente.js`, que ya están escritos pero todavía no tienen contra qué probarse.
+- [x] Autenticación (Paso 4): `POST /login` y `POST /logout`, middlewares de sesión y rol, y rate limit en el login y el portal. `iniciarSesion()` y `crearAgenteAutenticado()` ya se usan en `tests/integration/auth.test.js`.
+- [ ] CRUD de usuarios (HU-09): al crear o cambiar la contraseña de un técnico usar `AuthService.hashPassword` (que aplica `validarFortaleza`).
+- [ ] Portal: mostrar historial y cotización, y aprobar o rechazar (HU-05, RN-05, RN-06).
 - [x] Versionar el prototipo y el Documento Maestro de la Fase 1: se movieron a `docs/fase1/prototipo/` y `docs/fase1/` para dejar limpia la raíz del proyecto.
