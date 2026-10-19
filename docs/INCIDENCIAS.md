@@ -44,10 +44,20 @@ Problemas encontrados durante el desarrollo y cómo se resolvieron.
 | 36 | 20/10/2026 | 7 · Cotizaciones | La primera versión de `editar` pedía `FOR UPDATE` sobre una consulta con `include` del ticket usando la opción `lock.of`, que solo existe en PostgreSQL. | Se bloquea solo la fila de la cotización y el ticket se lee aparte. |
 | 37 | 20/10/2026 | 7 · Cotizaciones | `CotizacionService` necesita `TicketService` (permisos) y el listado de tickets necesitaba una subconsulta de cotizaciones: definirla en `CotizacionService` creaba una dependencia circular entre los dos módulos. | La subconsulta "Pendiente desde" (RN-05) vive en `TicketService`; el cálculo de vencimiento es una función pura en `utils/cotizaciones.js` que usan ambos y las vistas. |
 | 38 | 20/10/2026 | 7 · Cotizaciones | Para la demo hacía falta una cotización Pendiente que **no** estuviera vencida, pero los seeders usan fechas fijas de septiembre y cualquier Pendiente aparece como "Pendiente de respuesta". | El ticket nuevo TT-2026-0043 se siembra con fechas relativas al momento de ejecutar el seeder (cotización enviada "hace 2 horas"). Las pruebas que dependían de la cantidad de tickets, clientes y del primer folio libre se ajustaron. |
+| 39 | 21/10/2026 | 8 · Cierre | La demo de reportes no tenía datos: solo había un ticket Entregado (septiembre) y el reporte abre por defecto en el mes actual. | Seeder `20261021000106-tickets-entregados.js` con siete entregas de agosto y septiembre (fechas fijas, las usan las pruebas) y dos entregadas "hace unas horas" (fechas relativas). La prueba del KPI "Entregados este mes" calcula el valor esperado en lugar de fijarlo. |
+| 40 | 21/10/2026 | 8 · Cierre | `npm audit` reportó 26 vulnerabilidades (4 altas). Altas: `mysql2` 3.10.2 (fuga de credenciales con `mysql_clear_password` y descompresión sin límite), incluido como copia propia de `express-mysql-session`; y `braces` / `chokidar` / `nodemon` (dev). | `overrides` en `package.json` hace que `express-mysql-session` use el mismo `mysql2` 3.24.6 del proyecto (misma versión mayor). `nodemon` se reemplazó por `node --watch` (incluido en Node 20+), porque `braces` 3.0.3 ya es la última versión y no tiene corrección. Resultado: **0 altas y 0 críticas**; se repitieron todas las pruebas. |
+| 41 | 21/10/2026 | 8 · Cierre | ESLint marcó un carácter BOM literal dentro de `ReporteService` (invisible en el editor), dos variables sin usar en una prueba y un comentario `eslint-disable` innecesario. | El BOM se escribe con `String.fromCharCode(0xfeff)`; se quitaron las variables y el comentario. `npm run lint` queda sin errores ni avisos. |
+| 42 | 21/10/2026 | 8 · Cierre | Revisión final: `EnConstruccionController` y su vista ya no los usaba ninguna ruta; `CotizacionService.diasDesdeEnvio` no se usaba; el controlador de tickets decidía si una cotización se podía editar; la portada pública mostraba el entorno del servidor ("development") y el texto de prueba "TecniTrack funcionando". | Se eliminaron el código sin uso; la regla pasó a `CotizacionService.puedeEditar`; la portada muestra la descripción del sistema. No se encontraron `console.log` de depuración, TODOs, secretos rastreados ni rutas sin proteger (cada router declara `requireAuth` y su rol; las públicas son login y portal). |
 
 ## Limitaciones conocidas
 
 Comportamientos o restricciones que se aceptan en esta fase.
+
+- **Vulnerabilidades moderadas que quedan (21, ninguna alta ni crítica):**
+  - *Cadena de Jest* (`js-yaml`, `argparse`, `babel-plugin-istanbul`…): solo se usan para las pruebas, no llegan al servidor. `npm audit` propone bajar a Jest 25, que no es compatible con el proyecto.
+  - *`uuid` < 11.1.1 dentro de `sequelize` 6:* la falla solo afecta a `v3/v5/v6` cuando se les pasa un buffer, y Sequelize usa `v1/v4` sin buffer. La "corrección" propuesta es instalar Sequelize 3, una versión de hace años e incompatible. Se revisará cuando Sequelize publique una versión con `uuid` actualizado.
+- **El reporte por técnico solo cuenta tickets con técnico asignado** y mide de la primera entrada «Recibido» a la última «Entregado» del historial; los tickets entregados sin técnico no aparecen en esa tabla (sí en el resumen por estado).
+- **"Servicios más solicitados" usa la fecha de la cotización** (no la de aprobación, que no se guarda aparte).
 
 - **Rechazar una cotización adicional cancela el ticket completo,** igual que rechazar la primera (RN-06 tal como está escrita). Si el cliente solo rechaza el trabajo extra, hoy el admin tendría que crear otro ticket; una mejora sería volver a «En reparación» con la cotización anterior aprobada.
 - **Al editar una cotización Pendiente se toman los precios del catálogo de ese momento,** no los de la versión original.
@@ -94,7 +104,7 @@ Tareas identificadas que aún no se han realizado.
 - [x] Paso 7: cotizar pasa el ticket a Esperando aprobación y la respuesta del cliente lo lleva a En reparación o Cancelado (historial con `usuario_id` NULL).
 - [x] Pantalla de notificaciones (HU-10) con contador en la barra y alerta en el dashboard del técnico.
 - [ ] Permitir editar la fecha estimada de un ticket abierto.
-- [ ] Reportes (HU-08): tickets por técnico y tiempo promedio Recibido → Entregado (el historial ya tiene los datos).
+- [x] Reportes (HU-08): tickets por técnico, tiempo promedio, servicios más solicitados, resumen por estado y CSV.
 - [ ] Obligar al técnico a cambiar la contraseña temporal en su primer inicio de sesión (no lo pide la Fase 2; hoy el admin se la comunica).
 - [x] Portal: mostrar la cotización y aprobar o rechazar (HU-05).
 - [x] Versionar el prototipo y el Documento Maestro de la Fase 1: se movieron a `docs/fase1/prototipo/` y `docs/fase1/` para dejar limpia la raíz del proyecto.
