@@ -12,7 +12,7 @@ describe('Servidor', () => {
     const respuesta = await request(app).get('/');
 
     expect(respuesta.status).toBe(200);
-    expect(respuesta.text).toContain('TecniTrack funcionando');
+    expect(respuesta.text).toContain('Sistema de gestión de servicio técnico de computadoras');
   });
 
   test('aplica las cabeceras de seguridad de helmet', async () => {

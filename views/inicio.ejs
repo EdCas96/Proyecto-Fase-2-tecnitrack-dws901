@@ -1,10 +1,10 @@
 <main class="pantalla-centrada">
   <div class="role-select-card">
     <p class="role-select-logo">TecniTrack</p>
-    <p class="role-select-subtitle">TecniTrack funcionando</p>
-    <p class="text-small">Entorno: <strong><%= entorno %></strong></p>
+    <p class="role-select-subtitle">Sistema de gestión de servicio técnico de computadoras</p>
 
-    <%# Muestra de los colores semánticos de estado %>
+    <%# Estados por los que pasa un ticket, con sus colores semánticos %>
+    <p class="text-small">Así avanza el servicio de tu equipo:</p>
     <div class="leyenda-estados">
       <% estados.forEach((estado) => { %>
         <%- include('partials/badgeEstado', { estado }) %>
