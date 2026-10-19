@@ -4,28 +4,29 @@
  * | Prefijo          | Archivo            | Quién accede                    |
  * |------------------|--------------------|---------------------------------|
  * | /                | (este archivo)     | público (inicio)                |
- * | /auth            | auth.js            | público (login / logout)        |
+ * | / (login/logout) | auth.js            | público (/login, /logout)       |
  * | /portal          | cliente.js         | público (cliente: folio + tel.) |
  * | /admin           | admin.js           | admin                           |
- * | /tecnico         | tecnico.js         | técnico                         |
+ * | /tecnico         | tecnico.js         | técnico (y admin)               |
  * | /clientes        | clientes.js        | admin (técnico: lectura)        |
  * | /equipos         | equipos.js         | admin (técnico: lectura)        |
  * | /tickets         | tickets.js         | admin y técnico (RN-02)         |
- * | /cotizaciones    | cotizaciones.js    | técnico (admin: lectura)        |
+ * | /cotizaciones    | cotizaciones.js    | admin y técnico                 |
  * | /catalogo        | catalogo.js        | admin (técnico: lectura)        |
  * | /usuarios        | usuarios.js        | admin                           |
  * | /reportes        | reportes.js        | admin                           |
- * | /notificaciones  | notificaciones.js  | técnico                         |
+ * | /notificaciones  | notificaciones.js  | admin y técnico                 |
  *
- * El control de acceso por rol se agrega en cada router con los middlewares
- * de autenticación del Paso 4.
+ * El control de acceso lo pone cada router con middlewares/auth.js
+ * (requireAuth, checkRole, soloLecturaPara, requireCliente).
  */
 const { Router } = require('express');
 const asyncHandler = require('../utils/asyncHandler');
+const { redirectIfAuth } = require('../middlewares/auth');
 const InicioController = require('../controllers/inicioController');
 
 const MODULOS = {
-  '/auth': require('./auth'),
+  '/': require('./auth'),
   '/portal': require('./cliente'),
   '/admin': require('./admin'),
   '/tecnico': require('./tecnico'),
@@ -41,7 +42,8 @@ const MODULOS = {
 
 const router = Router();
 
-router.get('/', asyncHandler(InicioController.mostrar));
+// Con sesión abierta, la página de inicio lleva directo al panel del rol
+router.get('/', redirectIfAuth, asyncHandler(InicioController.mostrar));
 
 Object.entries(MODULOS).forEach(([prefijo, modulo]) => router.use(prefijo, modulo));
 
