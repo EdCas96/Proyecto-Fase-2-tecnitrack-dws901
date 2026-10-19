@@ -1,7 +1,12 @@
 /**
  * Utilidades de base de datos para las pruebas de integración.
  */
+const path = require('path');
+const fs = require('fs');
+const { Sequelize } = require('sequelize');
 const { sequelize } = require('../../models');
+
+const DIRECTORIO_SEEDERS = path.resolve(__dirname, '..', '..', 'seeders');
 
 // De hijas a padres, para respetar las llaves foráneas sin desactivarlas
 const TABLAS = [
@@ -26,6 +31,19 @@ async function limpiarBaseDatos() {
 }
 
 /**
+ * Vacía la base y carga los datos de los seeders (los mismos de npm run db:seed):
+ * usuarios de prueba, clientes, equipos, catálogo, tickets y cotizaciones.
+ */
+async function sembrarDatos() {
+  await limpiarBaseDatos();
+  const queryInterface = sequelize.getQueryInterface();
+  const archivos = fs.readdirSync(DIRECTORIO_SEEDERS).filter((archivo) => archivo.endsWith('.js')).sort();
+  for (const archivo of archivos) {
+    await require(path.join(DIRECTORIO_SEEDERS, archivo)).up(queryInterface, Sequelize);
+  }
+}
+
+/**
  * Cierra las conexiones abiertas para que Jest termine: la de Sequelize y,
  * si el archivo de pruebas cargó app.js, el pool del almacén de sesiones.
  */
@@ -37,4 +55,4 @@ async function cerrarConexiones() {
   }
 }
 
-module.exports = { limpiarBaseDatos, cerrarConexiones };
+module.exports = { limpiarBaseDatos, sembrarDatos, cerrarConexiones };

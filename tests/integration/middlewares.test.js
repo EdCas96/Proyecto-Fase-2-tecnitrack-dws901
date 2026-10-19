@@ -123,12 +123,12 @@ describe('Otros middlewares de app.js', () => {
     const token = await obtenerTokenCsrf(agente);
 
     const respuesta = await agente
-      .post('/clientes/1')
+      .post('/no-existe/1')
       .set('Accept', 'application/json')
       .type('form')
       .send({ _csrf: token, _method: 'DELETE' });
 
-    expect(respuesta.body.ruta).toBe('DELETE /clientes/1');
+    expect(respuesta.body.ruta).toBe('DELETE /no-existe/1');
   });
 
   test('method-override no permite convertir un POST en GET (evitaría la verificación CSRF)', async () => {
@@ -152,26 +152,30 @@ describe('Otros middlewares de app.js', () => {
 });
 
 describe('Ruteo modular y vistas base', () => {
-  test.each(PREFIJOS.map((prefijo) => [prefijo]))('el router de %s está montado', async (prefijo) => {
-    const ruta = prefijo === '/auth' ? '/auth/login' : prefijo;
+  // Los routers protegidos se prueban con sesión en tests/integration/auth.test.js
+  const PUBLICAS = { '/': '/login', '/portal': '/portal' };
+
+  test.each(Object.entries(PUBLICAS))('el router público de %s responde (%s)', async (prefijo, ruta) => {
     const respuesta = await request(app).get(ruta);
 
     expect(respuesta.status).toBe(200);
-    expect(respuesta.text).toContain('en construcción');
   });
 
-  test('las migas de pan enlazan a las páginas anteriores y marcan la actual', async () => {
-    const respuesta = await request(app).get('/clientes');
+  test.each(PREFIJOS.filter((prefijo) => !PUBLICAS[prefijo]).map((prefijo) => [prefijo]))(
+    'el router de %s está montado y pide iniciar sesión',
+    async (prefijo) => {
+      const respuesta = await request(app).get(prefijo);
 
-    expect(respuesta.text).toContain('<a href="/admin">Administrador</a>');
-    expect(respuesta.text).toContain('<span aria-current="page">Clientes</span>');
-  });
+      expect(respuesta.status).toBe(303);
+      expect(respuesta.headers.location).toBe('/login');
+    },
+  );
 
   test('sin sesión, la barra muestra los accesos públicos y no el submenú', async () => {
     const respuesta = await request(app).get('/');
 
     expect(respuesta.text).toContain('href="/portal"');
-    expect(respuesta.text).toContain('href="/auth/login"');
+    expect(respuesta.text).toContain('href="/login"');
     expect(respuesta.text).not.toContain('class="subnav"');
   });
 

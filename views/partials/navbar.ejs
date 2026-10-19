@@ -5,15 +5,17 @@
   <% if (usuario) { %>
     <div class="navbar-user">
       <span class="navbar-role"><%= etiquetaRol(usuario) %></span>
-      <form class="navbar-logout" method="post" action="/auth/logout">
+      <form class="navbar-logout" method="post" action="/logout">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" class="navbar-link">Cerrar sesión</button>
       </form>
     </div>
+  <% } else if (locals.clienteEnPortal) { %>
+    <span class="navbar-role">Cliente</span>
   <% } else { %>
     <nav class="navbar-links" aria-label="Accesos públicos">
       <a class="navbar-link" href="/portal">Consultar mi ticket</a>
-      <a class="navbar-link" href="/auth/login">Iniciar sesión</a>
+      <a class="navbar-link" href="/login">Iniciar sesión</a>
     </nav>
   <% } %>
 </header>

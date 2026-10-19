@@ -5,6 +5,9 @@
 
 const ROLES = Object.freeze(['admin', 'tecnico']);
 
+/** Página a la que entra cada rol al iniciar sesión. */
+const INICIO_POR_ROL = Object.freeze({ admin: '/admin', tecnico: '/tecnico' });
+
 /** Estados del ticket en el orden del flujo (RN-04). */
 const ESTADOS_TICKET = Object.freeze([
   'Recibido',
@@ -57,6 +60,7 @@ const REGEX_TELEFONO = /^\+?[0-9\s()-]{8,20}$/;
 
 module.exports = {
   ROLES,
+  INICIO_POR_ROL,
   ESTADOS_TICKET,
   ESTADOS_COTIZACION,
   COLOR_ESTADO,

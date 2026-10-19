@@ -14,4 +14,7 @@ module.exports = {
   secretoSesion: process.env.SESSION_SECRET,
   diasLimiteCotizacion: Number(process.env.DIAS_LIMITE_COTIZACION) || 7,
   maxFotoMb: Number(process.env.MAX_FOTO_MB) || 5,
+  // Rate limit del login y del portal: intentos fallidos por IP en la ventana (0 lo desactiva)
+  limiteIntentos: process.env.LIMITE_INTENTOS === undefined ? 5 : Number(process.env.LIMITE_INTENTOS),
+  ventanaIntentosMin: Number(process.env.VENTANA_INTENTOS_MIN) || 15,
 };

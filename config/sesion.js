@@ -5,6 +5,7 @@
 const session = require('express-session');
 const MySQLStoreFactory = require('express-mysql-session');
 const { entorno, secretoSesion } = require('./env');
+const { COOKIE_SESION } = require('../utils/sesion');
 
 if (!secretoSesion) {
   throw new Error('Falta SESSION_SECRET en el archivo .env (ver .env.example).');
@@ -29,7 +30,7 @@ const almacenSesiones = new MySQLStore({
 });
 
 const sesion = session({
-  name: 'tecnitrack.sid',
+  name: COOKIE_SESION,
   secret: secretoSesion,
   store: almacenSesiones,
   resave: false,

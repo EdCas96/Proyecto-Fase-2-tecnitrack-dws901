@@ -861,3 +861,21 @@ a {
     flex-wrap: wrap;
   }
 }
+
+/* --------------------------------------------------------------------------
+   20. LOGIN Y PORTAL
+   Formularios dentro de la tarjeta centrada
+   -------------------------------------------------------------------------- */
+.form-tarjeta {
+  text-align: left;
+}
+
+.form-group input[aria-invalid="true"] {
+  border-color: var(--color-rojo);
+}
+
+.acciones-portal {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 1.25rem;
+}

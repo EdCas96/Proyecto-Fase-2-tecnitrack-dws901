@@ -2,7 +2,7 @@
 
 Relaciona cada historia de usuario con su requerimiento, las reglas de negocio que aplica, la ruta, el código que la implementa y la prueba que la verifica. Se actualiza en cada paso.
 
-Abreviatura de pruebas: `modelos`, `servidor`, `middlewares`, `upload`, `validar` y `erroresSequelize` = `tests/integration/<nombre>.test.js`; `unit/<nombre>` = `tests/unit/<nombre>.test.js`.
+Abreviatura de pruebas: `auth`, `modelos`, `servidor`, `middlewares`, `upload`, `validar` y `erroresSequelize` = `tests/integration/<nombre>.test.js`; `unit/<nombre>` = `tests/unit/<nombre>.test.js`.
 
 En la columna **Ruta**, *(provisional)* indica que el prefijo ya está montado en `routes/index.js` y responde una página "en construcción"; las rutas definitivas se agregan al implementar cada historia.
 
@@ -13,12 +13,12 @@ En la columna **Ruta**, *(provisional)* indica que el prefijo ya está montado e
 | HU-01 Admin registra clientes y equipos | RF-01, RF-02 | — | `/clientes`, `/equipos` (provisional) | *pendiente* (modelos `Cliente`, `Equipo` listos) | modelos › Registros válidos; Integridad referencial |
 | HU-02 Técnico crea ticket con diagnóstico y fotos | RF-03 | RN-03 | `/tickets` (provisional) | *pendiente* (`FolioService`, `TicketService`) | modelos › Índices únicos (folio duplicado); Validaciones (formato de folio); upload › archivos aceptados y rechazados (`middlewares/upload.js`) |
 | HU-03 Técnico genera cotización | RF-06 | RN-06, RN-09 | `/cotizaciones` (provisional) | *pendiente* (`CotizacionService`) | modelos › Restricciones de BD (RN-09) |
-| HU-04 Cliente consulta su ticket con folio + teléfono | RF-05 | RN-05 | `/portal` (provisional) | *pendiente* | — |
+| HU-04 Cliente consulta su ticket con folio + teléfono | RF-05 | RN-05 (al mostrar la cotización, pendiente) | `GET /portal`, `POST /portal` (rate limit), `GET /portal/ticket` (`requireCliente`), `POST /portal/salir` | `PortalController`; `AuthService.verificarAccesoCliente`, `AuthService.normalizarTelefono`; `PortalService.obtenerResumenTicket`; `middlewares/auth.js` › `requireCliente` | auth › Portal del cliente (HU-04); auth › Rate limit (portal); unit/AuthService › normalizarTelefono |
 | HU-05 Cliente aprueba/rechaza cotización | RF-07 | RN-01, RN-06 | `/portal` (provisional) | *pendiente* (`CotizacionService`) | — |
 | HU-06 Técnico actualiza estado sin saltar el flujo | RF-04 | RN-01, RN-02, RN-04 | `/tickets` (provisional) | *pendiente* (`MaquinaEstadosTicket`, `TicketService`) | modelos › Restricciones de BD (ENUM de estado) |
 | HU-07 Admin gestiona catálogo | RF-08 | — | `/catalogo` (provisional) | *pendiente* (modelo `CatalogoItem` listo) | modelos › Validaciones (precio negativo); Integridad referencial (ítem usado) |
 | HU-08 Admin ve reporte por técnico y tiempo promedio | RF-11 | — | `/reportes` (provisional) | *pendiente* (`ReporteService`) | — |
-| HU-09 Admin gestiona técnicos | RF-09, RF-10 | RN-07, RN-08 | `/usuarios`, `/auth` (provisional) | *pendiente* (`AuthService`; modelo `Usuario` listo) | modelos › RN-08: password_hash nunca aparece |
+| HU-09 Admin gestiona técnicos | RF-09, RF-10 | RN-07, RN-08 | `GET/POST /login`, `POST /logout`; `/usuarios` (CRUD pendiente) | `AuthController`; `AuthService.login`, `hashPassword`, `validarFortaleza`, `obtenerUsuarioActivo`; `middlewares/auth.js` › `requireAuth` | auth › Inicio de sesión; Cierre de sesión; Revalidación de la sesión (RN-07); unit/AuthService › validarFortaleza; modelos › RN-08 |
 | HU-10 Técnico recibe notificación cuando el cliente responde | RF-12 | RN-06 | `/notificaciones` (provisional) | *pendiente* (modelo `Notificacion` listo) | modelos › Registros válidos (notificación no leída) |
 
 ## 2. Requerimientos funcionales ↔ tablas
@@ -36,7 +36,7 @@ Qué tablas, columnas y restricciones dan soporte a cada requerimiento del Docum
 | **RF-07** Registrar aprobación/rechazo del cliente | `cotizaciones`, `tickets`, `ticket_historiales` | `cotizaciones.estado` ENUM; historial con `usuario_id` NULL (acción del cliente) | `Cotizacion`, `TicketHistorial` | `…0007`, `…0008` | — (se probará con `CotizacionService`) |
 | **RF-08** Administrar servicios y repuestos | `catalogo_items` | `nombre` UNIQUE, `tipo` ENUM, `precio_referencia` CHECK ≥ 0, `activo` (se desactiva, no se borra) | `CatalogoItem` | `…0004-crear-catalogo-items` | modelos › Validaciones (precio negativo, tipo); Restricciones de BD (CHECK); Integridad referencial (ítem usado) |
 | **RF-09** Administrar cuentas de técnicos | `usuarios` | `correo` UNIQUE, `rol` ENUM, `activo` (RN-07) | `Usuario` | `…0001-crear-usuarios` | modelos › Índices únicos (correo); Validaciones (rol) |
-| **RF-10** Autenticación con control por rol | `usuarios` | `password_hash` (solo bcrypt, RN-08), `rol`; `defaultScope` sin hash, scope `conPassword` | `Usuario` | `…0001-crear-usuarios` | modelos › RN-08: password_hash nunca aparece |
+| **RF-10** Autenticación con control por rol | `usuarios`, `sesiones` | `password_hash` (solo bcrypt, RN-08), `rol`, `activo`; `defaultScope` sin hash, scope `conPassword`; la sesión guarda solo `{ id, nombre, rol }` | `Usuario` | `…0001-crear-usuarios`, `…0011-crear-sesiones` | auth › Inicio de sesión; Matriz de permisos (RN-02); modelos › RN-08: password_hash nunca aparece |
 | **RF-11** Reporte por técnico y tiempo promedio | `tickets`, `ticket_historiales`, `usuarios` | `tickets.tecnico_id`, `fecha_ingreso`, `fecha_entrega`; índice `(estado_nuevo, fecha)` | `Ticket`, `TicketHistorial` | `…0005`, `…0007` | — (se probará con `ReporteService`) |
 | **RF-12** Notificar cambios de estado | `notificaciones` | FK `ticket_id`, `usuario_id`; `leida` DEFAULT false; índice `(usuario_id, leida)` | `Notificacion` | `…0010-crear-notificaciones` | modelos › Registros válidos; Asociaciones (notificaciones del técnico) |
 
@@ -45,11 +45,18 @@ Qué tablas, columnas y restricciones dan soporte a cada requerimiento del Docum
 | Regla | Dónde se garantiza | Prueba |
 |---|---|---|
 | RN-03 Folio único TT-AAAA-NNNN | Índice único `uq_tickets_folio`, `CHECK chk_tickets_folio`, validación `is` del modelo | modelos › Índices únicos; Validaciones; Restricciones de BD |
-| RN-08 Nunca exponer password_hash | `Usuario.defaultScope`, `Usuario.toJSON()`; en las vistas, `variablesVistas.js` solo publica `id`, `nombre`, `correo` y `rol` del usuario de sesión; `errorHandler.js` nunca devuelve contraseñas al formulario | modelos › RN-08; validar › regresa sin contraseñas ni tokens |
+| RN-08 Nunca exponer password_hash | `Usuario.defaultScope`, `Usuario.toJSON()`; `AuthService.login` devuelve el usuario sin hash y el login guarda en sesión solo `{ id, nombre, rol }`; `variablesVistas.js` publica solo esos campos; `errorHandler.js` y el formulario de login nunca devuelven la contraseña; `AuthService.validarFortaleza` (mín. 8 caracteres, letra y número) | modelos › RN-08; auth › ni las respuestas del login ni la sesión contienen password_hash; validar › regresa sin contraseñas ni tokens; unit/AuthService |
 | RN-09 Una sola cotización Pendiente | Columna generada `pendiente_ticket_id` + índice único `uq_cotizaciones_una_pendiente` | modelos › Restricciones de BD (RN-09) |
 | RN-09 (mensaje al usuario) | `utils/traducirError.js` convierte la violación del índice en un `BusinessRuleError` 422 con el texto de la regla | erroresSequelize › unique solo de la base (RN-09) |
 
-Las reglas RN-01, RN-02, RN-04, RN-05, RN-06 y RN-07 se implementarán en `services/`.
+## 3.1 Reglas de negocio implementadas en servicios y middlewares
+
+| Regla | Ruta | Dónde se garantiza | Prueba |
+|---|---|---|---|
+| RN-02 Cada rol ve solo lo suyo (matriz de permisos) | todos los routers protegidos | `middlewares/auth.js` › `requireAuth`, `checkRole`, `soloLecturaPara`; cada `routes/*.js` declara su acceso. El filtro "el técnico solo ve sus tickets" se agrega con `TicketService`. | auth › Matriz de permisos (RN-02) |
+| RN-07 Técnico desactivado no entra | `POST /login` y toda ruta con `requireAuth` | `AuthService.login` (rechaza la cuenta inactiva); `requireAuth` + `AuthService.obtenerUsuarioActivo` revisan `activo` en cada petición y cierran la sesión | auth › el técnico inactivo (Óscar Meléndez) no puede iniciar sesión; Revalidación de la sesión (RN-07) |
+
+Las reglas RN-01, RN-04, RN-05 y RN-06 se implementarán en `services/`.
 
 ## 4. Infraestructura (sin historia asociada)
 
@@ -61,7 +68,7 @@ Las reglas RN-01, RN-02, RN-04, RN-05, RN-06 y RN-07 se implementarán en `servi
 | Sesión en MySQL (httpOnly, sameSite=lax, secure en producción, 8 h) | todas | `config/sesion.js`, migración `…0011-crear-sesiones` | middlewares › Sesión |
 | Protección CSRF (csrf-csrf) | todo POST/PUT/PATCH/DELETE | `middlewares/csrf.js` | middlewares › Protección CSRF |
 | Variables comunes de vistas (usuario sin datos sensibles, flash, token CSRF) | todas | `middlewares/variablesVistas.js` | middlewares › Ruteo modular y vistas base; validar |
-| Ruteo modular (12 routers con prefijo) | `/auth`, `/portal`, `/admin`, `/tecnico`, `/clientes`, `/equipos`, `/tickets`, `/cotizaciones`, `/catalogo`, `/usuarios`, `/reportes`, `/notificaciones` | `routes/index.js` y `routes/*.js` | middlewares › el router de … está montado |
+| Ruteo modular (12 routers con prefijo) | `/` (login/logout), `/portal`, `/admin`, `/tecnico`, `/clientes`, `/equipos`, `/tickets`, `/cotizaciones`, `/catalogo`, `/usuarios`, `/reportes`, `/notificaciones` | `routes/index.js` y `routes/*.js` | middlewares › el router de … está montado; auth › el admin puede entrar a todos los módulos |
 | Layout y parciales (navbar por rol, migas, flash, badge de estado) | todas | `views/layouts/main.ejs`, `views/partials/`, `utils/vistas.js` | middlewares › Ruteo modular y vistas base |
 | Validación de formularios | rutas con `validar(...)` | `middlewares/validar.js` | validar |
 | Subida de fotos (JPG/PNG/WEBP, firma, MAX_FOTO_MB, máx. 5) | rutas con `subirFotos` | `middlewares/upload.js` | upload |
@@ -69,6 +76,9 @@ Las reglas RN-01, RN-02, RN-04, RN-05, RN-06 y RN-07 se implementarán en `servi
 | Manejo central de errores (HTML/JSON, flash, sin stack) | todas | `middlewares/errorHandler.js` | middlewares; validar › BusinessRuleError; erroresSequelize |
 | Traducción de errores de Sequelize, CSRF y body-parser al español | todas | `utils/traducirError.js` | erroresSequelize; unit/traducirError |
 | Clases de error y asyncHandler | — | `utils/errors/`, `utils/asyncHandler.js` | unit/errores; unit/asyncHandler |
+| Rate limit del login y del portal (5 intentos fallidos / 15 min, configurable) | `POST /login`, `POST /portal` | `middlewares/limitarIntentos.js`, vista `errores/429` | auth › Rate limit |
+| Páginas autenticadas sin caché (botón "atrás" tras cerrar sesión) | rutas con `requireAuth` o `requireCliente` | `middlewares/auth.js` › `sinCache` | auth › las páginas autenticadas no se guardan en caché |
+| Paneles de inicio por rol | `GET /admin`, `GET /tecnico` | `DashboardController`, `views/admin/dashboard.ejs`, `views/tecnico/dashboard.ejs` | auth › el admin / el técnico entra y ve su nombre |
 | Registro de peticiones | todas (fuera de pruebas) | `middlewares/logger.js` | unit/logger |
 | Conexión a MySQL (modo estricto) | — | `config/database.js`, `config/config.js` | servidor; modelos › Restricciones de BD (ENUM) |
 | Esquema y datos de ejemplo | — | `migrations/`, `seeders/`, `database/tecnitrack.sql` | `tests/setup/globalSetup.js` (migra antes de cada ejecución) |
