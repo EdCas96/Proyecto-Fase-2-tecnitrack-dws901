@@ -1,21 +1,23 @@
 /**
  * Rutas: Reportes — montadas en /reportes (routes/index.js).
  *
- * Previstas (HU-08; solo admin):
- *   GET /reportes   tickets por técnico y tiempo promedio Recibido -> Entregado
+ * HU-08, RF-11 (solo admin):
+ *   GET /reportes                 tickets por técnico y tiempo promedio Recibido -> Entregado,
+ *                                 servicios más solicitados y resumen por estado (?desde=&hasta=)
+ *   GET /reportes/tecnicos.csv    el reporte por técnico en CSV (UTF-8 con BOM)
  *
  * Acceso: solo admin.
- *
- * Por ahora solo responde la página provisional "en construcción".
  */
 const { Router } = require('express');
-const EnConstruccionController = require('../controllers/enConstruccionController');
+const asyncHandler = require('../utils/asyncHandler');
 const { requireAuth, checkRole } = require('../middlewares/auth');
+const ReportesController = require('../controllers/reportesController');
 
 const router = Router();
 
 router.use(requireAuth, checkRole('admin'));
 
-router.get('/', EnConstruccionController.pagina('Reportes', [{ texto: 'Administrador', url: '/admin' }]));
+router.get('/', asyncHandler(ReportesController.mostrar));
+router.get('/tecnicos.csv', asyncHandler(ReportesController.exportarCsv));
 
 module.exports = router;

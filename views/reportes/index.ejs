@@ -1,0 +1,98 @@
+<%# Reportes del admin (prototipo: admin/reportes.html). HU-08, RF-11 %>
+<% const maximo = servicios.length ? servicios[0].cantidad : 0; %>
+<% const totalEstados = estados.reduce((suma, e) => suma + e.total, 0); %>
+<% const consulta = `desde=${encodeURIComponent(rango.desde)}&hasta=${encodeURIComponent(rango.hasta)}`; %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1>Reportes</h1>
+</div>
+
+<form class="table-filters" method="get" action="/reportes">
+  <div class="form-group">
+    <label for="desde">Desde</label>
+    <input type="date" id="desde" name="desde" required value="<%= rango.desde %>"<% if (errores.desde) { %> aria-invalid="true" aria-describedby="error-desde"<% } %>>
+    <%- include('../partials/errorCampo', { campo: 'desde' }) %>
+  </div>
+  <div class="form-group">
+    <label for="hasta">Hasta</label>
+    <input type="date" id="hasta" name="hasta" required value="<%= rango.hasta %>"<% if (errores.hasta) { %> aria-invalid="true" aria-describedby="error-hasta"<% } %>>
+    <%- include('../partials/errorCampo', { campo: 'hasta' }) %>
+  </div>
+  <button type="submit" class="btn btn-secondary">Generar reporte</button>
+</form>
+
+<% if (rango.inicio) { %>
+  <p class="form-ayuda tarjeta-aviso">Periodo: del <%= formatoFecha(rango.desde) %> al <%= formatoFecha(rango.hasta) %> (máximo un año).</p>
+
+  <div class="page-actions">
+    <h2>Tickets por técnico y tiempo promedio de reparación</h2>
+    <% if (tecnicos.length) { %><a class="btn btn-secondary" href="/reportes/tecnicos.csv?<%= consulta %>" download>Exportar CSV</a><% } %>
+  </div>
+  <p class="form-ayuda tarjeta-aviso">Tickets entregados en el periodo. El tiempo se mide desde que el ticket entró como «Recibido» hasta que pasó a «Entregado».</p>
+
+  <div class="table-wrapper">
+    <table class="table-standard">
+      <thead>
+        <tr>
+          <th>Técnico</th>
+          <th>Tickets atendidos</th>
+          <th>Tiempo promedio de reparación</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% tecnicos.forEach((fila) => { %>
+          <tr<% if (!fila.atendidos) { %> class="fila-inactiva"<% } %>>
+            <td><%= fila.tecnico %><% if (!fila.activo) { %> <span class="text-small">(inactivo)</span><% } %></td>
+            <td><%= fila.atendidos %></td>
+            <td><%= fila.promedioDias === null ? '—' : `${fila.promedioDias.toFixed(1)} días` %></td>
+          </tr>
+        <% }) %>
+        <% if (!tecnicos.some((fila) => fila.atendidos)) { %>
+          <tr><td colspan="3" class="tabla-vacia">No hay tickets entregados en este periodo.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="detail-grid">
+    <section class="detail-card">
+      <h2>Servicios y repuestos más solicitados</h2>
+      <p class="text-small">En cotizaciones aprobadas del periodo.</p>
+      <% if (servicios.length) { %>
+        <ul class="progress-list">
+          <% servicios.forEach((servicio) => { %>
+            <li class="progress-row">
+              <div class="progress-row-label">
+                <span><%= servicio.nombre %></span>
+                <span class="progress-count"><%= servicio.cantidad %></span>
+              </div>
+              <div class="progress-bar-track" role="img" aria-label="<%= servicio.cantidad %> de <%= maximo %>">
+                <div class="progress-bar-fill" style="width: <%= Math.round((servicio.cantidad / maximo) * 100) %>%;"></div>
+              </div>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <p class="tabla-vacia">No hay cotizaciones aprobadas en este periodo.</p>
+      <% } %>
+    </section>
+
+    <section class="detail-card">
+      <h2>Resumen por estado</h2>
+      <p class="text-small">Tickets que ingresaron en el periodo, según su estado actual.</p>
+      <% if (totalEstados) { %>
+        <div class="detail-list">
+          <% estados.forEach(({ estado, total }) => { %>
+            <div>
+              <span class="detail-label"><%- include('../partials/badgeEstado', { estado }) %></span>
+              <span class="detail-value"><%= total %></span>
+            </div>
+          <% }) %>
+          <div><span class="detail-label"><strong>Total</strong></span><span class="detail-value"><strong><%= totalEstados %></strong></span></div>
+        </div>
+      <% } else { %>
+        <p class="tabla-vacia">No ingresaron tickets en este periodo.</p>
+      <% } %>
+    </section>
+  </div>
+<% } %>
