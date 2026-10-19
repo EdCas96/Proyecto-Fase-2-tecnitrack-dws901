@@ -1,7 +1,7 @@
 const { ValidationError, UniqueConstraintError, ForeignKeyConstraintError } = require('sequelize');
 const {
-  sequelize, Usuario, Cliente, Equipo, CatalogoItem, Ticket, TicketFoto,
-  TicketHistorial, Cotizacion, CotizacionItem, Notificacion,
+  sequelize, Usuario, Cliente, Equipo, Ticket, TicketFoto,
+  TicketHistorial, CotizacionItem, Notificacion,
 } = require('../../models');
 const { limpiarBaseDatos } = require('../helpers/baseDatos');
 const {

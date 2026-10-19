@@ -67,7 +67,7 @@ function registrar(err, statusCode) {
   }
 }
 
-// eslint-disable-next-line no-unused-vars
+// Express reconoce el manejador de errores por sus 4 parámetros (next es obligatorio aunque no se use)
 function errorHandler(err, req, res, next) {
   if (res.headersSent) return next(err);
 

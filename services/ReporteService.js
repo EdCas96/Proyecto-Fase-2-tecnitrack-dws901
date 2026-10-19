@@ -6,6 +6,8 @@ const { ESTADOS_TICKET } = require('../utils/constantes');
 const ZONA_HORARIA = 'America/El_Salvador';
 const MAX_DIAS_RANGO = 366;
 const MS_POR_DIA = 24 * 60 * 60 * 1000;
+/** Marca de orden de bytes: Excel la necesita para leer el CSV como UTF-8. */
+const BOM = String.fromCharCode(0xfeff);
 const REGEX_FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
 /** "AAAA-MM-DD" de una fecha en la hora de El Salvador. */
@@ -166,7 +168,7 @@ class ReporteService {
       ['Técnico', 'Tickets atendidos', 'Tiempo promedio de reparación (días)'],
       ...filas.map((f) => [f.tecnico, f.atendidos, f.promedioDias === null ? '' : f.promedioDias.toFixed(1)]),
     ];
-    return `﻿${lineas.map((linea) => linea.map(campo).join(',')).join('\r\n')}\r\n`;
+    return `${BOM}${lineas.map((linea) => linea.map(campo).join(',')).join('\r\n')}\r\n`;
   }
 }
 
