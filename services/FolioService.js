@@ -40,23 +40,31 @@ class FolioService {
     const anio = FolioService.anioDe(fecha);
     const opciones = { transaction, replacements: { anio } };
 
-    // El primer ticket del año crea su contador (si otra transacción lo crea a la vez, este INSERT espera e ignora)
-    await sequelize.query('INSERT IGNORE INTO folio_contadores (anio, ultimo) VALUES (:anio, 0)', opciones);
+    // Incrementa el contador del año (o lo crea con 1, el primer ticket del año) tomando un bloqueo
+    // exclusivo de la fila: otra creación simultánea espera aquí hasta que esta transacción termine.
+    // (Un INSERT IGNORE seguido de FOR UPDATE produce deadlocks: varias transacciones toman un
+    // bloqueo compartido y luego todas quieren el exclusivo.)
+    await sequelize.query(
+      'INSERT INTO folio_contadores (anio, ultimo) VALUES (:anio, 1) ON DUPLICATE KEY UPDATE ultimo = ultimo + 1',
+      opciones,
+    );
     const [contador] = await sequelize.query(
       'SELECT ultimo FROM folio_contadores WHERE anio = :anio FOR UPDATE',
       { ...opciones, type: QueryTypes.SELECT },
     );
+    let siguiente = Number(contador.ultimo);
 
     // Respaldo: si hay tickets de ese año que no pasaron por el contador (datos importados), se continúa después del mayor
     const [maximo] = await sequelize.query(
       "SELECT MAX(CAST(SUBSTRING(folio, 9) AS UNSIGNED)) AS ultimo FROM tickets WHERE folio LIKE CONCAT('TT-', :anio, '-%')",
       { ...opciones, type: QueryTypes.SELECT },
     );
-
-    const siguiente = Math.max(Number(contador.ultimo), Number(maximo.ultimo) || 0) + 1;
-    await sequelize.query('UPDATE folio_contadores SET ultimo = :siguiente WHERE anio = :anio', {
-      transaction, replacements: { anio, siguiente },
-    });
+    if (Number(maximo.ultimo) >= siguiente) {
+      siguiente = Number(maximo.ultimo) + 1;
+      await sequelize.query('UPDATE folio_contadores SET ultimo = :siguiente WHERE anio = :anio', {
+        transaction, replacements: { anio, siguiente },
+      });
+    }
     return FolioService.formatear(anio, siguiente);
   }
 }
