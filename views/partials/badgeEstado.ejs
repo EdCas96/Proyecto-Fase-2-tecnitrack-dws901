@@ -1,0 +1,5 @@
+<%#
+  Badge de estado con color semántico (utils/constantes.js COLOR_ESTADO).
+  Uso: include('../partials/badgeEstado', { estado: ticket.estado, grande: false })
+%>
+<span class="badge badge-<%= colorEstado(estado) %><%= locals.grande ? ' badge-lg' : '' %>"><%= etiquetaEstado(estado) %></span>

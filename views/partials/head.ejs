@@ -1,0 +1,6 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<%# Token CSRF para peticiones fetch (cabecera X-CSRF-Token) %>
+<meta name="csrf-token" content="<%= locals.csrfToken || '' %>">
+<title><%= locals.titulo ? titulo + ' - TecniTrack' : 'TecniTrack' %></title>
+<link rel="stylesheet" href="/css/styles.css">

@@ -1,7 +1,19 @@
-<main class="role-select-screen">
+<main class="pantalla-centrada">
   <div class="role-select-card">
     <p class="role-select-logo">TecniTrack</p>
     <p class="role-select-subtitle">TecniTrack funcionando</p>
     <p class="text-small">Entorno: <strong><%= entorno %></strong></p>
+
+    <%# Muestra de los colores semánticos de estado %>
+    <div class="leyenda-estados">
+      <% estados.forEach((estado) => { %>
+        <%- include('partials/badgeEstado', { estado }) %>
+      <% }) %>
+    </div>
+
+    <div class="role-select-options">
+      <a class="btn btn-primary" href="/auth/login">Iniciar sesión (personal)</a>
+      <a class="btn btn-secondary" href="/portal">Consultar mi ticket (clientes)</a>
+    </div>
   </div>
 </main>

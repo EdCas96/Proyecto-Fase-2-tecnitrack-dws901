@@ -19,6 +19,32 @@ const ESTADOS_TICKET = Object.freeze([
 
 const ESTADOS_COTIZACION = Object.freeze(['Pendiente', 'Aprobada', 'Rechazada']);
 
+/**
+ * Color semántico de cada estado (clase CSS badge-<color>):
+ * gris = recibido, azul = en proceso, ámbar = esperando algo, verde = listo/entregado, rojo = cancelado.
+ * Incluye los estados de cotización.
+ */
+const COLOR_ESTADO = Object.freeze({
+  Recibido: 'gris',
+  Diagnosticado: 'azul',
+  Esperando_aprobacion: 'ambar',
+  En_reparacion: 'azul',
+  Esperando_repuesto: 'ambar',
+  Listo: 'verde',
+  Entregado: 'verde',
+  Cancelado: 'rojo',
+  Pendiente: 'ambar',
+  Aprobada: 'verde',
+  Rechazada: 'rojo',
+});
+
+/** Texto para mostrar de los estados que en la base llevan guion bajo. */
+const ETIQUETA_ESTADO = Object.freeze({
+  Esperando_aprobacion: 'Esperando aprobación',
+  En_reparacion: 'En reparación',
+  Esperando_repuesto: 'Esperando repuesto',
+});
+
 const TIPOS_CATALOGO = Object.freeze(['Servicio', 'Repuesto']);
 
 const TIPOS_EQUIPO = Object.freeze(['Laptop', 'Computadora de escritorio', 'Impresora', 'Otro']);
@@ -33,6 +59,8 @@ module.exports = {
   ROLES,
   ESTADOS_TICKET,
   ESTADOS_COTIZACION,
+  COLOR_ESTADO,
+  ETIQUETA_ESTADO,
   TIPOS_CATALOGO,
   TIPOS_EQUIPO,
   REGEX_FOLIO,

@@ -1,3 +1,28 @@
+<%# Barra superior y submenú según el rol (como en el prototipo de la Fase 1) %>
+<% const usuario = locals.usuarioActual; %>
 <header class="navbar">
-  <a class="navbar-brand" href="/">TecniTrack</a>
+  <a class="navbar-brand" href="<%= usuario ? (usuario.rol === 'admin' ? '/admin' : '/tecnico') : '/' %>">TecniTrack</a>
+  <% if (usuario) { %>
+    <div class="navbar-user">
+      <span class="navbar-role"><%= etiquetaRol(usuario) %></span>
+      <form class="navbar-logout" method="post" action="/auth/logout">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="navbar-link">Cerrar sesión</button>
+      </form>
+    </div>
+  <% } else { %>
+    <nav class="navbar-links" aria-label="Accesos públicos">
+      <a class="navbar-link" href="/portal">Consultar mi ticket</a>
+      <a class="navbar-link" href="/auth/login">Iniciar sesión</a>
+    </nav>
+  <% } %>
 </header>
+
+<% const menu = menuPorRol(usuario); %>
+<% if (menu.length) { %>
+  <nav class="subnav" aria-label="Menú principal">
+    <% menu.forEach(({ texto, url }) => { %>
+      <a href="<%= url %>"<% if (esRutaActiva(locals.rutaActual || '', url)) { %> class="active" aria-current="page"<% } %>><%= texto %></a>
+    <% }) %>
+  </nav>
+<% } %>
