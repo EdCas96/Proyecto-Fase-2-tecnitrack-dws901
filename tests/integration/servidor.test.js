@@ -1,10 +1,11 @@
 const request = require('supertest');
 const app = require('../../app');
 const sequelize = require('../../config/database');
+const { cerrarConexiones } = require('../helpers/baseDatos');
 
 describe('Servidor', () => {
   afterAll(async () => {
-    await sequelize.close();
+    await cerrarConexiones();
   });
 
   test('GET / responde 200 con la página de prueba', async () => {
