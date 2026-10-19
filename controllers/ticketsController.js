@@ -76,8 +76,7 @@ class TicketsController {
       permitidos: MaquinaEstadosTicket.transicionesManuales(ticket.estado),
       puedeCancelar: MaquinaEstadosTicket.puedeCancelar(ticket.estado, req.usuario.rol),
       puedeCotizar: CotizacionService.puedeCotizar(ticket, req.usuario),
-      puedeEditarCotizacion: Boolean(ticket.cotizaciones[0] && ticket.cotizaciones[0].estado === 'Pendiente')
-        && (admin || ticket.tecnico_id === req.usuario.id),
+      puedeEditarCotizacion: CotizacionService.puedeEditar(ticket, req.usuario),
       tecnicos: admin && !MaquinaEstadosTicket.esFinal(ticket.estado) ? await TicketService.tecnicosActivos() : [],
     });
   }
