@@ -1,10 +1,63 @@
-<%# Panel del administrador (provisional: los indicadores llegan con TicketService) %>
+<%# Panel del administrador (prototipo: admin/dashboard.html) %>
 <div class="section-header">
   <%- include('../partials/breadcrumbs') %>
   <h1>Bienvenido, <%= usuario.nombre %></h1>
 </div>
 
-<section class="detail-card tarjeta-aviso">
-  <p>Desde el menú puedes administrar clientes, tickets, catálogo, usuarios y reportes.</p>
-  <p class="text-small">Los indicadores del dashboard se agregan en los siguientes pasos.</p>
+<section class="kpi-grid" aria-label="Indicadores">
+  <a class="kpi-card" href="/tickets?estado=abiertos">
+    <span class="kpi-value"><%= kpis.abiertos %></span>
+    <span class="kpi-label">Tickets abiertos</span>
+  </a>
+  <a class="kpi-card" href="/tickets?estado=Esperando_aprobacion">
+    <span class="kpi-value"><%= kpis.esperandoAprobacion %></span>
+    <span class="kpi-label">Esperando aprobación</span>
+  </a>
+  <a class="kpi-card" href="/tickets?estado=Listo">
+    <span class="kpi-value"><%= kpis.listos %></span>
+    <span class="kpi-label">Listos para entregar</span>
+  </a>
+  <a class="kpi-card" href="/tickets?estado=Entregado">
+    <span class="kpi-value"><%= kpis.entregadosMes %></span>
+    <span class="kpi-label">Entregados este mes</span>
+  </a>
 </section>
+
+<div class="page-actions">
+  <h2>Tickets recientes</h2>
+  <a class="btn btn-primary" href="/tickets/nuevo">Nuevo ticket</a>
+</div>
+
+<div class="table-wrapper">
+  <table class="table-standard">
+    <thead>
+      <tr>
+        <th>Folio</th>
+        <th>Cliente</th>
+        <th>Estado</th>
+        <th>Técnico asignado</th>
+        <th>Fecha de ingreso</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% recientes.forEach((ticket) => { %>
+        <tr>
+          <td><%= ticket.folio %></td>
+          <td><%= ticket.equipo.cliente.nombre %></td>
+          <td><%- include('../partials/badgeEstado', { estado: ticket.estado }) %></td>
+          <td><%= ticket.tecnico ? ticket.tecnico.nombre : 'Sin asignar' %></td>
+          <td><%= formatoFecha(ticket.fecha_ingreso) %></td>
+          <td><a class="btn btn-secondary" href="/tickets/<%= ticket.id %>">Ver detalle</a></td>
+        </tr>
+      <% }) %>
+      <% if (!recientes.length) { %>
+        <tr><td colspan="6" class="tabla-vacia">Aún no hay tickets.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-pagination">
+  <a class="btn btn-secondary" href="/tickets">Ver todos los tickets</a>
+</div>
