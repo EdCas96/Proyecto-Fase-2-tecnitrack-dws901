@@ -22,6 +22,7 @@ const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler');
 const rutas = require('./routes');
 const ayudantesVistas = require('./utils/vistas');
+const NotificacionListener = require('./services/eventos/NotificacionListener');
 
 /** Tamaño máximo del cuerpo de formularios y JSON (las fotos van aparte, por Multer). */
 const LIMITE_CUERPO = '100kb';
@@ -29,6 +30,9 @@ const LIMITE_CUERPO = '100kb';
 const METODOS_SIMULABLES = new Set(['PUT', 'PATCH', 'DELETE']);
 
 const app = express();
+
+// Eventos del dominio: las notificaciones se crean al confirmar cada transacción (docs/ARQUITECTURA.md)
+NotificacionListener.registrar();
 
 // Detrás de un proxy HTTPS (producción) para que la cookie "secure" funcione
 if (entorno === 'production') app.set('trust proxy', 1);

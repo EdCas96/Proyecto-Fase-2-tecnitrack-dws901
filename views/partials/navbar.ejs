@@ -5,6 +5,12 @@
   <% if (usuario) { %>
     <div class="navbar-user">
       <span class="navbar-role"><%= etiquetaRol(usuario) %></span>
+      <% const noLeidas = locals.notificacionesNoLeidas || 0; %>
+      <a class="navbar-link navbar-campana" href="/notificaciones" data-notificaciones
+         aria-label="Notificaciones: <%= noLeidas %> sin leer" title="Notificaciones">
+        <span aria-hidden="true">&#128276;</span>
+        <span class="contador-notificaciones" data-contador<% if (!noLeidas) { %> hidden<% } %>><%= noLeidas %></span>
+      </a>
       <form class="navbar-logout" method="post" action="/logout">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" class="navbar-link">Cerrar sesión</button>
@@ -19,6 +25,8 @@
     </nav>
   <% } %>
 </header>
+
+<% if (usuario) { %><script src="/js/notificaciones.js" defer></script><% } %>
 
 <% const menu = menuPorRol(usuario); %>
 <% if (menu.length) { %>

@@ -7,6 +7,7 @@
  *   cliente -> solo /portal (sin cuenta: folio + teléfono)
  */
 const AuthService = require('../services/AuthService');
+const NotificacionService = require('../services/NotificacionService');
 const { AuthError, ForbiddenError } = require('../utils/errors');
 const { INICIO_POR_ROL } = require('../utils/constantes');
 const { regenerarSesion } = require('../utils/sesion');
@@ -54,6 +55,8 @@ const requireAuth = asyncHandler(async (req, res, next) => {
   }
   req.usuario = usuario;
   res.locals.usuarioActual = usuarioPublico(usuario);
+  // Contador de la campana de la barra superior (HU-10)
+  res.locals.notificacionesNoLeidas = await NotificacionService.contarNoLeidas(usuario.id);
   return sinCache(req, res, next);
 });
 

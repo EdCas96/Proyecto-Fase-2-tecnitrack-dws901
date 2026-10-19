@@ -1,6 +1,8 @@
-const { Op, fn, col, where: condicion } = require('sequelize');
 const {
-  sequelize, Ticket, Equipo, Cliente, Usuario, TicketFoto, TicketHistorial, Cotizacion, Notificacion,
+  Op, fn, col, literal, where: condicion,
+} = require('sequelize');
+const {
+  sequelize, Ticket, Equipo, Cliente, Usuario, TicketFoto, TicketHistorial, Cotizacion, CotizacionItem, CatalogoItem,
 } = require('../models');
 const {
   ValidationError, ForbiddenError, NotFoundError, BusinessRuleError,
@@ -14,6 +16,7 @@ const MaquinaEstadosTicket = require('./MaquinaEstadosTicket');
 const FolioService = require('./FolioService');
 const ClienteService = require('./ClienteService');
 const EquipoService = require('./EquipoService');
+const { bus, EVENTOS } = require('./eventos/busEventos');
 
 const { ORIGENES } = MaquinaEstadosTicket;
 const ESTADOS_ABIERTOS = ESTADOS_TICKET.filter((estado) => !MaquinaEstadosTicket.esFinal(estado));
@@ -33,6 +36,12 @@ const INCLUIR_EQUIPO = {
   include: { model: Cliente, as: 'cliente', attributes: ['id', 'nombre', 'telefono', 'correo'] },
 };
 const INCLUIR_TECNICO = { model: Usuario, as: 'tecnico', attributes: ['id', 'nombre'] };
+
+/** Fecha de la cotización Pendiente del ticket, si hay (indicador "Pendiente de respuesta", RN-05). */
+const PENDIENTE_DESDE = [
+  literal("(SELECT MIN(c.fecha) FROM cotizaciones AS c WHERE c.ticket_id = `Ticket`.`id` AND c.estado = 'Pendiente')"),
+  'pendienteDesde',
+];
 
 /** "AAAA-MM-DD" de hoy en El Salvador, para comparar con fecha_estimada (DATE). */
 function hoyEnElSalvador() {
@@ -178,10 +187,11 @@ class TicketService {
           archivos.map((archivo) => ({ ticket_id: ticket.id, url_foto: archivo.filename })),
           { transaction, validate: true },
         );
+        // El admin asignó el ticket a un técnico: se le avisa cuando la transacción confirma
         if (tecnicoId && tecnicoId !== usuario.id) {
-          await Notificacion.create({
-            ticket_id: ticket.id, usuario_id: tecnicoId, mensaje: `Se te asignó el ticket ${folio}.`,
-          }, { transaction });
+          bus.emitirAlConfirmar(transaction, EVENTOS.TICKET_REASIGNADO, {
+            ticketId: ticket.id, folio, tecnicoId, anteriorId: null, actorId: usuario.id,
+          });
         }
         return ticket;
       });
@@ -217,7 +227,7 @@ class TicketService {
 
     const resultado = await Ticket.findAndCountAll({
       where,
-      attributes: ['id', 'folio', 'estado', 'fecha_ingreso', 'fecha_estimada', 'tecnico_id'],
+      attributes: ['id', 'folio', 'estado', 'fecha_ingreso', 'fecha_estimada', 'tecnico_id', PENDIENTE_DESDE],
       include: [{ ...INCLUIR_EQUIPO, required: true }, INCLUIR_TECNICO],
       order: [['fecha_ingreso', 'DESC'], ['id', 'DESC']],
       distinct: true,
@@ -245,13 +255,24 @@ class TicketService {
           as: 'historial',
           include: { model: Usuario, as: 'usuario', attributes: ['id', 'nombre'] },
         },
-        { model: Cotizacion, as: 'cotizaciones', attributes: ['id', 'estado', 'total', 'fecha'] },
+        {
+          model: Cotizacion,
+          as: 'cotizaciones',
+          attributes: ['id', 'estado', 'total', 'fecha'],
+          include: {
+            model: CotizacionItem,
+            as: 'items',
+            include: { model: CatalogoItem, as: 'catalogoItem', attributes: ['id', 'nombre', 'tipo'] },
+          },
+        },
       ],
       order: [
         [{ model: TicketHistorial, as: 'historial' }, 'fecha', 'ASC'],
         [{ model: TicketHistorial, as: 'historial' }, 'id', 'ASC'],
         [{ model: TicketFoto, as: 'fotos' }, 'id', 'ASC'],
         [{ model: Cotizacion, as: 'cotizaciones' }, 'fecha', 'DESC'],
+        [{ model: Cotizacion, as: 'cotizaciones' }, 'id', 'DESC'],
+        [{ model: Cotizacion, as: 'cotizaciones' }, { model: CotizacionItem, as: 'items' }, 'id', 'ASC'],
       ],
     });
     if (!ticket) throw new NotFoundError('El ticket no existe.');
@@ -311,13 +332,20 @@ class TicketService {
         fecha: ahora,
       }, { transaction });
 
-      // Si el admin cancela un ticket asignado, se avisa al técnico
-      if (cancelando && ticket.tecnico_id && ticket.tecnico_id !== usuario.id) {
-        await Notificacion.create({
-          ticket_id: ticket.id,
-          usuario_id: ticket.tecnico_id,
-          mensaje: `El administrador canceló el ticket ${ticket.folio}.`.slice(0, 255),
-        }, { transaction });
+      // Los avisos al técnico los decide NotificacionListener, solo si la transacción confirma
+      const evento = {
+        ticketId: ticket.id,
+        folio: ticket.folio,
+        tecnicoId: ticket.tecnico_id,
+        anterior,
+        nuevo: destino,
+        actorId: usuario.id,
+        actorRol: usuario.rol,
+      };
+      if (cancelando) {
+        bus.emitirAlConfirmar(transaction, EVENTOS.TICKET_CANCELADO, { ...evento, motivo: comentario });
+      } else {
+        bus.emitirAlConfirmar(transaction, EVENTOS.TICKET_ESTADO_CAMBIADO, evento);
       }
       return ticket;
     });
@@ -325,7 +353,7 @@ class TicketService {
 
   /**
    * Asigna el ticket a otro técnico activo (solo admin). Registra la nota en el
-   * historial y notifica al técnico asignado.
+   * historial y emite ticket.reasignado (NotificacionListener avisa al técnico).
    *
    * @implements HU-06, RN-02
    * @param {number|string} id
@@ -364,9 +392,13 @@ class TicketService {
         usuario_id: usuario.id,
         comentario: nota.slice(0, 255),
       }, { transaction });
-      await Notificacion.create({
-        ticket_id: ticket.id, usuario_id: tecnico.id, mensaje: `Se te asignó el ticket ${ticket.folio}.`,
-      }, { transaction });
+      bus.emitirAlConfirmar(transaction, EVENTOS.TICKET_REASIGNADO, {
+        ticketId: ticket.id,
+        folio: ticket.folio,
+        tecnicoId: tecnico.id,
+        anteriorId: ticket.tecnico ? ticket.tecnico.id : null,
+        actorId: usuario.id,
+      });
       return ticket;
     });
   }
@@ -414,7 +446,7 @@ class TicketService {
       Ticket.count({ where: { estado: 'Listo' } }),
       Ticket.count({ where: { estado: 'Entregado', fecha_entrega: { [Op.gte]: inicioMes } } }),
       Ticket.findAll({
-        attributes: ['id', 'folio', 'estado', 'fecha_ingreso'],
+        attributes: ['id', 'folio', 'estado', 'fecha_ingreso', PENDIENTE_DESDE],
         include: [INCLUIR_EQUIPO, INCLUIR_TECNICO],
         order: [['fecha_ingreso', 'DESC'], ['id', 'DESC']],
         limit: 5,

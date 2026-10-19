@@ -2,12 +2,19 @@
 
 /**
  * Cotizaciones de los tickets del prototipo, con sus líneas y las notificaciones
- * que recibió el técnico cuando el cliente respondió (RN-06, HU-10).
+ * que recibieron el técnico y el admin cuando el cliente respondió (RN-06, HU-10).
+ * Demo del paso 7:
+ * - TT-2026-0040: Pendiente desde septiembre -> "Pendiente de respuesta" (RN-05).
+ * - TT-2026-0043: Pendiente enviada hace 2 horas -> lista para aprobar en el portal.
+ * - El rechazo de TT-2026-0038 queda sin leer para Jorge y el admin (alerta del dashboard).
  *
  * Catálogo: 1 Diagnóstico $10, 2 Limpieza $15, 3 Instalación SO $20,
  *           4 RAM 8GB $35, 5 SSD 480GB $55, 6 Cartucho $12.
  */
 const f = (fechaHora) => new Date(`${fechaHora}:00-06:00`);
+const haceHoras = (horas) => new Date(Date.now() - horas * 60 * 60 * 1000);
+const comoFecha = (valor) => (valor instanceof Date ? valor : f(valor));
+const ADMIN_ID = 1;
 
 const COTIZACIONES = [
   {
@@ -40,6 +47,12 @@ const COTIZACIONES = [
     items: [[1, 1, 10.0], [2, 1, 15.0], [4, 1, 35.0]],
     notificacion: null,
   },
+  {
+    // TT-2026-0043 (Esperando aprobación): Pendiente reciente, lista para aprobar
+    id: 6, ticket_id: 8, estado: 'Pendiente', fecha: haceHoras(2), respuesta: null,
+    items: [[1, 1, 10.0], [5, 1, 55.0]],
+    notificacion: null,
+  },
 ];
 
 module.exports = {
@@ -49,8 +62,8 @@ module.exports = {
     const notificaciones = [];
 
     for (const cot of COTIZACIONES) {
-      const fecha = f(cot.fecha);
-      const actualizada = cot.respuesta ? f(cot.respuesta) : fecha;
+      const fecha = comoFecha(cot.fecha);
+      const actualizada = cot.respuesta ? comoFecha(cot.respuesta) : fecha;
       const total = cot.items.reduce((suma, [, cantidad, precio]) => suma + cantidad * precio, 0);
 
       cotizaciones.push({
@@ -66,10 +79,13 @@ module.exports = {
       }
 
       if (cot.notificacion) {
-        notificaciones.push({
-          ticket_id: cot.ticket_id, ...cot.notificacion, fecha: actualizada,
-          created_at: actualizada, updated_at: actualizada,
-        });
+        // El mismo aviso para el técnico asignado y para el admin (NotificacionListener hace lo mismo)
+        for (const usuarioId of [cot.notificacion.usuario_id, ADMIN_ID]) {
+          notificaciones.push({
+            ticket_id: cot.ticket_id, ...cot.notificacion, usuario_id: usuarioId, tipo: 'cotizacion_respondida',
+            fecha: actualizada, created_at: actualizada, updated_at: actualizada,
+          });
+        }
       }
     }
 

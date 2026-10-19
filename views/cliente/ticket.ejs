@@ -34,6 +34,50 @@
   <% }) %>
 </ul>
 
+<% if (cotizacion) { %>
+  <div class="section-header">
+    <h2>Cotización</h2>
+    <% if (cotizacion.estado !== 'Pendiente') { %>
+      <p class="text-small">Estado: <%- include('../partials/badgeEstado', { estado: cotizacion.estado }) %></p>
+    <% } %>
+  </div>
+
+  <div class="detail-grid">
+    <div class="detail-card">
+      <p class="text-small">Equipo: <%= ticket.equipo %> · Enviada el <%= formatoFecha(cotizacion.fecha) %></p>
+      <div class="detail-list">
+        <% cotizacion.items.forEach((item) => { %>
+          <div>
+            <span class="detail-label"><%= item.catalogoItem ? item.catalogoItem.nombre : 'Ítem' %><% if (item.cantidad > 1) { %> × <%= item.cantidad %><% } %></span>
+            <span class="detail-value"><%= formatoPrecio(item.subtotal) %></span>
+          </div>
+        <% }) %>
+        <div><span class="detail-label"><strong>Total</strong></span><span class="detail-value"><strong><%= formatoPrecio(cotizacion.total) %></strong></span></div>
+      </div>
+    </div>
+  </div>
+
+  <% if (cotizacion.estado === 'Pendiente') { %>
+    <div class="state-actions acciones-respuesta">
+      <form method="post" action="/portal/cotizaciones/<%= cotizacion.id %>/aprobar"
+            data-confirmar="¿Aprobar la cotización por <%= formatoPrecio(cotizacion.total) %>? El técnico comenzará la reparación.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-primary">Aprobar cotización</button>
+      </form>
+      <form class="form-rechazo" method="post" action="/portal/cotizaciones/<%= cotizacion.id %>/rechazar"
+            data-confirmar="¿Rechazar la cotización? El servicio se cancelará y podrás retirar tu equipo.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group">
+          <label for="motivo">Motivo del rechazo (opcional)</label>
+          <textarea id="motivo" name="motivo" rows="2" maxlength="200" placeholder="Ej. El precio es más alto de lo esperado"><%= datos.motivo || '' %></textarea>
+          <%- include('../partials/errorCampo', { campo: 'motivo' }) %>
+        </div>
+        <button type="submit" class="btn btn-destructive">Rechazar cotización</button>
+      </form>
+    </div>
+  <% } %>
+<% } %>
+
 <form class="acciones-portal" method="post" action="/portal/salir">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <button type="submit" class="btn btn-secondary">Salir</button>

@@ -6,10 +6,19 @@
  * usuario_id = null en el historial indica que el cambio lo hizo el cliente desde el portal.
  *
  * Usuarios: 1 admin, 2 Luis Fernández, 3 Jorge Pineda.
- * Equipos: 1 Dell (María), 2 HP (Carlos), 3 Lenovo (Ana), 4 Epson (Ana).
+ * Equipos: 1 Dell (María), 2 HP (Carlos), 3 Lenovo (Ana), 4 Epson (Ana), 5 HP (José).
+ * TT-2026-0043 usa fechas relativas al momento de sembrar: su cotización Pendiente
+ * siempre está "al día" (lista para aprobar en la demo), mientras que la de
+ * TT-2026-0040 es de septiembre y siempre aparece como "Pendiente de respuesta" (RN-05).
  * fecha_estimada (SC-03): fecha de entrega prometida al cliente; el ticket cancelado no tiene.
  */
 const f = (fechaHora) => new Date(`${fechaHora}:00-06:00`);
+/** Fecha relativa a "ahora" (horas hacia atrás). */
+const haceHoras = (horas) => new Date(Date.now() - horas * 60 * 60 * 1000);
+/** "AAAA-MM-DD" dentro de N días (hora de El Salvador). */
+const enDias = (dias) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/El_Salvador' })
+  .format(new Date(Date.now() + dias * 24 * 60 * 60 * 1000));
+const comoFecha = (valor) => (valor instanceof Date ? valor : f(valor));
 
 const TICKETS = [
   {
@@ -93,6 +102,17 @@ const TICKETS = [
     historial: [[null, 'Recibido', 1, '2026-09-12T16:10']],
     fotos: ['/img/equipo-placeholder-2.svg'],
   },
+  {
+    id: 8, folio: 'TT-2026-0043', fecha_estimada: enDias(5), equipo_id: 5, tecnico_id: 2, estado: 'Esperando_aprobacion',
+    diagnostico_inicial: 'El disco duro hace ruido y el sistema tarda varios minutos en iniciar.',
+    fecha_ingreso: haceHoras(50), fecha_entrega: null,
+    historial: [
+      [null, 'Recibido', 2, haceHoras(50)],
+      ['Recibido', 'Diagnosticado', 2, haceHoras(26)],
+      ['Diagnosticado', 'Esperando_aprobacion', 2, haceHoras(2)],
+    ],
+    fotos: ['/img/equipo-placeholder-1.svg'],
+  },
 ];
 
 module.exports = {
@@ -102,7 +122,7 @@ module.exports = {
     const fotos = [];
 
     for (const { historial: cambios, fotos: urls, ...ticket } of TICKETS) {
-      const ultimaFecha = f(cambios[cambios.length - 1][3]);
+      const ultimaFecha = comoFecha(cambios[cambios.length - 1][3]);
       tickets.push({ ...ticket, created_at: ticket.fecha_ingreso, updated_at: ultimaFecha });
 
       for (const [estadoAnterior, estadoNuevo, usuarioId, fecha] of cambios) {
@@ -111,9 +131,9 @@ module.exports = {
           estado_anterior: estadoAnterior,
           estado_nuevo: estadoNuevo,
           usuario_id: usuarioId,
-          fecha: f(fecha),
-          created_at: f(fecha),
-          updated_at: f(fecha),
+          fecha: comoFecha(fecha),
+          created_at: comoFecha(fecha),
+          updated_at: comoFecha(fecha),
         });
       }
 

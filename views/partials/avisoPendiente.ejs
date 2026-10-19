@@ -1,0 +1,2 @@
+<%# RN-05: badge "Pendiente de respuesta" si la cotización Pendiente superó DIAS_LIMITE_COTIZACION. Uso: include('../partials/avisoPendiente', { fecha }) %>
+<% if (locals.fecha && pendienteDeRespuesta(fecha)) { %> <span class="badge badge-ambar" title="Enviada hace <%= diasDesde(fecha) %> días">Pendiente de respuesta</span><% } %>

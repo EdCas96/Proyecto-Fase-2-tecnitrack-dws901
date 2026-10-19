@@ -48,6 +48,12 @@ const ETIQUETA_ESTADO = Object.freeze({
   Esperando_repuesto: 'Esperando repuesto',
 });
 
+/**
+ * Tipos de notificación (SC-06). Las migraciones guardan su propia copia.
+ * cotizacion_respondida: el cliente aprobó o rechazó (alerta del dashboard del técnico, HU-10).
+ */
+const TIPOS_NOTIFICACION = Object.freeze(['cotizacion_respondida', 'ticket_asignado', 'ticket_cancelado', 'ticket_estado']);
+
 const TIPOS_CATALOGO = Object.freeze(['Servicio', 'Repuesto']);
 
 const TIPOS_EQUIPO = Object.freeze(['Laptop', 'Computadora de escritorio', 'Impresora', 'Otro']);
@@ -69,6 +75,7 @@ module.exports = {
   INICIO_POR_ROL,
   ESTADOS_TICKET,
   ESTADOS_COTIZACION,
+  TIPOS_NOTIFICACION,
   COLOR_ESTADO,
   ETIQUETA_ESTADO,
   TIPOS_CATALOGO,

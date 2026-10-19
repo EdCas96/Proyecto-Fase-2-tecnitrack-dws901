@@ -7,6 +7,8 @@ const CLIENTES = [
   { id: 1, nombre: 'María Elena Hernández', telefono: '7123-4567', correo: 'maria.hernandez@example.com' },
   { id: 2, nombre: 'Carlos Alberto Ramírez', telefono: '7234-8912', correo: 'carlos.ramirez@example.com' },
   { id: 3, nombre: 'Ana Lucía Martínez', telefono: '7345-6720', correo: 'ana.martinez@example.com' },
+  // Paso 7: dueño del ticket con la cotización Pendiente lista para aprobar en la demo
+  { id: 4, nombre: 'José Antonio Pérez', telefono: '7456-1230', correo: 'jose.perez@example.com' },
 ];
 
 const EQUIPOS = [
@@ -14,6 +16,7 @@ const EQUIPOS = [
   { id: 2, cliente_id: 2, tipo: 'Computadora de escritorio', marca: 'HP', modelo: 'Pavilion TP01', numero_serie: 'HP-55210' },
   { id: 3, cliente_id: 3, tipo: 'Laptop', marca: 'Lenovo', modelo: 'ThinkPad E14', numero_serie: 'LN-73104' },
   { id: 4, cliente_id: 3, tipo: 'Impresora', marca: 'Epson', modelo: 'L3250', numero_serie: 'EP-40218' },
+  { id: 5, cliente_id: 4, tipo: 'Laptop', marca: 'HP', modelo: '15-dy2021', numero_serie: 'HP-77001' },
 ];
 
 module.exports = {

@@ -1,0 +1,49 @@
+<%# Notificaciones del usuario (HU-10): no leídas primero %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1>Notificaciones</h1>
+</div>
+
+<div class="page-actions">
+  <p class="text-small"><%= notificacionesNoLeidas %> sin leer de <%= paginacion.total %></p>
+  <% if (notificacionesNoLeidas) { %>
+    <%- include('../partials/botonAccion', { accion: '/notificaciones/leidas', metodo: 'PATCH', texto: 'Marcar todas como leídas' }) %>
+  <% } %>
+</div>
+
+<div class="table-wrapper">
+  <table class="table-standard">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Mensaje</th>
+        <th>Ticket</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% paginacion.registros.forEach((notificacion) => { %>
+        <tr class="<%= notificacion.leida ? 'fila-inactiva' : 'fila-no-leida' %>">
+          <td><%= formatoFechaHora(notificacion.fecha) %></td>
+          <td><%= notificacion.mensaje %></td>
+          <td><%= notificacion.ticket ? notificacion.ticket.folio : '—' %></td>
+          <td><span class="badge badge-<%= notificacion.leida ? 'gris' : 'azul' %>"><%= notificacion.leida ? 'Leída' : 'Nueva' %></span></td>
+          <td>
+            <%- include('../partials/botonAccion', {
+              accion: `/notificaciones/${notificacion.id}/leida`, metodo: 'PATCH', texto: 'Ver ticket', campos: { ir_a_ticket: '1' },
+            }) %>
+            <% if (!notificacion.leida) { %>
+              <%- include('../partials/botonAccion', { accion: `/notificaciones/${notificacion.id}/leida`, metodo: 'PATCH', texto: 'Marcar como leída' }) %>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!paginacion.registros.length) { %>
+        <tr><td colspan="5" class="tabla-vacia">No tienes notificaciones.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/paginacion', { rutaBase: '/notificaciones' }) %>

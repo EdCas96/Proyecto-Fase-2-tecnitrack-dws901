@@ -996,3 +996,64 @@ a.kpi-card:focus-visible {
 [hidden] {
   display: none !important;
 }
+
+/* --------------------------------------------------------------------------
+   23. COTIZACIONES Y NOTIFICACIONES
+   Campana con contador, alertas RN-05, respuesta del cliente
+   -------------------------------------------------------------------------- */
+.navbar-campana {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.contador-notificaciones {
+  min-width: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background-color: var(--color-rojo);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.25rem;
+}
+
+.fila-no-leida td {
+  font-weight: 600;
+}
+
+.kpi-alerta .kpi-value {
+  color: var(--color-ambar-text);
+}
+
+.seccion-cotizacion .alert {
+  margin-top: 0;
+}
+
+.texto-tabla {
+  caption-side: top;
+  text-align: left;
+  padding: 0.5rem 1rem;
+}
+
+.subtitulo-seccion {
+  margin: 1rem 1.25rem 0.5rem;
+  font-size: var(--font-size-body);
+}
+
+.acciones-respuesta {
+  align-items: flex-start;
+}
+
+.form-rechazo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 260px;
+}
+
+.tabla-cotizacion select {
+  min-width: 260px;
+}

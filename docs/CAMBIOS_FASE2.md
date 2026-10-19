@@ -171,6 +171,45 @@ El índice único `uq_tickets_folio` sigue como respaldo. La migración iniciali
 
 ---
 
+## SC-06 — Tipo de notificación
+
+| Campo | Detalle |
+|---|---|
+| **Fecha** | 20/10/2026 |
+| **Solicitante** | Eduardo Francisco Castro Ramírez (desarrollador) |
+| **Tipo** | Ampliación del modelo de datos |
+| **Estado** | Aprobado e implementado (`migrations/20261020000015-agregar-tipo-notificaciones.js`) |
+
+### Situación anterior
+HU-10 pide una alerta visible en el dashboard del técnico cuando un cliente responde una cotización. La tabla `notificaciones` solo tenía el texto del mensaje: distinguir las respuestas de cotización de otros avisos (asignación, cancelación) obligaba a buscar palabras en el mensaje.
+
+### Cambio
+Nueva columna `tipo` ENUM(`cotizacion_respondida`, `ticket_asignado`, `ticket_cancelado`, `ticket_estado`), **nullable** (las notificaciones anteriores quedan sin tipo). La asigna `NotificacionListener` según el evento que originó el aviso.
+
+### Impacto
+- **Tablas:** `notificaciones` (+1 columna nullable).
+- **Historias:** HU-10. **Requerimiento:** RF-12.
+- **Código:** `models/Notificacion.js`, `NotificacionService.contarNoLeidas(usuario, { tipo })`, dashboard del técnico.
+
+---
+
+## DT-01 — Cotización adicional durante la reparación (decisión técnica)
+
+| Campo | Detalle |
+|---|---|
+| **Fecha** | 20/10/2026 |
+| **Tipo** | Ajuste del flujo de estados (sin cambio en la base de datos) |
+| **Estado** | Implementado (`services/MaquinaEstadosTicket.js`, `services/CotizacionService.js`) |
+
+El flujo original solo permitía cotizar desde `Diagnosticado`. En la práctica, al abrir el equipo puede aparecer otra falla (un repuesto adicional). Se agregan dos transiciones **solo invocables por `CotizacionService`** (origen `cotizacion`):
+
+- `En_reparacion` → `Esperando_aprobacion`
+- `Esperando_repuesto` → `Esperando_aprobacion`
+
+Al responder el cliente rige lo mismo que con la primera cotización (RN-06): aprobar → `En_reparacion`; rechazar → `Cancelado`. RN-09 sigue aplicando: no puede haber dos cotizaciones Pendientes. El historial registra "Cotización adicional enviada al cliente por $X".
+
+---
+
 ## Ajustes menores del modelo (sin cambio de alcance)
 
 Decisiones de diseño tomadas al implementar el modelo de la Fase 1. No cambian requerimientos; se registran para la trazabilidad.

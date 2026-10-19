@@ -18,7 +18,7 @@ routes  ->  middlewares  ->  controllers  ->  services  ->  models  ->  MySQL
 | `routes/` | `index.js` monta un router por módulo en su prefijo (tabla en el propio archivo). Cada router asocia URL y método con sus middlewares y su controlador, y envuelve los controladores con `asyncHandler`. |
 | `middlewares/` | Lógica transversal antes del controlador: `logger.js`, `csrf.js`, `variablesVistas.js`, `validar.js` (express-validator), `upload.js` (Multer), `notFound.js`, `errorHandler.js`, `auth.js` (`requireAuth`, `checkRole`, `soloLecturaPara`, `requireCliente`, `redirectIfAuth`, `sinCache`) y `limitarIntentos.js` (rate limit del login y del portal). |
 | `controllers/` | Leen la petición (`req.params`, `req.body`, `req.session`), llaman al servicio y responden (render o redirección). **No** contienen reglas de negocio ni consultas a modelos. |
-| `services/` | Lógica de negocio como **clases** (`TicketService`, `CotizacionService`, `FolioService`, `AuthService`, `MaquinaEstadosTicket`…). Aplican las reglas RN-xx, abren transacciones y lanzan errores propios. |
+| `services/` | Lógica de negocio como **clases** (`TicketService`, `CotizacionService`, `FolioService`, `AuthService`, `NotificacionService`, `MaquinaEstadosTicket`…). Aplican las reglas RN-xx, abren transacciones, lanzan errores propios y emiten eventos del dominio. `services/eventos/`: bus de eventos (`busEventos.js`) y `NotificacionListener.js`. |
 | `validators/` | Reglas de express-validator por módulo (ej. `authValidators.js`: login y portal), que las rutas pasan a `validar(...)`. |
 | `models/` | Modelos de Sequelize como clases (`static inicializar()` y `static asociar()`): columnas, validaciones con mensajes en español y asociaciones. `models/index.js` los registra y exporta junto con `sequelize`. |
 | `migrations/` | Cambios versionados del esquema de la base de datos (crear tablas, índices, llaves foráneas). |
@@ -98,6 +98,30 @@ Los servicios **lanzan** estos errores. `asyncHandler` los atrapa, también los 
    - **`AuthError` desde el navegador:** deja el mensaje en flash y redirige a `/login`.
    - **Lo demás:** renderiza `views/errores/<código>.ejs` con el layout.
 3. **Nunca envía el stack** al navegador ni al cliente JSON, en ningún entorno. Los 500 se registran con su stack en consola (también en pruebas, para que un fallo no pase en silencio); los 4xx solo en desarrollo.
+
+## Eventos y notificaciones
+
+Los servicios no crean notificaciones directamente: **emiten eventos del dominio** en un bus (`services/eventos/busEventos.js`, una instancia de `EventEmitter` de Node) y un listener (`NotificacionListener`) decide a quién avisar. Así `TicketService` y `CotizacionService` no dependen de las notificaciones, y agregar otro efecto (por ejemplo, un correo) sería registrar otro listener sin tocar los servicios.
+
+| Evento | Lo emite | Datos principales | Notificación que crea el listener |
+|---|---|---|---|
+| `cotizacion.creada` | `CotizacionService.crear` | ticket, técnico, si es adicional | ninguna (el cliente la ve en el portal) |
+| `cotizacion.respondida` | `CotizacionService.responder` | ticket, técnico, aprobada, motivo | al técnico asignado y a todos los admins activos (`tipo: cotizacion_respondida`) |
+| `ticket.estadoCambiado` | `TicketService.cambiarEstado` | estado anterior y nuevo, quién lo hizo | al técnico asignado, solo si el cambio lo hizo el admin |
+| `ticket.reasignado` | `TicketService.reasignar` y `crear` (cuando el admin asigna) | técnico nuevo y anterior | al técnico que recibe el ticket |
+| `ticket.cancelado` | `TicketService.cambiarEstado` (cancelación del admin) | motivo | al técnico asignado |
+
+**Solo después del commit.** Los servicios emiten con `bus.emitirAlConfirmar(transaction, evento, datos)`, que registra el evento en `transaction.afterCommit`. Si la transacción se revierte (una regla de negocio, un error de la base, otra respuesta del cliente que llegó primero), el evento nunca se emite y no se notifica un cambio que no ocurrió. Lo verifica la prueba «un error dentro de la transacción no deja cambios ni genera notificaciones».
+
+**Asíncrono.** `EventEmitter` llama a los listeners de forma síncrona, pero el trabajo del listener (guardar notificaciones) es asíncrono y no bloquea la respuesta al usuario. `NotificacionListener` guarda la promesa de cada tarea en curso para que las pruebas esperen a que termine (`NotificacionListener.esperar()`) y registra en consola los errores sin tumbar la petición que originó el evento. Se registra una sola vez, al cargar `app.js`.
+
+**Contador en vivo.** La barra superior muestra las notificaciones sin leer (`requireAuth` las cuenta en cada página) y `public/js/notificaciones.js` consulta `GET /notificaciones/no-leidas` cada 30 segundos para actualizarlo sin recargar.
+
+## Cotizaciones: total y respuesta del cliente
+
+- **El total se calcula siempre en el servidor** (`CotizacionService.prepararLineas`): el formulario solo manda ítems y cantidades; el precio unitario se copia del `precio_referencia` del catálogo **activo** en ese momento y la suma se hace en **centavos enteros** (`utils/cotizaciones.js`), porque con decimales binarios 3 × 0.10 da 0.30000000000000004. Cualquier `total` o `precio_unitario` enviado se ignora.
+- **Respuesta del cliente con bloqueo de fila.** `CotizacionService.responder` lee la cotización con `SELECT ... FOR UPDATE`: si llegan dos respuestas a la vez (doble clic, dos pestañas), la segunda espera a que la primera termine y luego la encuentra respondida, con el error «Esta cotización ya fue aprobada. No se puede responder dos veces.».
+- **Cotización adicional (decisión técnica).** Si el diagnóstico cambia durante la reparación, se puede cotizar desde `En_reparacion` o `Esperando_repuesto`: `MaquinaEstadosTicket` tiene esas transiciones hacia `Esperando_aprobacion` con origen `cotizacion`, así que solo `CotizacionService.crear` puede provocarlas (como cambio manual se rechazan).
 
 ## Recorrido de una petición
 

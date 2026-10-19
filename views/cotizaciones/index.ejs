@@ -1,0 +1,59 @@
+<%# Listado de cotizaciones (admin: todas; técnico: las de sus tickets). ?vencidas=1: "Pendiente de respuesta" (RN-05) %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1>Cotizaciones</h1>
+</div>
+
+<form class="table-filters" method="get" action="/cotizaciones">
+  <div class="form-group">
+    <label for="estado">Estado</label>
+    <select id="estado" name="estado">
+      <option value="">Todas</option>
+      <% ['Pendiente', 'Aprobada', 'Rechazada'].forEach((estado) => { %>
+        <option value="<%= estado %>"<%= filtros.estado === estado ? ' selected' : '' %>><%= estado %></option>
+      <% }) %>
+    </select>
+  </div>
+  <label class="opciones-modo"><input type="checkbox" name="vencidas" value="1"<%= filtros.vencidas ? ' checked' : '' %>> Solo pendientes de respuesta</label>
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  <% if (filtros.estado || filtros.vencidas) { %><a class="btn btn-secondary" href="/cotizaciones">Limpiar</a><% } %>
+</form>
+
+<div class="page-actions">
+  <p class="text-small"><%= paginacion.total %> cotización<%= paginacion.total === 1 ? '' : 'es' %></p>
+</div>
+
+<div class="table-wrapper">
+  <table class="table-standard">
+    <thead>
+      <tr>
+        <th>Ticket</th>
+        <th>Cliente</th>
+        <th>Fecha</th>
+        <th>Total</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% paginacion.registros.forEach((cotizacion) => { %>
+        <tr>
+          <td><%= cotizacion.ticket.folio %></td>
+          <td><%= cotizacion.ticket.equipo.cliente.nombre %></td>
+          <td><%= formatoFecha(cotizacion.fecha) %></td>
+          <td><%= formatoPrecio(cotizacion.total) %></td>
+          <td>
+            <%- include('../partials/badgeEstado', { estado: cotizacion.estado }) %>
+            <% if (cotizacion.estado === 'Pendiente' && pendienteDeRespuesta(cotizacion.fecha)) { %><span class="badge badge-ambar">Pendiente de respuesta</span><% } %>
+          </td>
+          <td><a class="btn btn-secondary" href="/tickets/<%= cotizacion.ticket.id %>">Ver ticket</a></td>
+        </tr>
+      <% }) %>
+      <% if (!paginacion.registros.length) { %>
+        <tr><td colspan="6" class="tabla-vacia">No hay cotizaciones que coincidan con el filtro.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/paginacion', { rutaBase: '/cotizaciones' }) %>

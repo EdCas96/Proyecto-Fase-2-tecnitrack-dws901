@@ -39,12 +39,22 @@ Problemas encontrados durante el desarrollo y cómo se resolvieron.
 | 31 | 19/10/2026 | 6 · Tickets | Al editar archivos con scripts de la terminal (Git Bash en Windows), algunas barras invertidas de expresiones regulares se perdieron (`\d` quedó como `d`), igual que en la incidencia 20. Afectó a `formatoFecha` y a una prueba de `FolioService`. | Se detectó al probar cada cambio; los archivos con expresiones regulares se editan directamente y no con scripts de la terminal. |
 | 32 | 19/10/2026 | 6 · Tickets | Una prueba de búsqueda fallaba porque el *placeholder* del buscador ("Ej. TT-2026-0040 o Ana") contiene un folio. | Las pruebas revisan las celdas de la tabla (`<td>TT-...</td>`), no el texto de toda la página. |
 | 33 | 19/10/2026 | 6 · Tickets | `npm run db:reset` falló con un error de llave foránea (`notificaciones_ibfk_1`) después de usar la aplicación: los seeders, al revertirse, solo borran sus propias filas, y las notificaciones que la app creó sobre un ticket de ejemplo (al reasignarlo y cancelarlo) impedían borrar ese ticket. La base quedó a medio revertir. | `db:reset` ahora borra y vuelve a crear la base (`db:drop` + `db:create` + `db:migrate` + `db:seed:all`), así no depende de qué datos haya creado la aplicación; también reemplaza la solución de la incidencia 6. Se verificó con la base que había fallado. |
+| 34 | 20/10/2026 | 7 · Cotizaciones | Las notificaciones las crea el listener **después** del commit y de forma asíncrona (EventEmitter no espera a sus manejadores), así que las pruebas a veces revisaban la base antes de que existieran. | `NotificacionListener` guarda la promesa de cada tarea en curso y expone `esperar()`; las pruebas la llaman antes de contar notificaciones. En la aplicación el aviso aparece en milisegundos y el contador se actualiza con la consulta de cada 30 s. |
+| 35 | 20/10/2026 | 7 · Cotizaciones | Con RN-09 revisado después del estado del ticket, intentar una segunda cotización daba "Solo se puede cotizar un ticket Diagnosticado…" en lugar de explicar que ya hay una Pendiente (el ticket ya está en Esperando aprobación). | `CotizacionService.crear` revisa primero si hay una cotización Pendiente. |
+| 36 | 20/10/2026 | 7 · Cotizaciones | La primera versión de `editar` pedía `FOR UPDATE` sobre una consulta con `include` del ticket usando la opción `lock.of`, que solo existe en PostgreSQL. | Se bloquea solo la fila de la cotización y el ticket se lee aparte. |
+| 37 | 20/10/2026 | 7 · Cotizaciones | `CotizacionService` necesita `TicketService` (permisos) y el listado de tickets necesitaba una subconsulta de cotizaciones: definirla en `CotizacionService` creaba una dependencia circular entre los dos módulos. | La subconsulta "Pendiente desde" (RN-05) vive en `TicketService`; el cálculo de vencimiento es una función pura en `utils/cotizaciones.js` que usan ambos y las vistas. |
+| 38 | 20/10/2026 | 7 · Cotizaciones | Para la demo hacía falta una cotización Pendiente que **no** estuviera vencida, pero los seeders usan fechas fijas de septiembre y cualquier Pendiente aparece como "Pendiente de respuesta". | El ticket nuevo TT-2026-0043 se siembra con fechas relativas al momento de ejecutar el seeder (cotización enviada "hace 2 horas"). Las pruebas que dependían de la cantidad de tickets, clientes y del primer folio libre se ajustaron. |
 
 ## Limitaciones conocidas
 
 Comportamientos o restricciones que se aceptan en esta fase.
 
-- **Esperando aprobación todavía no se alcanza desde la interfaz:** el ticket entra a ese estado al crear una cotización y sale con la respuesta del cliente; las dos cosas llegan en el paso 7. Mientras tanto, la máquina de estados las rechaza como transiciones manuales con un mensaje que lo explica.
+- **Rechazar una cotización adicional cancela el ticket completo,** igual que rechazar la primera (RN-06 tal como está escrita). Si el cliente solo rechaza el trabajo extra, hoy el admin tendría que crear otro ticket; una mejora sería volver a «En reparación» con la cotización anterior aprobada.
+- **Al editar una cotización Pendiente se toman los precios del catálogo de ese momento,** no los de la versión original.
+- **Las notificaciones solo son internas** (no hay correo ni SMS) y el contador se actualiza cada 30 segundos, no al instante.
+- **El aviso "Pendiente de respuesta" se calcula al mostrar la página:** no hay tareas programadas, porque RN-05 pide solo mostrarlo, nunca cancelar.
+- **`database/tecnitrack.sql` trae las fechas de TT-2026-0043 del momento en que se generó;** con `npm run db:reset` se siembran relativas a ese momento.
+
 - **La fecha estimada solo se captura al crear el ticket;** todavía no hay pantalla para cambiarla después.
 - **El select de clientes del nuevo ticket carga todos los clientes** y los filtra en el navegador. Es rápido para el tamaño de un taller (cientos de clientes); con miles convendría una búsqueda en el servidor.
 - **Las fotos no se redimensionan:** se guardan tal como se suben (máximo `MAX_FOTO_MB` cada una) y la galería las muestra reducidas con CSS.
@@ -80,10 +90,11 @@ Tareas identificadas que aún no se han realizado.
 - [ ] Probar la importación de `database/tecnitrack.sql` en MySQL 8.
 - [x] Autenticación (Paso 4): `POST /login` y `POST /logout`, middlewares de sesión y rol, y rate limit en el login y el portal. `iniciarSesion()` y `crearAgenteAutenticado()` ya se usan en `tests/integration/auth.test.js`.
 - [x] CRUD de usuarios (HU-09): crear y restablecer contraseña usan `AuthService.hashPassword` (que aplica `validarFortaleza`).
-- [ ] Usar `CatalogoService.listarActivos` en el formulario de cotización (paso 7, HU-03).
-- [ ] Paso 7: al crear una cotización, pasar el ticket a Esperando aprobación (`MaquinaEstadosTicket` con origen `cotizacion`) y, con la respuesta del cliente, a En reparación o Cancelado (origen `cliente`, historial con `usuario_id` NULL).
-- [ ] Pantalla de notificaciones del técnico (HU-10): las notificaciones de asignación y cancelación ya se guardan.
+- [x] Usar `CatalogoService.listarActivos` en el formulario de cotización (paso 7, HU-03).
+- [x] Paso 7: cotizar pasa el ticket a Esperando aprobación y la respuesta del cliente lo lleva a En reparación o Cancelado (historial con `usuario_id` NULL).
+- [x] Pantalla de notificaciones (HU-10) con contador en la barra y alerta en el dashboard del técnico.
 - [ ] Permitir editar la fecha estimada de un ticket abierto.
+- [ ] Reportes (HU-08): tickets por técnico y tiempo promedio Recibido → Entregado (el historial ya tiene los datos).
 - [ ] Obligar al técnico a cambiar la contraseña temporal en su primer inicio de sesión (no lo pide la Fase 2; hoy el admin se la comunica).
-- [ ] Portal: mostrar la cotización y aprobar o rechazar (el historial y la fecha estimada ya se muestran) (HU-05, RN-05, RN-06).
+- [x] Portal: mostrar la cotización y aprobar o rechazar (HU-05).
 - [x] Versionar el prototipo y el Documento Maestro de la Fase 1: se movieron a `docs/fase1/prototipo/` y `docs/fase1/` para dejar limpia la raíz del proyecto.
