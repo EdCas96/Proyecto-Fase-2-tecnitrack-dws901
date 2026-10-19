@@ -25,6 +25,12 @@ Problemas encontrados durante el desarrollo y cómo se resolvieron.
 | 17 | 18/10/2026 | 4 · Autenticación | Los routers montados en el Paso 3 eran públicos y sus pruebas esperaban 200; al protegerlos, las pruebas antiguas de migas, menú y method-override fallarían o probarían otra cosa (el 401 en lugar del middleware). | Las pruebas sin sesión verifican ahora la redirección a `/login`; las de menú y migas pasaron a `auth.test.js` con sesión de admin, y la de method-override usa una ruta pública inexistente. |
 | 18 | 18/10/2026 | 4 · Autenticación | Al cerrar sesión con flash no se puede dejar el mensaje "Cerraste sesión": `session.destroy()` elimina la sesión donde se guardaría. | El logout redirige a `/login?sesion=cerrada` y el login muestra el mensaje a partir de ese parámetro. |
 | 19 | 18/10/2026 | 4 · Autenticación | Si el correo no existe, no hay hash con el cual comparar y la respuesta sería más rápida que con un correo real (permitiría adivinar qué correos están registrados midiendo el tiempo). | `AuthService.login` compara contra un hash señuelo cuando el correo no existe, así que `bcrypt.compare` siempre se ejecuta. |
+| 20 | 19/10/2026 | 5 · CRUD | Buscar `%` en clientes devolvía **todos** los registros: el escape de comodines de `LIKE` (`utils/texto.js`) había perdido las barras invertidas al escribirse el archivo, así que `%` y `_` seguían funcionando como comodines. Lo detectó la prueba «los comodines de LIKE se buscan como texto». | Se corrigió `escaparLike` (`replace(/[\\%_]/g, '\\$&')`) y la prueba unitaria verifica la salida exacta. |
+| 21 | 19/10/2026 | 5 · CRUD | `soloLecturaPara('tecnico')` deja pasar cualquier `GET`, así que el técnico podía abrir los **formularios** de nuevo y editar (aunque guardar ya respondía 403). | Las rutas `GET .../nuevo` y `GET .../:id/editar` llevan además `checkRole('admin')`. Lo verifican las pruebas «GET /clientes/nuevo responde 403», etc. |
+| 22 | 19/10/2026 | 5 · CRUD | Los errores del equipo en "Nuevo cliente" llegaban con el nombre de campo del modelo (`numero_serie`), pero en ese formulario el campo se llama `equipo_numero_serie`: el mensaje no aparecía junto al campo. | `ClienteService.crear` traduce el error del equipo y antepone `equipo_` a cada campo. |
+| 23 | 19/10/2026 | 5 · CRUD | Las columnas DECIMAL (precio) llegan como número (`45.5`) y no como texto (`'45.50'`), por `decimalNumbers: true` en `config/config.js`. Las primeras pruebas del catálogo esperaban texto. | Se mantiene la configuración (los cálculos de cotizaciones usarán números) y las vistas muestran el precio con `formatoPrecio` (`$45.50`). |
+| 24 | 19/10/2026 | 5 · CRUD | Para comprobar que el listado usa LIMIT/OFFSET se intentó capturar el SQL cambiando `sequelize.options.logging` en la prueba, pero Sequelize ya había copiado esa opción y no registró nada. | La prueba espía `Cliente.findAndCountAll` y verifica que recibe `{ limit: 10, offset: 20 }` y devuelve solo 10 filas. |
+| 25 | 19/10/2026 | 5 · CRUD | La prueba de "el técnico no ve botones" buscaba la palabra `Editar` en toda la página y fallaba porque otra prueba había creado un cliente llamado "Para Editar". | La prueba busca botones (`class="btn..."`), no texto suelto. |
 
 ## Limitaciones conocidas
 
@@ -34,7 +40,12 @@ Comportamientos o restricciones que se aceptan en esta fase.
 - **`database/tecnitrack.sql` se generó con MariaDB 10.4.** Se probó su importación en MariaDB; en MySQL 8 no se ha probado en esta máquina.
 - **Datos de ejemplo fieles al prototipo:** la laptop Dell (DL-88291) tiene a la vez el ticket TT-2026-0039 en estado Listo y el TT-2026-0042 en Recibido, tal como aparece en las pantallas de la Fase 1. Ninguna regla de negocio lo impide.
 - **La cotización Pendiente de ejemplo (TT-2026-0040) es del 12/09/2026,** así que siempre superará `DIAS_LIMITE_COTIZACION` y servirá para demostrar RN-05.
-- **Los módulos (salvo login, portal y paneles) siguen mostrando "en construcción",** pero ya están protegidos por sesión y rol según la matriz de permisos.
+- **Tickets, cotizaciones, reportes y notificaciones siguen mostrando "en construcción",** pero ya están protegidos por sesión y rol según la matriz de permisos.
+- **El teléfono del cliente acepta solo 8 dígitos con guion opcional** (`7123-4567` o `71234567`), como pide el formato de El Salvador; no acepta espacios ni el prefijo `+503`. Se guarda siempre como `0000-0000`. El modelo conserva una validación más flexible para los datos ya existentes.
+- **La regla "siempre queda un admin activo" no se puede alcanzar desde la interfaz** mientras solo exista un admin, porque antes se aplica "no puedes desactivarte a ti mismo". Se prueba directamente en `UsuarioService`. Tampoco se pueden crear admins desde la interfaz (solo técnicos, como pide HU-09).
+- **Los errores de un formulario se muestran dos veces:** un resumen en el aviso rojo superior y el mensaje junto a cada campo. Es intencional (el resumen ayuda con lectores de pantalla y en formularios largos).
+- **La confirmación antes de eliminar o desactivar usa `window.confirm`** (`public/js/confirmar.js`). Sin JavaScript el formulario se envía sin preguntar; las reglas de negocio del servidor siguen aplicándose.
+- **`GET /equipos` no tiene listado propio:** redirige a `/clientes`, porque los equipos se administran dentro del detalle de cada cliente (como en el prototipo).
 - **El filtro "el técnico solo ve sus tickets" (RN-02) aún no se aplica a nivel de registro:** hoy el técnico entra a `/tickets` porque su rol lo permite; el filtro por `tecnico_id` se agrega con `TicketService`.
 - **El rate limit guarda los contadores en memoria** (por proceso). Si el servidor se reinicia, se vacían; con varias instancias detrás de un balanceador habría que usar un almacén compartido. En producción, `trust proxy` permite identificar la IP real del cliente.
 - **El personal y el portal comparten la cookie de sesión:** si en el mismo navegador alguien con sesión de técnico entra al portal, su sesión de técnico se cierra (la sesión se regenera con solo `clienteTicketId`), y viceversa.
@@ -53,6 +64,8 @@ Tareas identificadas que aún no se han realizado.
 - [ ] `MaquinaEstadosTicket` y `TicketService` (RN-01, RN-02, RN-04), registrando cada cambio en `ticket_historiales`.
 - [ ] Probar la importación de `database/tecnitrack.sql` en MySQL 8.
 - [x] Autenticación (Paso 4): `POST /login` y `POST /logout`, middlewares de sesión y rol, y rate limit en el login y el portal. `iniciarSesion()` y `crearAgenteAutenticado()` ya se usan en `tests/integration/auth.test.js`.
-- [ ] CRUD de usuarios (HU-09): al crear o cambiar la contraseña de un técnico usar `AuthService.hashPassword` (que aplica `validarFortaleza`).
+- [x] CRUD de usuarios (HU-09): crear y restablecer contraseña usan `AuthService.hashPassword` (que aplica `validarFortaleza`).
+- [ ] Usar `CatalogoService.listarActivos` en el formulario de cotización (paso 7, HU-03).
+- [ ] Obligar al técnico a cambiar la contraseña temporal en su primer inicio de sesión (no lo pide la Fase 2; hoy el admin se la comunica).
 - [ ] Portal: mostrar historial y cotización, y aprobar o rechazar (HU-05, RN-05, RN-06).
 - [x] Versionar el prototipo y el Documento Maestro de la Fase 1: se movieron a `docs/fase1/prototipo/` y `docs/fase1/` para dejar limpia la raíz del proyecto.

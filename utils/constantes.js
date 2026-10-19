@@ -55,8 +55,14 @@ const TIPOS_EQUIPO = Object.freeze(['Laptop', 'Computadora de escritorio', 'Impr
 /** RN-03: TT-AAAA-NNNN (el correlativo puede crecer más allá de 4 dígitos). */
 const REGEX_FOLIO = /^TT-\d{4}-\d{4,}$/;
 
-/** Dígitos con guiones, espacios, paréntesis o "+" opcionales; ej. 7123-4567 o +503 7123 4567. */
+/**
+ * Validación del modelo: dígitos con guiones, espacios, paréntesis o "+" opcionales.
+ * Los formularios usan la regla más estricta REGEX_TELEFONO_SV.
+ */
 const REGEX_TELEFONO = /^\+?[0-9\s()-]{8,20}$/;
+
+/** Teléfono de El Salvador en formularios: 8 dígitos, con guion opcional (7123-4567 o 71234567). */
+const REGEX_TELEFONO_SV = /^\d{4}-?\d{4}$/;
 
 module.exports = {
   ROLES,
@@ -69,4 +75,5 @@ module.exports = {
   TIPOS_EQUIPO,
   REGEX_FOLIO,
   REGEX_TELEFONO,
+  REGEX_TELEFONO_SV,
 };

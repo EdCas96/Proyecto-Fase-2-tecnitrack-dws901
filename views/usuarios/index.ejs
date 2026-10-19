@@ -1,0 +1,64 @@
+<%# Usuarios del personal (prototipo: admin/usuarios.html). Nunca recibe password_hash (RN-08) %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1>Usuarios</h1>
+</div>
+
+<form class="table-filters" method="get" action="/usuarios" role="search">
+  <div class="form-group">
+    <label for="q">Buscar por nombre o correo</label>
+    <input type="search" id="q" name="q" value="<%= filtros.q %>" placeholder="Ej. Luis Fernández">
+  </div>
+  <button type="submit" class="btn btn-secondary">Buscar</button>
+  <% if (filtros.q) { %><a class="btn btn-secondary" href="/usuarios">Limpiar</a><% } %>
+</form>
+
+<div class="page-actions">
+  <p class="text-small"><%= paginacion.total %> usuario<%= paginacion.total === 1 ? '' : 's' %> <%= filtros.q ? 'encontrados' : 'registrados' %></p>
+  <a class="btn btn-primary" href="/usuarios/nuevo">Nuevo técnico</a>
+</div>
+
+<div class="table-wrapper">
+  <table class="table-standard">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Correo</th>
+        <th>Rol</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% paginacion.registros.forEach((usuario) => { %>
+        <% const esYo = usuario.id === usuarioActual.id; %>
+        <tr<% if (!usuario.activo) { %> class="fila-inactiva"<% } %>>
+          <td><%= usuario.nombre %><% if (esYo) { %> <span class="text-small">(tú)</span><% } %></td>
+          <td><%= usuario.correo %></td>
+          <td><%= usuario.rol === 'admin' ? 'Administrador' : 'Técnico' %></td>
+          <td><span class="badge badge-<%= usuario.activo ? 'verde' : 'gris' %>"><%= usuario.activo ? 'Activo' : 'Inactivo' %></span></td>
+          <td>
+            <a class="btn btn-secondary" href="/usuarios/<%= usuario.id %>/editar">Editar</a>
+            <a class="btn btn-secondary" href="/usuarios/<%= usuario.id %>/password">Restablecer contraseña</a>
+            <% if (usuario.activo && !esYo) { %>
+              <%- include('../partials/botonAccion', {
+                accion: `/usuarios/${usuario.id}/activo`, metodo: 'PATCH', texto: 'Desactivar', clase: 'btn-destructive',
+                campos: { activo: 'false' },
+                confirmar: `¿Desactivar a ${usuario.nombre}? No podrá iniciar sesión y, si está conectado, su sesión se cerrará.`,
+              }) %>
+            <% } else if (!usuario.activo) { %>
+              <%- include('../partials/botonAccion', {
+                accion: `/usuarios/${usuario.id}/activo`, metodo: 'PATCH', texto: 'Activar', campos: { activo: 'true' },
+              }) %>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!paginacion.registros.length) { %>
+        <tr><td colspan="5" class="tabla-vacia">Ningún usuario coincide con la búsqueda.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/paginacion', { rutaBase: '/usuarios' }) %>

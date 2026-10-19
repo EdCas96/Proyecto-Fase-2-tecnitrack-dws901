@@ -1,0 +1,41 @@
+<%# Nuevo ítem del catálogo o edición (prototipo: admin/catalogo.html, formulario "Nuevo ítem") %>
+<% const editando = Boolean(item); const v = (campo) => valorCampo(datos, item, campo); %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1><%= titulo %></h1>
+</div>
+
+<form class="form-container" method="post" action="<%= editando ? `/catalogo/${item.id}` : '/catalogo' %>" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <% if (editando) { %><input type="hidden" name="_method" value="PUT"><% } %>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" name="nombre" required maxlength="120" placeholder="Ej. Cambio de pantalla" value="<%= v('nombre') %>"<% if (errores.nombre) { %> aria-invalid="true" aria-describedby="error-nombre"<% } %>>
+      <%- include('../partials/errorCampo', { campo: 'nombre' }) %>
+    </div>
+    <div class="form-group">
+      <label for="tipo">Tipo</label>
+      <select id="tipo" name="tipo"<% if (errores.tipo) { %> aria-invalid="true" aria-describedby="error-tipo"<% } %>>
+        <% tipos.forEach((tipo) => { %>
+          <option value="<%= tipo %>"<%= v('tipo') === tipo ? ' selected' : '' %>><%= tipo %></option>
+        <% }) %>
+      </select>
+      <%- include('../partials/errorCampo', { campo: 'tipo' }) %>
+    </div>
+    <div class="form-group">
+      <label for="precio_referencia">Precio de referencia ($)</label>
+      <input type="number" id="precio_referencia" name="precio_referencia" required step="0.01" min="0.01" placeholder="Ej. 25.00" value="<%= v('precio_referencia') %>"<% if (errores.precio_referencia) { %> aria-invalid="true" aria-describedby="error-precio_referencia"<% } %>>
+      <%- include('../partials/errorCampo', { campo: 'precio_referencia' }) %>
+    </div>
+  </div>
+  <% if (editando) { %>
+    <p class="form-ayuda">Cambiar el precio no modifica las cotizaciones ya hechas: cada una guarda su propio precio.</p>
+  <% } %>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a class="btn btn-secondary" href="/catalogo">Cancelar</a>
+  </div>
+</form>

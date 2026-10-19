@@ -1,0 +1,84 @@
+<%# Catálogo de servicios y repuestos (prototipo: admin/catalogo.html) %>
+<% const admin = esAdmin(usuarioActual); %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1>Catálogo de servicios y repuestos</h1>
+</div>
+
+<form class="table-filters" method="get" action="/catalogo" role="search">
+  <div class="form-group">
+    <label for="tipo">Tipo</label>
+    <select id="tipo" name="tipo">
+      <option value="">Todos</option>
+      <% tipos.forEach((tipo) => { %>
+        <option value="<%= tipo %>"<%= filtros.tipo === tipo ? ' selected' : '' %>><%= tipo %></option>
+      <% }) %>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="q">Buscar por nombre</label>
+    <input type="search" id="q" name="q" value="<%= filtros.q %>" placeholder="Ej. Memoria RAM">
+  </div>
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  <% if (filtros.tipo || filtros.q) { %><a class="btn btn-secondary" href="/catalogo">Limpiar</a><% } %>
+</form>
+
+<div class="page-actions">
+  <p class="text-small"><%= paginacion.total %> ítem<%= paginacion.total === 1 ? '' : 's' %> <%= filtros.tipo || filtros.q ? 'encontrados' : 'registrados' %></p>
+  <% if (admin) { %><a class="btn btn-primary" href="/catalogo/nuevo">Nuevo ítem</a><% } %>
+</div>
+
+<div class="table-wrapper">
+  <table class="table-standard">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Tipo</th>
+        <th>Precio de referencia</th>
+        <th>Estado</th>
+        <% if (admin) { %><th>Acciones</th><% } %>
+      </tr>
+    </thead>
+    <tbody>
+      <% paginacion.registros.forEach((item) => { %>
+        <% const usado = Number(item.get('vecesUsado')) > 0; %>
+        <tr<% if (!item.activo) { %> class="fila-inactiva"<% } %>>
+          <td><%= item.nombre %></td>
+          <td><span class="badge badge-<%= colorTipoCatalogo(item.tipo) %>"><%= item.tipo %></span></td>
+          <td><%= formatoPrecio(item.precio_referencia) %></td>
+          <td><span class="badge badge-<%= item.activo ? 'verde' : 'gris' %>"><%= item.activo ? 'Activo' : 'Inactivo' %></span></td>
+          <% if (admin) { %>
+            <td>
+              <a class="btn btn-secondary" href="/catalogo/<%= item.id %>/editar">Editar</a>
+              <% if (item.activo) { %>
+                <%- include('../partials/botonAccion', {
+                  accion: `/catalogo/${item.id}/activo`, metodo: 'PATCH', texto: 'Desactivar', clase: 'btn-destructive',
+                  campos: { activo: 'false' },
+                  confirmar: `¿Desactivar "${item.nombre}"? Ya no se podrá agregar a nuevas cotizaciones.`,
+                }) %>
+              <% } else { %>
+                <%- include('../partials/botonAccion', {
+                  accion: `/catalogo/${item.id}/activo`, metodo: 'PATCH', texto: 'Activar', campos: { activo: 'true' },
+                }) %>
+              <% } %>
+              <% if (!usado) { %>
+                <%- include('../partials/botonAccion', {
+                  accion: `/catalogo/${item.id}`, metodo: 'DELETE', texto: 'Eliminar', clase: 'btn-destructive',
+                  confirmar: `¿Eliminar "${item.nombre}" del catálogo? Esta acción no se puede deshacer.`,
+                }) %>
+              <% } %>
+            </td>
+          <% } %>
+        </tr>
+      <% }) %>
+      <% if (!paginacion.registros.length) { %>
+        <tr><td colspan="<%= admin ? 5 : 4 %>" class="tabla-vacia">No hay ítems que coincidan con el filtro.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+<% if (admin) { %>
+  <p class="form-ayuda tarjeta-aviso">Los ítems que ya se usaron en una cotización no se pueden eliminar: se desactivan para que no aparezcan al cotizar.</p>
+<% } %>
+
+<%- include('../partials/paginacion', { rutaBase: '/catalogo' }) %>

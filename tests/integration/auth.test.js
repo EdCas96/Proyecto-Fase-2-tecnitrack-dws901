@@ -286,7 +286,7 @@ describe('Matriz de permisos (RN-02)', () => {
     expect(respuesta.text).toContain('No tienes permiso para acceder a esta sección');
   });
 
-  test.each(['/tickets', '/cotizaciones', '/notificaciones', '/clientes', '/equipos', '/catalogo'])(
+  test.each(['/tickets', '/cotizaciones', '/notificaciones', '/clientes', '/clientes/1', '/catalogo'])(
     'un técnico sí puede consultar %s',
     async (ruta) => {
       const { agente } = await crearAgenteAutenticado({ correo: USUARIOS.luis.correo });
@@ -308,19 +308,22 @@ describe('Matriz de permisos (RN-02)', () => {
     const { agente } = await crearAgenteAutenticado({ correo: USUARIOS.admin.correo });
     const protegidos = PREFIJOS.filter((prefijo) => !['/', '/portal'].includes(prefijo));
 
+    // /equipos no tiene listado propio: redirige al de clientes
     for (const prefijo of protegidos) {
       const respuesta = await agente.get(prefijo);
-      expect([prefijo, respuesta.status]).toEqual([prefijo, 200]);
+      const esperado = prefijo === '/equipos' ? 303 : 200;
+      expect([prefijo, respuesta.status]).toEqual([prefijo, esperado]);
     }
   });
 
   test('las escrituras del admin pasan el control de acceso', async () => {
     const { agente, csrfToken } = await crearAgenteAutenticado({ correo: USUARIOS.admin.correo });
 
-    // POST /clientes aún no existe: el 404 demuestra que no lo frenó el permiso
+    // Sin datos: el 400 de validación demuestra que el permiso lo dejó pasar
     const respuesta = await agente.post('/clientes').set('Accept', 'application/json').send({ _csrf: csrfToken });
 
-    expect(respuesta.status).toBe(404);
+    expect(respuesta.status).toBe(400);
+    expect(respuesta.body.error).toBe('ValidationError');
   });
 
   test('con sesión de admin, la barra muestra el submenú, las migas y el botón de cerrar sesión', async () => {

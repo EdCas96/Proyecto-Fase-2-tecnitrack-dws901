@@ -1,0 +1,14 @@
+<%#
+  Paginación de los listados (la consulta ya trae solo la página pedida).
+  Uso: include('../partials/paginacion', { paginacion, rutaBase: '/clientes', filtros: { q } })
+%>
+<% const { pagina, totalPaginas } = paginacion; %>
+<nav class="table-pagination" aria-label="Paginación">
+  <% if (pagina > 1) { %>
+    <a class="btn btn-secondary" href="<%= urlPagina(rutaBase, filtros, pagina - 1) %>" rel="prev">Anterior</a>
+  <% } %>
+  <span>Página <%= pagina %> de <%= totalPaginas %></span>
+  <% if (pagina < totalPaginas) { %>
+    <a class="btn btn-secondary" href="<%= urlPagina(rutaBase, filtros, pagina + 1) %>" rel="next">Siguiente</a>
+  <% } %>
+</nav>
