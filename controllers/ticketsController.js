@@ -1,5 +1,6 @@
 const TicketService = require('../services/TicketService');
 const MaquinaEstadosTicket = require('../services/MaquinaEstadosTicket');
+const CotizacionService = require('../services/CotizacionService');
 const ClienteService = require('../services/ClienteService');
 const EquipoService = require('../services/EquipoService');
 const { ESTADOS_TICKET, TIPOS_EQUIPO } = require('../utils/constantes');
@@ -74,6 +75,9 @@ class TicketsController {
       flujo: MaquinaEstadosTicket.FLUJO,
       permitidos: MaquinaEstadosTicket.transicionesManuales(ticket.estado),
       puedeCancelar: MaquinaEstadosTicket.puedeCancelar(ticket.estado, req.usuario.rol),
+      puedeCotizar: CotizacionService.puedeCotizar(ticket, req.usuario),
+      puedeEditarCotizacion: Boolean(ticket.cotizaciones[0] && ticket.cotizaciones[0].estado === 'Pendiente')
+        && (admin || ticket.tecnico_id === req.usuario.id),
       tecnicos: admin && !MaquinaEstadosTicket.esFinal(ticket.estado) ? await TicketService.tecnicosActivos() : [],
     });
   }

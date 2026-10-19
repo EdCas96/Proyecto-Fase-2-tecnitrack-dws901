@@ -1,0 +1,82 @@
+<%#
+  Sección de cotizaciones del detalle del ticket: la vigente con sus ítems, la alerta
+  "Pendiente de respuesta" (RN-05), los botones Generar/Editar y las cotizaciones anteriores.
+  Uso: include('../partials/cotizacionTicket', { ticket, puedeCotizar, puedeEditarCotizacion })
+%>
+<% const [vigente, ...anteriores] = ticket.cotizaciones; %>
+<div class="page-actions">
+  <h2>Cotización</h2>
+  <% if (puedeCotizar) { %>
+    <a class="btn btn-primary" href="/cotizaciones/nueva?ticket_id=<%= ticket.id %>"><%= vigente ? 'Generar cotización adicional' : 'Generar cotización' %></a>
+  <% } %>
+</div>
+
+<% if (!vigente) { %>
+  <section class="detail-card tarjeta-aviso">
+    <p class="text-small">Este ticket aún no tiene cotización.<% if (ticket.estado === 'Recibido') { %> Primero pásalo a «Diagnosticado».<% } %></p>
+  </section>
+<% } else { %>
+  <% if (vigente.estado === 'Pendiente' && pendienteDeRespuesta(vigente.fecha)) { %>
+    <div class="alert alert-confirmacion" role="status">
+      <strong>Pendiente de respuesta:</strong> el cliente no ha respondido desde hace <%= diasDesde(vigente.fecha) %> días.
+      La cotización sigue vigente; no se cancela automáticamente (RN-05).
+    </div>
+  <% } %>
+  <div class="table-wrapper">
+    <table class="table-standard">
+      <caption class="text-small texto-tabla">
+        Enviada el <%= formatoFechaHora(vigente.fecha) %> · <%- include('badgeEstado', { estado: vigente.estado }) %>
+      </caption>
+      <thead>
+        <tr>
+          <th>Ítem</th>
+          <th>Cantidad</th>
+          <th>Precio unitario</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% vigente.items.forEach((item) => { %>
+          <tr>
+            <td><%= item.catalogoItem ? item.catalogoItem.nombre : 'Ítem eliminado' %></td>
+            <td><%= item.cantidad %></td>
+            <td><%= formatoPrecio(item.precio_unitario) %></td>
+            <td><%= formatoPrecio(item.subtotal) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" class="text-right"><strong>Total</strong></td>
+          <td><strong><%= formatoPrecio(vigente.total) %></strong></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <% if (puedeEditarCotizacion) { %>
+    <div class="page-actions">
+      <a class="btn btn-secondary" href="/cotizaciones/<%= vigente.id %>/editar">Editar cotización</a>
+    </div>
+  <% } %>
+
+  <% if (anteriores.length) { %>
+    <h3 class="subtitulo-seccion">Cotizaciones anteriores</h3>
+    <div class="table-wrapper">
+      <table class="table-standard">
+        <thead>
+          <tr><th>Fecha</th><th>Ítems</th><th>Total</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <% anteriores.forEach((cot) => { %>
+            <tr>
+              <td><%= formatoFecha(cot.fecha) %></td>
+              <td><%= cot.items.map((i) => `${i.cantidad} × ${i.catalogoItem ? i.catalogoItem.nombre : 'Ítem eliminado'}`).join(', ') %></td>
+              <td><%= formatoPrecio(cot.total) %></td>
+              <td><%- include('badgeEstado', { estado: cot.estado }) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+<% } %>

@@ -10,7 +10,7 @@
 <% const cancelado = ticket.estado === 'Cancelado'; %>
 <%# Por qué cada paso no manual está deshabilitado (texto de ayuda del botón) %>
 <% const AYUDA = {
-  Esperando_aprobacion: 'Se activa al crear una cotización (paso 7).',
+  Esperando_aprobacion: 'Se activa al enviar una cotización al cliente.',
   En_reparacion: ticket.estado === 'Esperando_aprobacion' ? 'Se activa cuando el cliente aprueba la cotización.' : 'Requiere una cotización aprobada (RN-01).',
 }; %>
 <div class="section-header">
@@ -45,8 +45,8 @@
         <div><span class="detail-label">Monto total</span><span class="detail-value"><%= formatoPrecio(cotizacion.total) %></span></div>
         <div><span class="detail-label">Estado</span><span class="detail-value"><%- include('../partials/badgeEstado', { estado: cotizacion.estado }) %></span></div>
         <div><span class="detail-label">Fecha</span><span class="detail-value"><%= formatoFecha(cotizacion.fecha) %></span></div>
-        <% if (ticket.cotizaciones.length > 1) { %>
-          <div><span class="detail-label">Cotizaciones anteriores</span><span class="detail-value"><%= ticket.cotizaciones.length - 1 %></span></div>
+        <% if (cotizacion.estado === 'Pendiente' && pendienteDeRespuesta(cotizacion.fecha)) { %>
+          <div><span class="detail-label">Aviso</span><span class="detail-value"><span class="badge badge-ambar">Pendiente de respuesta</span></span></div>
         <% } %>
       <% } else { %>
         <p class="text-small">Este ticket aún no tiene cotización.</p>
@@ -71,6 +71,10 @@
   <h2>Diagnóstico inicial</h2>
 </div>
 <section class="detail-card tarjeta-aviso texto-largo"><%= ticket.diagnostico_inicial %></section>
+
+<div class="seccion-cotizacion">
+  <%- include('../partials/cotizacionTicket') %>
+</div>
 
 <div class="section-header">
   <h2>Historial de estados</h2>
