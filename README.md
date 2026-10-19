@@ -66,6 +66,8 @@ Sistema web de gestión de servicio técnico de computadoras. Permite registrar 
 | `SESSION_SECRET` | Secreto para firmar la cookie de sesión y los tokens CSRF. **Obligatorio:** sin él la aplicación no arranca | cadena aleatoria larga |
 | `DIAS_LIMITE_COTIZACION` | RN-05: días tras los que una cotización Pendiente se marca como "Pendiente de respuesta" | `7` |
 | `MAX_FOTO_MB` | Tamaño máximo de cada foto subida, en MB | `5` |
+| `LIMITE_INTENTOS` | Rate limit: intentos fallidos de login o portal permitidos por IP en la ventana (`0` lo desactiva) | `5` |
+| `VENTANA_INTENTOS_MIN` | Rate limit: duración de la ventana, en minutos | `15` |
 
 Con `NODE_ENV=test` la aplicación lee `.env.test`; en cualquier otro caso, `.env`. Ninguno de los dos se sube al repositorio.
 
@@ -129,22 +131,24 @@ Además, `sesiones` guarda las sesiones de inicio de sesión (express-mysql-sess
 
 ## Rutas
 
-Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. Por ahora los módulos responden una página "en construcción"; se implementan en los siguientes pasos.
+Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. El login, el portal y los paneles de inicio ya funcionan; los demás módulos responden una página "en construcción" (ya protegida por sesión y rol) y se implementan en los siguientes pasos.
 
 | Prefijo | Módulo | Acceso |
 |---|---|---|
-| `/` | Inicio | público |
-| `/auth` | Inicio y cierre de sesión (`/auth/login`) | público |
-| `/portal` | Portal del cliente (folio + teléfono) | público |
+| `/` | Inicio (con sesión abierta lleva al panel del rol) | público |
+| `/login`, `/logout` | Inicio y cierre de sesión del personal | público |
+| `/portal` | Portal del cliente (folio + teléfono); `/portal/ticket` tras validar | público |
 | `/admin` | Panel del administrador | admin |
-| `/tecnico` | Panel del técnico (mis tickets) | técnico |
+| `/tecnico` | Panel del técnico (mis tickets) | técnico (y admin) |
 | `/clientes`, `/equipos` | Clientes y sus equipos | admin (técnico: lectura) |
 | `/tickets` | Tickets | admin y técnico (solo los suyos) |
-| `/cotizaciones` | Cotizaciones | técnico |
+| `/cotizaciones` | Cotizaciones | admin y técnico |
 | `/catalogo` | Servicios y repuestos | admin (técnico: lectura) |
 | `/usuarios` | Técnicos | admin |
 | `/reportes` | Reportes | admin |
-| `/notificaciones` | Notificaciones | técnico |
+| `/notificaciones` | Notificaciones | admin y técnico |
+
+Sin sesión, las rutas protegidas redirigen a `/login` (o responden 401 si la petición es JSON); con un rol sin permiso responden 403 "No tienes permiso para acceder a esta sección".
 
 Los formularios envían el token CSRF en el campo oculto `_csrf` y simulan `PUT`, `PATCH` o `DELETE` con el campo oculto `_method`. En [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) están el orden de los middlewares y cómo se manejan los errores.
 
@@ -158,6 +162,25 @@ Todos usan la contraseña **`Tecni2026!`**.
 | tecnico | Luis Fernández | `luis.fernandez@tecnitrack.com` | Activo |
 | tecnico | Jorge Pineda | `jorge.pineda@tecnitrack.com` | Activo |
 | tecnico | Óscar Meléndez | `oscar.melendez@tecnitrack.com` | **Inactivo** (no puede iniciar sesión, RN-07) |
+
+### Cómo iniciar sesión
+
+1. Abre `http://localhost:3000/login`.
+2. Entra con el correo de la tabla y la contraseña `Tecni2026!`:
+   - **Administrador:** `admin@tecnitrack.com`. Llega a `/admin` y ve el menú completo (Dashboard, Clientes, Tickets, Catálogo, Usuarios, Reportes).
+   - **Técnico:** `luis.fernandez@tecnitrack.com` o `jorge.pineda@tecnitrack.com`. Llega a `/tecnico`; si intenta abrir `/admin`, `/usuarios` o `/reportes` recibe 403.
+   - **Técnico inactivo:** `oscar.melendez@tecnitrack.com` recibe "Cuenta desactivada, contacte al administrador".
+3. "Cerrar sesión" (barra superior) elimina la sesión y regresa a `/login`.
+
+Tras **5 intentos fallidos en 15 minutos** desde la misma IP, el login responde 429 hasta que pase la ventana (lo mismo para el portal). Se ajusta con `LIMITE_INTENTOS` y `VENTANA_INTENTOS_MIN` en `.env` (`LIMITE_INTENTOS=0` lo desactiva); reiniciar el servidor también vacía los contadores.
+
+### Cómo entrar al portal del cliente
+
+1. Abre `http://localhost:3000/portal` (o el botón "Consultar mi ticket (Cliente)" del login).
+2. Escribe un folio y el teléfono del cliente dueño del equipo, por ejemplo:
+   - Folio **`TT-2026-0040`**, teléfono **`7345-6720`** (Ana Lucía Martínez, *Esperando aprobación*).
+   - El teléfono se acepta con o sin guion o espacios (`73456720`, `7345 6720`).
+3. Con un teléfono o folio incorrecto el mensaje es siempre "No se encontró un ticket con esos datos".
 
 ### Datos de ejemplo para el portal del cliente
 
@@ -176,6 +199,7 @@ Todos usan la contraseña **`Tecni2026!`**.
 - [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md): capas, carpetas y recorrido de una petición.
 - [`docs/DEPENDENCIAS.md`](docs/DEPENDENCIAS.md): para qué sirve cada dependencia.
 - [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md): historias de usuario, requerimientos, tablas, código y pruebas.
+- [`docs/SEGURIDAD.md`](docs/SEGURIDAD.md): cada medida de seguridad y qué riesgo mitiga.
 - [`docs/CAMBIOS_FASE2.md`](docs/CAMBIOS_FASE2.md): solicitudes de cambio respecto a la Fase 1.
 - [`docs/INCIDENCIAS.md`](docs/INCIDENCIAS.md): incidencias, limitaciones y pendientes.
 
