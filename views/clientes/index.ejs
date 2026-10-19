@@ -1,0 +1,53 @@
+<%# Listado de clientes (prototipo: admin/clientes.html) %>
+<% const admin = esAdmin(usuarioActual); %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1>Clientes</h1>
+</div>
+
+<form class="table-filters" method="get" action="/clientes" role="search">
+  <div class="form-group">
+    <label for="q">Buscar por nombre o teléfono</label>
+    <input type="search" id="q" name="q" value="<%= filtros.q %>" placeholder="Ej. María Hernández o 7123-4567">
+  </div>
+  <button type="submit" class="btn btn-secondary">Buscar</button>
+  <% if (filtros.q) { %><a class="btn btn-secondary" href="/clientes">Limpiar</a><% } %>
+</form>
+
+<div class="page-actions">
+  <p class="text-small"><%= paginacion.total %> cliente<%= paginacion.total === 1 ? '' : 's' %> <%= filtros.q ? 'encontrados' : 'registrados' %></p>
+  <% if (admin) { %><a class="btn btn-primary" href="/clientes/nuevo">Nuevo cliente</a><% } %>
+</div>
+
+<div class="table-wrapper">
+  <table class="table-standard">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Teléfono</th>
+        <th>Correo</th>
+        <th>Equipos registrados</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% paginacion.registros.forEach((cliente) => { %>
+        <tr>
+          <td><%= cliente.nombre %></td>
+          <td><%= cliente.telefono %></td>
+          <td><%= cliente.correo || '—' %></td>
+          <td><%= cliente.get('totalEquipos') %></td>
+          <td>
+            <a class="btn btn-secondary" href="/clientes/<%= cliente.id %>">Ver equipos</a>
+            <% if (admin) { %><a class="btn btn-secondary" href="/clientes/<%= cliente.id %>/editar">Editar</a><% } %>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!paginacion.registros.length) { %>
+        <tr><td colspan="5" class="tabla-vacia"><%= filtros.q ? 'Ningún cliente coincide con la búsqueda.' : 'Aún no hay clientes registrados.' %></td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/paginacion', { rutaBase: '/clientes' }) %>

@@ -1,0 +1,43 @@
+<%# Nuevo cliente (con equipo opcional) o edición (prototipo: admin/cliente-form.html) %>
+<% const editando = Boolean(cliente); const v = (campo) => valorCampo(datos, cliente, campo); %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1><%= titulo %></h1>
+</div>
+
+<form class="form-container" method="post" action="<%= editando ? `/clientes/${cliente.id}` : '/clientes' %>" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <% if (editando) { %><input type="hidden" name="_method" value="PUT"><% } %>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" name="nombre" required maxlength="100" placeholder="Ej. María Elena Hernández" value="<%= v('nombre') %>"<% if (errores.nombre) { %> aria-invalid="true" aria-describedby="error-nombre"<% } %>>
+      <%- include('../partials/errorCampo', { campo: 'nombre' }) %>
+    </div>
+    <div class="form-group">
+      <label for="telefono">Teléfono</label>
+      <input type="tel" id="telefono" name="telefono" required placeholder="Ej. 7123-4567" value="<%= v('telefono') %>"<% if (errores.telefono) { %> aria-invalid="true" aria-describedby="error-telefono"<% } %>>
+      <%- include('../partials/errorCampo', { campo: 'telefono' }) %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="correo">Correo electrónico (opcional)</label>
+    <input type="email" id="correo" name="correo" maxlength="120" placeholder="Ej. maria.hernandez@example.com" value="<%= v('correo') %>"<% if (errores.correo) { %> aria-invalid="true" aria-describedby="error-correo"<% } %>>
+    <%- include('../partials/errorCampo', { campo: 'correo' }) %>
+  </div>
+
+  <% if (!editando) { %>
+    <fieldset class="form-section">
+      <legend>Agregar equipo (opcional)</legend>
+      <p class="form-ayuda">Si llenas estos campos, el cliente y su equipo se guardan juntos.</p>
+      <%- include('../partials/camposEquipo', { prefijo: 'equipo_', equipo: null }) %>
+    </fieldset>
+  <% } %>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a class="btn btn-secondary" href="<%= editando ? `/clientes/${cliente.id}` : '/clientes' %>">Cancelar</a>
+  </div>
+</form>

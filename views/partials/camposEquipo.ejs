@@ -1,0 +1,36 @@
+<%#
+  Campos de un equipo, para el formulario de equipo y la sección "Agregar equipo" de nuevo cliente.
+  Uso: include('../partials/camposEquipo', { prefijo: 'equipo_', equipo, tiposEquipo })
+%>
+<% const p = locals.prefijo || ''; %>
+<%# Lo escrito por el usuario viene con el prefijo (datos.equipo_marca); el registro, sin él (equipo.marca) %>
+<% const v = (campo) => (datos[p + campo] !== undefined ? datos[p + campo] : valorCampo(null, locals.equipo, campo)); %>
+<div class="form-row">
+  <div class="form-group">
+    <label for="<%= p %>tipo">Tipo de equipo</label>
+    <select id="<%= p %>tipo" name="<%= p %>tipo"<% if (errores[p + 'tipo']) { %> aria-invalid="true" aria-describedby="error-<%= p %>tipo"<% } %>>
+      <option value="">Seleccione un tipo</option>
+      <% tiposEquipo.forEach((tipo) => { %>
+        <option value="<%= tipo %>"<%= v('tipo') === tipo ? ' selected' : '' %>><%= tipo %></option>
+      <% }) %>
+    </select>
+    <%- include('errorCampo', { campo: p + 'tipo' }) %>
+  </div>
+  <div class="form-group">
+    <label for="<%= p %>marca">Marca</label>
+    <input type="text" id="<%= p %>marca" name="<%= p %>marca" maxlength="60" placeholder="Ej. Dell" value="<%= v('marca') %>"<% if (errores[p + 'marca']) { %> aria-invalid="true" aria-describedby="error-<%= p %>marca"<% } %>>
+    <%- include('errorCampo', { campo: p + 'marca' }) %>
+  </div>
+</div>
+<div class="form-row">
+  <div class="form-group">
+    <label for="<%= p %>modelo">Modelo</label>
+    <input type="text" id="<%= p %>modelo" name="<%= p %>modelo" maxlength="80" placeholder="Ej. Inspiron 15" value="<%= v('modelo') %>"<% if (errores[p + 'modelo']) { %> aria-invalid="true" aria-describedby="error-<%= p %>modelo"<% } %>>
+    <%- include('errorCampo', { campo: p + 'modelo' }) %>
+  </div>
+  <div class="form-group">
+    <label for="<%= p %>numero_serie">Número de serie (opcional)</label>
+    <input type="text" id="<%= p %>numero_serie" name="<%= p %>numero_serie" maxlength="80" placeholder="Ej. DL-88291" value="<%= v('numero_serie') %>"<% if (errores[p + 'numero_serie']) { %> aria-invalid="true" aria-describedby="error-<%= p %>numero_serie"<% } %>>
+    <%- include('errorCampo', { campo: p + 'numero_serie' }) %>
+  </div>
+</div>
