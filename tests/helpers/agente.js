@@ -82,6 +82,26 @@ async function entrarAlPortal(agente, { folio = TICKET_PORTAL.folio, telefono = 
   return agente.post('/portal').type('form').send({ _csrf: token, folio, telefono });
 }
 
+/**
+ * Envía un formulario como lo hace el navegador: siempre POST, con el token
+ * CSRF y, para PUT/PATCH/DELETE, el campo oculto _method (method-override).
+ *
+ * @param {import('supertest').SuperAgentTest} agente
+ * @param {{metodo?: string, ruta: string, csrfToken: string, datos?: object, json?: boolean, referer?: string}} opciones
+ *   json: true pide la respuesta en JSON (para leer el código y los errores por campo);
+ *   referer: página del formulario, a la que errorHandler regresa si la validación falla.
+ */
+function enviarFormulario(agente, {
+  metodo = 'POST', ruta, csrfToken, datos = {}, json = false, referer,
+}) {
+  const cuerpo = { _csrf: csrfToken, ...datos };
+  if (metodo !== 'POST') cuerpo._method = metodo;
+  let peticion = agente.post(ruta).type('form');
+  if (json) peticion = peticion.set('Accept', 'application/json');
+  if (referer) peticion = peticion.set('Host', 'tecnitrack.local').set('Referer', `http://tecnitrack.local${referer}`);
+  return peticion.send(cuerpo);
+}
+
 /** Atajo: agente nuevo que ya inició sesión. */
 async function crearAgenteAutenticado(credenciales) {
   const agente = crearAgente();
@@ -94,6 +114,7 @@ module.exports = {
   USUARIOS,
   TICKET_PORTAL,
   entrarAlPortal,
+  enviarFormulario,
   crearAgente,
   obtenerTokenCsrf,
   iniciarSesion,
