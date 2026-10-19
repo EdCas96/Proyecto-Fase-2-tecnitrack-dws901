@@ -9,12 +9,17 @@
  *   PUT   /usuarios/:id          actualiza
  *   PATCH /usuarios/:id/activo   activa o desactiva
  *
+ * Acceso: solo admin.
+ *
  * Por ahora solo responde la página provisional "en construcción".
  */
 const { Router } = require('express');
 const EnConstruccionController = require('../controllers/enConstruccionController');
+const { requireAuth, checkRole } = require('../middlewares/auth');
 
 const router = Router();
+
+router.use(requireAuth, checkRole('admin'));
 
 router.get('/', EnConstruccionController.pagina('Usuarios', [{ texto: 'Administrador', url: '/admin' }]));
 

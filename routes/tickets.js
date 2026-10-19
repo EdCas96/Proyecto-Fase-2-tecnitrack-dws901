@@ -9,12 +9,17 @@
  *   PATCH /tickets/:id/estado   cambia de estado (MaquinaEstadosTicket)
  *   PATCH /tickets/:id/tecnico  reasigna (solo admin)
  *
+ * Acceso: admin y técnico (cada técnico solo sus tickets, RN-02).
+ *
  * Por ahora solo responde la página provisional "en construcción".
  */
 const { Router } = require('express');
 const EnConstruccionController = require('../controllers/enConstruccionController');
+const { requireAuth, checkRole } = require('../middlewares/auth');
 
 const router = Router();
+
+router.use(requireAuth, checkRole('admin', 'tecnico'));
 
 router.get('/', EnConstruccionController.pagina('Tickets', [{ texto: 'Administrador', url: '/admin' }]));
 

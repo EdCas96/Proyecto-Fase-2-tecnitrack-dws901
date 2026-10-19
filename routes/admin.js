@@ -1,16 +1,17 @@
 /**
  * Rutas: Dashboard — montadas en /admin (routes/index.js).
  *
- * Previstas (solo rol admin):
- *   GET /admin          panel con indicadores y tickets recientes
- *
- * Por ahora solo responde la página provisional "en construcción".
+ * Acceso: solo admin.
+ *   GET /admin          panel del administrador (indicadores: pasos siguientes)
  */
 const { Router } = require('express');
-const EnConstruccionController = require('../controllers/enConstruccionController');
+const { requireAuth, checkRole } = require('../middlewares/auth');
+const DashboardController = require('../controllers/dashboardController');
 
 const router = Router();
 
-router.get('/', EnConstruccionController.pagina('Dashboard', [{ texto: 'Administrador', url: '/admin' }]));
+router.use(requireAuth, checkRole('admin'));
+
+router.get('/', DashboardController.admin);
 
 module.exports = router;

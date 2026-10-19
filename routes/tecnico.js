@@ -1,16 +1,17 @@
 /**
  * Rutas: Mis tickets — montadas en /tecnico (routes/index.js).
  *
- * Previstas (solo rol técnico, RN-02):
- *   GET /tecnico        panel con los tickets asignados al técnico en sesión
- *
- * Por ahora solo responde la página provisional "en construcción".
+ * Acceso: técnico (y admin, que puede entrar a todo; RN-02).
+ *   GET /tecnico        panel del técnico (sus tickets asignados: pasos siguientes)
  */
 const { Router } = require('express');
-const EnConstruccionController = require('../controllers/enConstruccionController');
+const { requireAuth, checkRole } = require('../middlewares/auth');
+const DashboardController = require('../controllers/dashboardController');
 
 const router = Router();
 
-router.get('/', EnConstruccionController.pagina('Mis tickets', [{ texto: 'Técnico', url: '/tecnico' }]));
+router.use(requireAuth, checkRole('tecnico', 'admin'));
+
+router.get('/', DashboardController.tecnico);
 
 module.exports = router;
