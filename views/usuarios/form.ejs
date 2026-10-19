@@ -1,0 +1,51 @@
+<%# Nuevo técnico (con contraseña temporal) o edición de nombre y correo %>
+<% const editando = Boolean(usuario); const v = (campo) => valorCampo(datos, usuario, campo); %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1><%= titulo %></h1>
+</div>
+
+<form class="form-container" method="post" action="<%= editando ? `/usuarios/${usuario.id}` : '/usuarios' %>" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <% if (editando) { %><input type="hidden" name="_method" value="PUT"><% } %>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" name="nombre" required maxlength="100" placeholder="Ej. Luis Fernández" value="<%= v('nombre') %>"<% if (errores.nombre) { %> aria-invalid="true" aria-describedby="error-nombre"<% } %>>
+      <%- include('../partials/errorCampo', { campo: 'nombre' }) %>
+    </div>
+    <div class="form-group">
+      <label for="correo">Correo electrónico</label>
+      <input type="email" id="correo" name="correo" required maxlength="120" autocomplete="off" placeholder="Ej. luis.fernandez@tecnitrack.com" value="<%= v('correo') %>"<% if (errores.correo) { %> aria-invalid="true" aria-describedby="error-correo"<% } %>>
+      <%- include('../partials/errorCampo', { campo: 'correo' }) %>
+    </div>
+    <% if (!editando) { %>
+      <div class="form-group">
+        <label for="password">Contraseña temporal</label>
+        <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password"<% if (errores.password) { %> aria-invalid="true" aria-describedby="error-password"<% } %>>
+        <%- include('../partials/errorCampo', { campo: 'password' }) %>
+      </div>
+    <% } %>
+  </div>
+  <% if (!editando) { %>
+    <p class="form-ayuda">Mínimo 8 caracteres, con al menos una letra y un número. Por seguridad, si el formulario tiene errores tendrás que escribirla de nuevo.</p>
+  <% } else { %>
+    <p class="form-ayuda">Rol: <%= usuario.rol === 'admin' ? 'Administrador' : 'Técnico' %>. La contraseña se cambia con "Restablecer contraseña".</p>
+  <% } %>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a class="btn btn-secondary" href="/usuarios">Cancelar</a>
+  </div>
+</form>
+
+<% if (editando && usuario.id !== usuarioActual.id) { %>
+  <section class="detail-card tarjeta-aviso">
+    <p class="form-ayuda">Solo se pueden eliminar cuentas sin tickets ni historial; las demás se desactivan.</p>
+    <%- include('../partials/botonAccion', {
+      accion: `/usuarios/${usuario.id}`, metodo: 'DELETE', texto: 'Eliminar usuario', clase: 'btn-destructive',
+      confirmar: `¿Eliminar la cuenta de ${usuario.nombre}? Esta acción no se puede deshacer.`,
+    }) %>
+  </section>
+<% } %>
