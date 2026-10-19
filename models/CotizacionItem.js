@@ -1,4 +1,5 @@
 const { Model, DataTypes } = require('sequelize');
+const { aCentavos } = require('../utils/cotizaciones');
 
 /**
  * Línea de una cotización. precio_unitario se copia del catálogo al cotizar
@@ -41,7 +42,8 @@ class CotizacionItem extends Model {
         subtotal: {
           type: DataTypes.VIRTUAL,
           get() {
-            return Number(this.cantidad) * Number(this.precio_unitario);
+            // En centavos, para evitar errores de decimales (ej. 3 x 0.10)
+            return (Number(this.cantidad) * aCentavos(this.precio_unitario)) / 100;
           },
         },
       },
