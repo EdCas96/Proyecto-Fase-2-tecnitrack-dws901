@@ -1,4 +1,5 @@
 const { Model, DataTypes } = require('sequelize');
+const { TIPOS_NOTIFICACION } = require('../utils/constantes');
 
 /**
  * Aviso interno para un usuario sobre un ticket (ej. el cliente respondió la cotización).
@@ -18,6 +19,14 @@ class Notificacion extends Model {
           type: DataTypes.INTEGER.UNSIGNED,
           allowNull: false,
           validate: { notNull: { msg: 'La notificación debe tener un destinatario.' } },
+        },
+        // SC-06: qué la originó (para la alerta del dashboard del técnico)
+        tipo: {
+          type: DataTypes.ENUM(...TIPOS_NOTIFICACION),
+          allowNull: true,
+          validate: {
+            isIn: { args: [TIPOS_NOTIFICACION], msg: 'El tipo de notificación no es válido.' },
+          },
         },
         mensaje: {
           type: DataTypes.STRING(255),
