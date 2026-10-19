@@ -1,6 +1,8 @@
-const { Op, fn, col, where: condicion } = require('sequelize');
 const {
-  sequelize, Ticket, Equipo, Cliente, Usuario, TicketFoto, TicketHistorial, Cotizacion,
+  Op, fn, col, literal, where: condicion,
+} = require('sequelize');
+const {
+  sequelize, Ticket, Equipo, Cliente, Usuario, TicketFoto, TicketHistorial, Cotizacion, CotizacionItem, CatalogoItem,
 } = require('../models');
 const {
   ValidationError, ForbiddenError, NotFoundError, BusinessRuleError,
@@ -34,6 +36,12 @@ const INCLUIR_EQUIPO = {
   include: { model: Cliente, as: 'cliente', attributes: ['id', 'nombre', 'telefono', 'correo'] },
 };
 const INCLUIR_TECNICO = { model: Usuario, as: 'tecnico', attributes: ['id', 'nombre'] };
+
+/** Fecha de la cotización Pendiente del ticket, si hay (indicador "Pendiente de respuesta", RN-05). */
+const PENDIENTE_DESDE = [
+  literal("(SELECT MIN(c.fecha) FROM cotizaciones AS c WHERE c.ticket_id = `Ticket`.`id` AND c.estado = 'Pendiente')"),
+  'pendienteDesde',
+];
 
 /** "AAAA-MM-DD" de hoy en El Salvador, para comparar con fecha_estimada (DATE). */
 function hoyEnElSalvador() {
@@ -219,7 +227,7 @@ class TicketService {
 
     const resultado = await Ticket.findAndCountAll({
       where,
-      attributes: ['id', 'folio', 'estado', 'fecha_ingreso', 'fecha_estimada', 'tecnico_id'],
+      attributes: ['id', 'folio', 'estado', 'fecha_ingreso', 'fecha_estimada', 'tecnico_id', PENDIENTE_DESDE],
       include: [{ ...INCLUIR_EQUIPO, required: true }, INCLUIR_TECNICO],
       order: [['fecha_ingreso', 'DESC'], ['id', 'DESC']],
       distinct: true,
@@ -247,13 +255,24 @@ class TicketService {
           as: 'historial',
           include: { model: Usuario, as: 'usuario', attributes: ['id', 'nombre'] },
         },
-        { model: Cotizacion, as: 'cotizaciones', attributes: ['id', 'estado', 'total', 'fecha'] },
+        {
+          model: Cotizacion,
+          as: 'cotizaciones',
+          attributes: ['id', 'estado', 'total', 'fecha'],
+          include: {
+            model: CotizacionItem,
+            as: 'items',
+            include: { model: CatalogoItem, as: 'catalogoItem', attributes: ['id', 'nombre', 'tipo'] },
+          },
+        },
       ],
       order: [
         [{ model: TicketHistorial, as: 'historial' }, 'fecha', 'ASC'],
         [{ model: TicketHistorial, as: 'historial' }, 'id', 'ASC'],
         [{ model: TicketFoto, as: 'fotos' }, 'id', 'ASC'],
         [{ model: Cotizacion, as: 'cotizaciones' }, 'fecha', 'DESC'],
+        [{ model: Cotizacion, as: 'cotizaciones' }, 'id', 'DESC'],
+        [{ model: Cotizacion, as: 'cotizaciones' }, { model: CotizacionItem, as: 'items' }, 'id', 'ASC'],
       ],
     });
     if (!ticket) throw new NotFoundError('El ticket no existe.');
@@ -427,7 +446,7 @@ class TicketService {
       Ticket.count({ where: { estado: 'Listo' } }),
       Ticket.count({ where: { estado: 'Entregado', fecha_entrega: { [Op.gte]: inicioMes } } }),
       Ticket.findAll({
-        attributes: ['id', 'folio', 'estado', 'fecha_ingreso'],
+        attributes: ['id', 'folio', 'estado', 'fecha_ingreso', PENDIENTE_DESDE],
         include: [INCLUIR_EQUIPO, INCLUIR_TECNICO],
         order: [['fecha_ingreso', 'DESC'], ['id', 'DESC']],
         limit: 5,
