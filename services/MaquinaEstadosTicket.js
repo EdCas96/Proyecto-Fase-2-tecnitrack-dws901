@@ -38,6 +38,10 @@ const TRANSICIONES = Object.freeze([
   { de: 'Esperando_repuesto', a: 'En_reparacion', origen: ORIGENES.MANUAL },
   { de: 'En_reparacion', a: 'Listo', origen: ORIGENES.MANUAL },
   { de: 'Listo', a: 'Entregado', origen: ORIGENES.MANUAL },
+  // Decisión técnica (paso 7): cotización adicional cuando el diagnóstico cambia durante la
+  // reparación. Solo CotizacionService.crear puede provocarlas (origen "cotizacion").
+  { de: 'En_reparacion', a: 'Esperando_aprobacion', origen: ORIGENES.COTIZACION },
+  { de: 'Esperando_repuesto', a: 'Esperando_aprobacion', origen: ORIGENES.COTIZACION },
 ]);
 
 const nombre = (estado) => `«${ETIQUETA_ESTADO[estado] || estado}»`;
@@ -46,6 +50,7 @@ const nombre = (estado) => `«${ETIQUETA_ESTADO[estado] || estado}»`;
  * Define las transiciones válidas entre estados del ticket.
  *
  *   Recibido -> Diagnosticado -> Esperando_aprobacion -> En_reparacion <-> Esperando_repuesto -> Listo -> Entregado
+ *   Cotización adicional: En_reparacion / Esperando_repuesto -> Esperando_aprobacion (solo CotizacionService).
  *   Cancelado: desde Esperando_aprobacion (rechazo del cliente) o por el admin desde cualquier estado antes de Entregado.
  *
  * RN-01 (cotización aprobada para entrar a En_reparacion) necesita la base de

@@ -75,10 +75,17 @@ describe('Transiciones que no son manuales (paso 7)', () => {
     expect(Maquina.puedeTransicionar('Esperando_aprobacion', a, { origen: ORIGENES.CLIENTE })).toBe(true);
   });
 
-  test('una cotización no mueve el ticket desde otro estado', () => {
-    PAREJAS.filter(([de, a]) => !(de === 'Diagnosticado' && a === 'Esperando_aprobacion')).forEach(([de, a]) => {
-      expect(Maquina.puedeTransicionar(de, a, { origen: ORIGENES.COTIZACION })).toBe(false);
+  test('una cotización solo mueve a Esperando_aprobacion desde Diagnosticado o, si es adicional, durante la reparación', () => {
+    const DESDE = ['Diagnosticado', 'En_reparacion', 'Esperando_repuesto'];
+    PAREJAS.forEach(([de, a]) => {
+      const esperado = a === 'Esperando_aprobacion' && DESDE.includes(de);
+      expect(Maquina.puedeTransicionar(de, a, { origen: ORIGENES.COTIZACION })).toBe(esperado);
     });
+  });
+
+  test.each([['En_reparacion'], ['Esperando_repuesto']])('la cotización adicional desde %s no se puede hacer a mano', (de) => {
+    expect(() => Maquina.validarTransicion(de, 'Esperando_aprobacion', { rol: 'admin' }))
+      .toThrow('El ticket pasa a «Esperando aprobación» automáticamente al crear una cotización.');
   });
 
   test('el cliente solo decide desde Esperando_aprobacion', () => {
