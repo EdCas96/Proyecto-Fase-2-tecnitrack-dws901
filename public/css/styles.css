@@ -777,3 +777,87 @@ a {
     height: 100px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   19. COMPONENTES DE LA FASE 2 (vistas EJS)
+   Accesos y cierre de sesión en la barra, migas con enlace, mensajes flash,
+   pantallas centradas debajo de la barra (inicio, errores) y avisos.
+   -------------------------------------------------------------------------- */
+.navbar-links,
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navbar-logout {
+  margin: 0;
+}
+
+.navbar-link {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font: inherit;
+  font-size: var(--font-size-small);
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius);
+}
+
+.navbar-link:hover,
+.navbar-link:focus-visible {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.section-header .breadcrumb a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.section-header .breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.flash .alert {
+  margin-bottom: 0;
+}
+
+.alert-lista {
+  margin: 0.5rem 0 0 1.25rem;
+  font-size: var(--font-size-small);
+}
+
+/* Como .role-select-screen, pero descontando la barra superior */
+.pantalla-centrada {
+  min-height: calc(100vh - 8rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.error-titulo {
+  font-size: var(--font-size-h2);
+  margin-bottom: 0.5rem;
+}
+
+.leyenda-estados {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 1.25rem 0 1.75rem;
+}
+
+.tarjeta-aviso {
+  margin: 1rem 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .navbar-links,
+  .navbar-user {
+    flex-wrap: wrap;
+  }
+}

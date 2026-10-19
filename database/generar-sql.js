@@ -4,7 +4,8 @@
  *
  * Usa mysqldump y luego quita de los INSERT la columna generada
  * cotizaciones.pendiente_ticket_id: el mysqldump de MariaDB la incluye y MySQL 8
- * rechaza valores explícitos en columnas generadas (error 3105).
+ * rechaza valores explícitos en columnas generadas (error 3105). También omite
+ * las filas de la tabla sesiones (se exporta solo su estructura).
  * La ruta de mysqldump se toma de MYSQLDUMP_PATH, del XAMPP por defecto o del PATH.
  */
 require('../config/env');
@@ -41,6 +42,8 @@ const COLUMNA = 'pendiente_ticket_id';
 const sql = volcado
   .replace(/\r\n/g, '\n') // mysqldump en Windows escribe CRLF
   .split('\n')
+  // Las sesiones activas son datos locales de quien generó el script: solo se exporta la tabla vacía
+  .filter((linea) => !linea.startsWith('INSERT INTO `sesiones`'))
   .map((linea) => {
     if (!linea.startsWith('INSERT INTO `cotizaciones`')) return linea;
     // pendiente_ticket_id es la última columna: se quita del listado y el último valor de cada fila

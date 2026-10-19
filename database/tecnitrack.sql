@@ -269,8 +269,33 @@ CREATE TABLE `sequelize_meta` (
 
 LOCK TABLES `sequelize_meta` WRITE;
 /*!40000 ALTER TABLE `sequelize_meta` DISABLE KEYS */;
-INSERT INTO `sequelize_meta` (`name`) VALUES ('20261018000001-crear-usuarios.js'),('20261018000002-crear-clientes.js'),('20261018000003-crear-equipos.js'),('20261018000004-crear-catalogo-items.js'),('20261018000005-crear-tickets.js'),('20261018000006-crear-ticket-fotos.js'),('20261018000007-crear-ticket-historiales.js'),('20261018000008-crear-cotizaciones.js'),('20261018000009-crear-cotizacion-items.js'),('20261018000010-crear-notificaciones.js');
+INSERT INTO `sequelize_meta` (`name`) VALUES ('20261018000001-crear-usuarios.js'),('20261018000002-crear-clientes.js'),('20261018000003-crear-equipos.js'),('20261018000004-crear-catalogo-items.js'),('20261018000005-crear-tickets.js'),('20261018000006-crear-ticket-fotos.js'),('20261018000007-crear-ticket-historiales.js'),('20261018000008-crear-cotizaciones.js'),('20261018000009-crear-cotizacion-items.js'),('20261018000010-crear-notificaciones.js'),('20261018000011-crear-sesiones.js');
 /*!40000 ALTER TABLE `sequelize_meta` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `sesiones`
+--
+
+DROP TABLE IF EXISTS `sesiones`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sesiones` (
+  `session_id` varchar(128) NOT NULL,
+  `expires` int(10) unsigned NOT NULL,
+  `data` mediumtext DEFAULT NULL,
+  PRIMARY KEY (`session_id`),
+  KEY `idx_sesiones_expires` (`expires`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `sesiones`
+--
+
+LOCK TABLES `sesiones` WRITE;
+/*!40000 ALTER TABLE `sesiones` DISABLE KEYS */;
+/*!40000 ALTER TABLE `sesiones` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -405,7 +430,7 @@ CREATE TABLE `usuarios` (
 
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
-INSERT INTO `usuarios` (`id`, `nombre`, `correo`, `password_hash`, `rol`, `activo`, `created_at`, `updated_at`) VALUES (1,'Administrador Principal','admin@tecnitrack.com','$2b$10$Gu8G.HANnPdvggrKnycmYOs4ZxmBBgWpfJAsF9cSHvz6tPZp.r.Oy','admin',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(2,'Luis Fernández','luis.fernandez@tecnitrack.com','$2b$10$M7dfSn5sPIAYRf1R6SBzruiUrLH889M9Ll5ePkFbIioFeJ19KYmkq','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(3,'Jorge Pineda','jorge.pineda@tecnitrack.com','$2b$10$PNS9JAaT1mCs7snVObLpsu0Ksir2Q8.8kFVOXVvB6b2vNpdo/h.ru','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(4,'Óscar Meléndez','oscar.melendez@tecnitrack.com','$2b$10$gUkpvU1fM0y3So/Z/WpyzeuuXt7GhAd7X88/bm7vHMFABdal3eU9W','tecnico',0,'2026-08-25 08:00:00','2026-08-25 08:00:00');
+INSERT INTO `usuarios` (`id`, `nombre`, `correo`, `password_hash`, `rol`, `activo`, `created_at`, `updated_at`) VALUES (1,'Administrador Principal','admin@tecnitrack.com','$2b$10$HjY.nMGqdXZrUhnlUkqkGOX8nlXsCnNCreAbLtEiBC7Y3wU06Yx1W','admin',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(2,'Luis Fernández','luis.fernandez@tecnitrack.com','$2b$10$O01qlvpCU77bzxn81aMiEOJSwknuGhNgm4a5gBbHLyjq5jUMVQgJm','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(3,'Jorge Pineda','jorge.pineda@tecnitrack.com','$2b$10$3GskVWFgHrMEF4e2/p0Qme8RVBniBr9QNjdPYpuWzOeM1vKtEynCe','tecnico',1,'2026-08-25 08:00:00','2026-08-25 08:00:00'),(4,'Óscar Meléndez','oscar.melendez@tecnitrack.com','$2b$10$jk9df6Rm94YTIeeagWpXAuGr.eHbNr.w5.ORNVSkXsa/Np06bMmiS','tecnico',0,'2026-08-25 08:00:00','2026-08-25 08:00:00');
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 

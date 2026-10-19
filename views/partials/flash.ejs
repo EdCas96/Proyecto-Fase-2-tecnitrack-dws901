@@ -1,0 +1,20 @@
+<%# Mensajes flash de éxito y error (los pone variablesVistas.js en res.locals) %>
+<% const { exito = [], error = [] } = locals.mensajes || {}; %>
+<% const erroresCampo = Object.values(locals.errores || {}); %>
+<% if (exito.length || error.length) { %>
+  <div class="flash">
+    <% exito.forEach((mensaje) => { %>
+      <div class="alert alert-exito" role="status"><%= mensaje %></div>
+    <% }) %>
+    <% error.forEach((mensaje) => { %>
+      <div class="alert alert-error" role="alert">
+        <%= mensaje %>
+        <% if (erroresCampo.length) { %>
+          <ul class="alert-lista">
+            <% erroresCampo.forEach((detalle) => { %><li><%= detalle %></li><% }) %>
+          </ul>
+        <% } %>
+      </div>
+    <% }) %>
+  </div>
+<% } %>

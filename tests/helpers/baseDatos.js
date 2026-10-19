@@ -15,6 +15,7 @@ const TABLAS = [
   'clientes',
   'catalogo_items',
   'usuarios',
+  'sesiones',
 ];
 
 /** Deja todas las tablas vacías (el esquema lo crea tests/setup/globalSetup.js). */
@@ -24,4 +25,16 @@ async function limpiarBaseDatos() {
   }
 }
 
-module.exports = { limpiarBaseDatos };
+/**
+ * Cierra las conexiones abiertas para que Jest termine: la de Sequelize y,
+ * si el archivo de pruebas cargó app.js, el pool del almacén de sesiones.
+ */
+async function cerrarConexiones() {
+  await sequelize.close();
+  const rutaSesion = require.resolve('../../config/sesion');
+  if (require.cache[rutaSesion]) {
+    await require.cache[rutaSesion].exports.almacenSesiones.close();
+  }
+}
+
+module.exports = { limpiarBaseDatos, cerrarConexiones };

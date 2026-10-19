@@ -63,7 +63,7 @@ Sistema web de gestión de servicio técnico de computadoras. Permite registrar 
 | `DB_NAME` | Nombre de la base de datos | `tecnitrack` (`tecnitrack_test` en `.env.test`) |
 | `DB_USER` | Usuario de MySQL | `root` |
 | `DB_PASSWORD` | Contraseña de MySQL (vacía por defecto en XAMPP) | |
-| `SESSION_SECRET` | Secreto para firmar la cookie de sesión y los tokens CSRF | cadena aleatoria larga |
+| `SESSION_SECRET` | Secreto para firmar la cookie de sesión y los tokens CSRF. **Obligatorio:** sin él la aplicación no arranca | cadena aleatoria larga |
 | `DIAS_LIMITE_COTIZACION` | RN-05: días tras los que una cotización Pendiente se marca como "Pendiente de respuesta" | `7` |
 | `MAX_FOTO_MB` | Tamaño máximo de cada foto subida, en MB | `5` |
 
@@ -124,6 +124,29 @@ mysqldump -u root -p --databases tecnitrack --add-drop-database --skip-dump-date
 ### Tablas
 
 `usuarios`, `clientes`, `equipos`, `catalogo_items`, `tickets`, `ticket_fotos`, `ticket_historiales`, `cotizaciones`, `cotizacion_items`, `notificaciones`. La relación con los requerimientos está en [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md).
+
+Además, `sesiones` guarda las sesiones de inicio de sesión (express-mysql-session). `npm run db:sql` exporta solo su estructura; si usas el comando `mysqldump` directo, agrega `--ignore-table=tecnitrack.sesiones` o ejecuta antes `npm run db:reset`.
+
+## Rutas
+
+Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. Por ahora los módulos responden una página "en construcción"; se implementan en los siguientes pasos.
+
+| Prefijo | Módulo | Acceso |
+|---|---|---|
+| `/` | Inicio | público |
+| `/auth` | Inicio y cierre de sesión (`/auth/login`) | público |
+| `/portal` | Portal del cliente (folio + teléfono) | público |
+| `/admin` | Panel del administrador | admin |
+| `/tecnico` | Panel del técnico (mis tickets) | técnico |
+| `/clientes`, `/equipos` | Clientes y sus equipos | admin (técnico: lectura) |
+| `/tickets` | Tickets | admin y técnico (solo los suyos) |
+| `/cotizaciones` | Cotizaciones | técnico |
+| `/catalogo` | Servicios y repuestos | admin (técnico: lectura) |
+| `/usuarios` | Técnicos | admin |
+| `/reportes` | Reportes | admin |
+| `/notificaciones` | Notificaciones | técnico |
+
+Los formularios envían el token CSRF en el campo oculto `_csrf` y simulan `PUT`, `PATCH` o `DELETE` con el campo oculto `_method`. En [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) están el orden de los middlewares y cómo se manejan los errores.
 
 ## Usuarios de prueba
 

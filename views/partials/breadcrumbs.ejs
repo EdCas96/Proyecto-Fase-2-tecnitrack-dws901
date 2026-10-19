@@ -1,0 +1,14 @@
+<%#
+  Migas de pan. Uso: include('../partials/breadcrumbs', { migas: [{ texto: 'Administrador', url: '/admin' }, { texto: 'Clientes' }] })
+  La última miga es la página actual y va sin enlace.
+%>
+<% if (locals.migas && migas.length) { %>
+  <nav aria-label="Ruta de navegación">
+    <p class="breadcrumb">
+      <% migas.forEach(({ texto, url }, i) => { %>
+        <% if (i > 0) { %><span class="breadcrumb-separador"> / </span><% } %>
+        <% if (url && i < migas.length - 1) { %><a href="<%= url %>"><%= texto %></a><% } else { %><span aria-current="page"><%= texto %></span><% } %>
+      <% }) %>
+    </p>
+  </nav>
+<% } %>
