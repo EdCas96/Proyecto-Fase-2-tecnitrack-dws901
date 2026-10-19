@@ -1,6 +1,6 @@
 /**
  * Pone en res.locals lo que usan todas las vistas:
- * - usuarioActual: solo { id, nombre, correo, rol } del usuario en sesión (nunca password_hash, RN-08).
+ * - usuarioActual: solo { id, nombre, rol } del usuario en sesión (nunca password_hash, RN-08).
  * - mensajes: flash de éxito y error.
  * - errores / datos: errores por campo y datos ingresados de un formulario
  *   que no pasó la validación (los deja errorHandler.js al regresar).
@@ -12,8 +12,8 @@ const { generarTokenCsrf } = require('./csrf');
 /** Copia solo los campos públicos del usuario guardado en la sesión. */
 function usuarioPublico(usuario) {
   if (!usuario) return null;
-  const { id, nombre, correo, rol } = usuario;
-  return { id, nombre, correo, rol };
+  const { id, nombre, rol } = usuario;
+  return { id, nombre, rol };
 }
 
 /** Lee (y consume) un tipo de flash solo si existe, para no modificar la sesión sin necesidad. */

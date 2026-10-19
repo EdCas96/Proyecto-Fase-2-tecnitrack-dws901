@@ -18,12 +18,13 @@ const { asegurarVariablesVistas } = require('./variablesVistas');
 const { entorno } = require('../config/env');
 
 const MENSAJE_GENERICO = 'Ocurrió un error inesperado. Intenta de nuevo más tarde.';
-const VISTAS = [400, 403, 404, 422, 500];
+const VISTAS = [400, 403, 404, 422, 429, 500];
 const TITULOS = {
   400: 'Datos no válidos',
   403: 'Acceso denegado',
   404: 'Página no encontrada',
   422: 'Operación no permitida',
+  429: 'Demasiados intentos',
   500: 'Error del servidor',
 };
 // Campos que nunca se devuelven al formulario
@@ -94,7 +95,7 @@ function errorHandler(err, req, res, next) {
 
   if (error instanceof AuthError && typeof req.flash === 'function') {
     req.flash('error', mensaje);
-    return res.redirect(303, '/auth/login');
+    return res.redirect(303, '/login');
   }
 
   const vista = VISTAS.includes(statusCode) ? statusCode : (statusCode >= 500 ? 500 : 400);
