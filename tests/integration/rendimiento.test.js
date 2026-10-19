@@ -32,8 +32,8 @@ describe('Listado de clientes con 500 registros (RNF-04)', () => {
     expect(duracion).toBeLessThan(LIMITE_MS);
     const filas = respuesta.text.match(/href="\/clientes\/\d+">Ver equipos/g);
     expect(filas).toHaveLength(10);
-    // 500 nuevos + 3 de los seeders = 503 -> 51 páginas
-    expect(respuesta.text).toContain('503 clientes registrados');
+    // 500 nuevos + 4 de los seeders = 504 -> 51 páginas
+    expect(respuesta.text).toContain('504 clientes registrados');
     expect(respuesta.text).toContain('Página 1 de 51');
   });
 
@@ -42,7 +42,7 @@ describe('Listado de clientes con 500 registros (RNF-04)', () => {
     const respuesta = await admin.agente.get('/clientes?pagina=51');
 
     expect(Date.now() - inicio).toBeLessThan(LIMITE_MS);
-    expect(respuesta.text.match(/href="\/clientes\/\d+">Ver equipos/g)).toHaveLength(3);
+    expect(respuesta.text.match(/href="\/clientes\/\d+">Ver equipos/g)).toHaveLength(4);
     expect(respuesta.text).toContain('rel="prev"');
     expect(respuesta.text).not.toContain('rel="next"');
   });
