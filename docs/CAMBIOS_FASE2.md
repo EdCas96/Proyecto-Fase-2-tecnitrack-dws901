@@ -139,7 +139,7 @@ Nueva columna `comentario` VARCHAR(255), **nullable**, en `ticket_historiales`:
 
 ### Impacto
 - **Tablas:** `ticket_historiales` (+1 columna nullable).
-- **Historias / reglas:** HU-06; cancelación por decisión del admin (flujo de estados de CLAUDE.md).
+- **Historias / reglas:** HU-06; cancelación por decisión del admin (flujo de estados del Documento Maestro).
 - **Reporte (HU-08):** las filas de reasignación no cambian de estado, así que no alteran el cálculo de tiempos entre estados.
 
 ---
