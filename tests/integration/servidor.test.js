@@ -37,6 +37,8 @@ describe('Servidor', () => {
 
   test('la conexión a MySQL (base de datos de pruebas) funciona', async () => {
     await expect(sequelize.authenticate()).resolves.toBeUndefined();
-    expect(sequelize.getDatabaseName()).toBe('tecnitrack_test');
+    // La de .env.test, que siempre termina en _test (cada quien puede ponerle otro nombre)
+    expect(sequelize.getDatabaseName()).toBe(process.env.DB_NAME);
+    expect(sequelize.getDatabaseName()).toMatch(/_test$/);
   });
 });
