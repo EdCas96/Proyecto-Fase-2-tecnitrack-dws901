@@ -1,0 +1,23 @@
+<%# Nuevo equipo de un cliente o edición %>
+<% const editando = Boolean(equipo); %>
+<div class="section-header">
+  <%- include('../partials/breadcrumbs') %>
+  <h1><%= titulo %></h1>
+  <p class="text-small">Cliente: <%= cliente.nombre %></p>
+</div>
+
+<form class="form-container" method="post" action="<%= editando ? `/equipos/${equipo.id}` : '/equipos' %>" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <% if (editando) { %>
+    <input type="hidden" name="_method" value="PUT">
+  <% } else { %>
+    <input type="hidden" name="cliente_id" value="<%= cliente.id %>">
+  <% } %>
+
+  <%- include('../partials/camposEquipo', { prefijo: '', equipo }) %>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a class="btn btn-secondary" href="/clientes/<%= cliente.id %>">Cancelar</a>
+  </div>
+</form>
