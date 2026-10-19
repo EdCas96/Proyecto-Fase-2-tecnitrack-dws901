@@ -1,7 +1,7 @@
 /**
  * Control de acceso: sesión del personal, roles y sesión del cliente del portal.
  *
- * Matriz de permisos (CLAUDE.md, RN-02):
+ * Matriz de permisos (RN-02; también en README.md › Rutas):
  *   admin   -> todo
  *   tecnico -> tickets, cotizaciones, notificaciones; clientes, equipos y catálogo solo lectura
  *   cliente -> solo /portal (sin cuenta: folio + teléfono)
