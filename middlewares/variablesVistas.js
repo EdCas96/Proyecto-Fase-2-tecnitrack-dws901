@@ -6,6 +6,7 @@
  *   que no pasó la validación (los deja errorHandler.js al regresar).
  * - csrfToken: para el campo oculto _csrf de los formularios.
  * - rutaActual: para marcar la opción activa del menú.
+ * - clienteEnPortal: el cliente validó folio + teléfono (la barra muestra "Cliente").
  */
 const { generarTokenCsrf } = require('./csrf');
 
@@ -29,6 +30,7 @@ function variablesVistas(req, res, next) {
   res.locals.datos = leerFlash(req, 'datos')[0] || {};
   res.locals.csrfToken = generarTokenCsrf(req, res);
   res.locals.rutaActual = req.path;
+  res.locals.clienteEnPortal = Boolean(req.session.clienteTicketId);
   next();
 }
 

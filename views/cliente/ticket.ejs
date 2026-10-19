@@ -1,0 +1,20 @@
+<%# Estado del ticket del cliente (prototipo: cliente/ticket-estado.html). Historial y cotización: HU-05 %>
+<div class="status-hero">
+  <p class="breadcrumb">Ticket <%= ticket.folio %> · <%= ticket.cliente %></p>
+  <h1>Estado actual</h1>
+  <%- include('../partials/badgeEstado', { estado: ticket.estado, grande: true }) %>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-card">
+    <div class="detail-list">
+      <div><span class="detail-label">Equipo</span><span class="detail-value"><%= ticket.equipo %></span></div>
+      <div><span class="detail-label">Fecha de ingreso</span><span class="detail-value"><%= new Date(ticket.fechaIngreso).toLocaleDateString('es-SV') %></span></div>
+    </div>
+  </div>
+</div>
+
+<form class="acciones-portal" method="post" action="/portal/salir">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <button type="submit" class="btn btn-secondary">Salir</button>
+</form>
