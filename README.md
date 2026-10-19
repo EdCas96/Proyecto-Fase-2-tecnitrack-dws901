@@ -1,253 +1,259 @@
 # TecniTrack
 
-Sistema web de gestión de servicio técnico de computadoras. Permite registrar clientes y equipos, abrir tickets de reparación con fotos, generar cotizaciones que el cliente aprueba o rechaza desde un portal público (con folio + teléfono), y dar seguimiento al estado de cada reparación.
+Sistema web de gestión de servicio técnico de computadoras. Un taller registra clientes y equipos, abre tickets de reparación con fotos, genera cotizaciones con su catálogo de servicios y repuestos, y da seguimiento a cada reparación por un flujo de estados controlado. El cliente, sin crear cuenta, consulta su ticket con **folio + teléfono** y aprueba o rechaza la cotización desde un portal público; el técnico recibe una notificación en cuanto el cliente responde.
 
-**Fase 2:** back-end y persistencia (Node.js + Express + EJS + MySQL/Sequelize).
+**Proyecto universitario — DWS901, Fase 2 (Sprint II): back-end y persistencia.** El prototipo y el Documento Maestro de la Fase 1 están en [`docs/fase1/`](docs/fase1/).
 
-> El prototipo estático y el Documento Maestro de la Fase 1 están en [`docs/fase1/`](docs/fase1/) (ver [Documentación de la Fase 1](#documentación-de-la-fase-1)).
+## Contenido
+
+1. [Tecnologías](#tecnologías)
+2. [Requisitos](#requisitos)
+3. [Instalación paso a paso](#instalación-paso-a-paso)
+4. [Configuración del `.env`](#configuración-del-env)
+5. [Base de datos](#base-de-datos)
+6. [Ejecutar la aplicación](#ejecutar-la-aplicación)
+7. [Pruebas, cobertura y lint](#pruebas-cobertura-y-lint)
+8. [Usuarios de prueba](#usuarios-de-prueba)
+9. [Folios de ejemplo para el portal](#folios-de-ejemplo-para-el-portal)
+10. [Módulos implementados](#módulos-implementados)
+11. [Estructura de carpetas](#estructura-de-carpetas)
+12. [Documentación](#documentación)
+13. [Problemas frecuentes](#problemas-frecuentes)
+
+## Tecnologías
+
+| Capa | Tecnología |
+|---|---|
+| Servidor | Node.js + **Express 5** |
+| Vistas | **EJS** renderizadas en el servidor, con `express-ejs-layouts` (layout y parciales) |
+| Base de datos | **MySQL / MariaDB** con **Sequelize 6**; esquema con **sequelize-cli** (migraciones y seeders, nunca `sync()`) |
+| Sesión y autenticación | `express-session` guardada en MySQL (`express-mysql-session`) + **bcrypt** |
+| Seguridad | `helmet`, **csrf-csrf** (CSRF), `express-rate-limit` (login y portal) |
+| Formularios y archivos | **express-validator**, `method-override`, **Multer** (fotos) |
+| Configuración | **dotenv** (`.env` y `.env.test`) |
+| Pruebas | **Jest** + **Supertest**, con una base de datos de pruebas separada |
+| Calidad | **ESLint 9** |
+
+Arquitectura MVC por capas: `routes → middlewares → controllers → services (lógica de negocio) → models`. Detalle en [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md); para qué sirve cada paquete, en [`docs/DEPENDENCIAS.md`](docs/DEPENDENCIAS.md).
 
 ## Requisitos
 
 | Herramienta | Versión |
 |---|---|
-| Node.js | 20 o superior (desarrollado con 24.19) |
-| npm | 10 o superior |
-| MySQL | 8.0 o superior **o** MariaDB 10.4 o superior (por ejemplo, la incluida en XAMPP) |
+| Node.js | **20 o superior** (desarrollado y probado con 24.19.0) |
+| npm | **10 o superior** (probado con 11.17.0) |
+| MySQL o MariaDB | **MySQL 8.0.16+** o **MariaDB 10.4+** (probado con la MariaDB 10.4.32 de XAMPP) |
 | Git | cualquier versión reciente |
 
-## Instalación
+> Con MySQL anterior a 8.0.16 las restricciones `CHECK` se ignoran (las validaciones del modelo siguen activas).
 
-1. Clona el repositorio y entra en la carpeta:
+## Instalación paso a paso
+
+> **Windows / PowerShell:** si al escribir `npm` aparece *"no se puede cargar el archivo ...\npm.ps1 porque la ejecución de scripts está deshabilitada en este sistema"*, tienes dos opciones:
+> - usar `npm.cmd` en lugar de `npm` en todos los comandos (por ejemplo `npm.cmd install`, `npm.cmd run dev`), o
+> - permitir los scripts firmados para tu usuario, una sola vez: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+>
+> Las dos funcionan igual. También puedes usar **Git Bash** o **CMD**, que no tienen esa restricción.
+
+1. **Clona el repositorio** y entra en la carpeta:
    ```bash
-   git clone <url-del-repositorio> tecnitrack
+   git clone https://github.com/EdCas96/Proyecto-Fase-2-tecnitrack-dws901.git tecnitrack
    cd tecnitrack
    ```
-2. Instala las dependencias:
+2. **Instala las dependencias:**
    ```bash
    npm install
    ```
-3. Crea tus archivos de entorno a partir de las plantillas y ajusta el usuario y la contraseña de MySQL:
+   Si npm 11 avisa que bloqueó los scripts de instalación de `bcrypt`, no pasa nada: `bcrypt` 6 trae binarios ya compilados (ver [Problemas frecuentes](#problemas-frecuentes)).
+3. **Crea los archivos de entorno** a partir de las plantillas:
    ```bash
    cp .env.example .env
    cp .env.test.example .env.test
    ```
-   Cambia `SESSION_SECRET` en ambos por una cadena larga y aleatoria. Puedes generar una con:
+   En PowerShell: `Copy-Item .env.example .env` y `Copy-Item .env.test.example .env.test`.
+4. **Edita `.env` y `.env.test`**: el usuario y la contraseña de MySQL y un `SESSION_SECRET` largo y aleatorio en cada uno (ver [Configuración del `.env`](#configuración-del-env)). Para generar un secreto:
    ```bash
    node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
    ```
-4. Asegúrate de que MySQL esté corriendo (en XAMPP: botón **Start** de MySQL).
-5. Crea las bases de datos de desarrollo y de pruebas:
+5. **Enciende MySQL** (en XAMPP: botón **Start** de MySQL).
+6. **Crea la base de datos con sus tablas y datos de ejemplo** (opción A, recomendada):
    ```bash
    npm run db:create
-   npm run db:create:test
-   ```
-6. Ejecuta las migraciones y carga los datos de ejemplo:
-   ```bash
    npm run db:migrate
    npm run db:seed
    ```
-7. Levanta el servidor:
+   O importa el script SQL (opción B, ver [Base de datos](#base-de-datos)).
+7. **Arranca el servidor:**
    ```bash
    npm run dev
    ```
-   Abre <http://localhost:3000>.
+   Abre <http://localhost:3000> y entra con un [usuario de prueba](#usuarios-de-prueba).
+8. **(Opcional) Comprueba que todo funciona** ejecutando las pruebas: `npm test`. La base de pruebas `tecnitrack_test` se crea sola.
 
-## Variables de entorno
+## Configuración del `.env`
+
+`.env` (desarrollo) y `.env.test` (pruebas) **nunca se suben al repositorio**. Con `NODE_ENV=test` la aplicación lee `.env.test`; en cualquier otro caso, `.env`.
 
 | Variable | Descripción | Ejemplo |
 |---|---|---|
-| `NODE_ENV` | Entorno de ejecución: `development`, `test` o `production` | `development` |
-| `PORT` | Puerto HTTP del servidor | `3000` |
+| `NODE_ENV` | Entorno: `development`, `test` o `production` | `development` |
+| `PORT` | Puerto HTTP | `3000` (`3001` en `.env.test`) |
 | `DB_HOST` | Host de MySQL | `127.0.0.1` |
 | `DB_PORT` | Puerto de MySQL | `3306` |
-| `DB_NAME` | Nombre de la base de datos | `tecnitrack` (`tecnitrack_test` en `.env.test`) |
+| `DB_NAME` | Base de datos | `tecnitrack`; en `.env.test` **debe terminar en `_test`** (`tecnitrack_test`) |
 | `DB_USER` | Usuario de MySQL | `root` |
 | `DB_PASSWORD` | Contraseña de MySQL (vacía por defecto en XAMPP) | |
-| `SESSION_SECRET` | Secreto para firmar la cookie de sesión y los tokens CSRF. **Obligatorio:** sin él la aplicación no arranca | cadena aleatoria larga |
-| `DIAS_LIMITE_COTIZACION` | RN-05: días tras los que una cotización Pendiente se marca como "Pendiente de respuesta" | `7` |
-| `MAX_FOTO_MB` | Tamaño máximo de cada foto subida, en MB | `5` |
-| `DIRECTORIO_FOTOS` | (Opcional) carpeta donde se guardan las fotos. Por defecto `storage/fotos-tickets` (fuera de `public/`; las pruebas usan `storage/fotos-tickets-test`) | `storage/fotos-tickets` |
-| `LIMITE_INTENTOS` | Rate limit: intentos fallidos de login o portal permitidos por IP en la ventana (`0` lo desactiva) | `5` |
-| `VENTANA_INTENTOS_MIN` | Rate limit: duración de la ventana, en minutos | `15` |
+| `SESSION_SECRET` | Firma la cookie de sesión y los tokens CSRF. **Obligatorio:** sin él la aplicación no arranca | cadena aleatoria larga |
+| `DIAS_LIMITE_COTIZACION` | RN-05: días tras los que una cotización Pendiente se muestra como "Pendiente de respuesta" | `7` |
+| `MAX_FOTO_MB` | Tamaño máximo de cada foto, en MB | `5` |
+| `DIRECTORIO_FOTOS` | (Opcional) carpeta de las fotos; por defecto `storage/fotos-tickets` (fuera de `public/`) | `storage/fotos-tickets` |
+| `LIMITE_INTENTOS` | Intentos fallidos de login o portal permitidos por IP en la ventana (`0` lo desactiva) | `5` |
+| `VENTANA_INTENTOS_MIN` | Duración de la ventana del rate limit, en minutos | `15` |
 
-Con `NODE_ENV=test` la aplicación lee `.env.test`; en cualquier otro caso, `.env`. Ninguno de los dos se sube al repositorio.
-
-## Comandos
-
-| Comando | Qué hace |
-|---|---|
-| `npm start` | Levanta el servidor en modo normal |
-| `npm run dev` | Levanta el servidor con nodemon (se reinicia al guardar) |
-| `npm run db:create` | Crea la base de datos de desarrollo |
-| `npm run db:create:test` | Crea la base de datos de pruebas (`tecnitrack_test`) |
-| `npm run db:migrate` | Ejecuta las migraciones pendientes |
-| `npm run db:seed` | Carga todos los seeders |
-| `npm run db:reset` | Borra la base `tecnitrack`, la vuelve a crear, migra y siembra (deja la base como recién instalada; **se pierden los datos que hayas creado**) |
-| `npm run db:sql` | Regenera `database/tecnitrack.sql` a partir de la base de desarrollo |
-| `npm test` | Ejecuta las pruebas (Jest + Supertest) contra `tecnitrack_test` |
-| `npm run test:watch` | Ejecuta las pruebas en modo observación |
+Las pruebas se niegan a ejecutarse si `DB_NAME` de `.env.test` no termina en `_test`, para no borrar por error la base de desarrollo.
 
 ## Base de datos
+
+**Tablas:** `usuarios`, `clientes`, `equipos`, `catalogo_items`, `tickets`, `ticket_fotos`, `ticket_historiales`, `cotizaciones`, `cotizacion_items`, `notificaciones`, más `folio_contadores` (contador de folios por año) y `sesiones` (sesiones de inicio de sesión). Los cambios respecto al modelo de la Fase 1 están en [`docs/CAMBIOS_FASE2.md`](docs/CAMBIOS_FASE2.md).
 
 ### Opción A: migraciones y seeders (recomendada)
 
 ```bash
-npm run db:create     # crea la base tecnitrack (utf8mb4)
-npm run db:migrate    # crea las tablas
-npm run db:seed       # carga los datos de ejemplo
+npm run db:create     # crea la base tecnitrack (utf8mb4_unicode_ci)
+npm run db:migrate    # crea las tablas (15 migraciones)
+npm run db:seed       # carga los datos de ejemplo (6 seeders)
 ```
 
-Para volver a empezar desde cero en cualquier momento: `npm run db:reset`.
+Para dejar la base como recién instalada en cualquier momento: `npm run db:reset` (borra la base, la crea, migra y siembra; **se pierden los datos que hayas creado**).
 
-**Si ya tenías la base de un paso anterior**, ejecuta `npm run db:migrate`: agrega `tickets.fecha_estimada`, `ticket_historiales.comentario` y la tabla `folio_contadores` (SC-03 a SC-05 en [`docs/CAMBIOS_FASE2.md`](docs/CAMBIOS_FASE2.md)) sin borrar tus datos. Para ver también las fechas estimadas de ejemplo, usa `npm run db:reset`.
-
-No hace falta preparar la base de pruebas a mano: antes de cada `npm test`, `tests/setup/globalSetup.js` crea `tecnitrack_test` si no existe y reconstruye su esquema con las migraciones.
+Si ya tenías la base de un paso anterior, `npm run db:migrate` aplica solo las migraciones nuevas sin borrar tus datos.
 
 ### Opción B: importar el script SQL
 
-`database/tecnitrack.sql` contiene la creación de la base, las tablas y los datos de ejemplo:
+`database/tecnitrack.sql` crea la base `tecnitrack`, todas las tablas y los datos de ejemplo:
 
 ```bash
 mysql -u root -p < database/tecnitrack.sql
 ```
 
-En XAMPP también se puede importar desde phpMyAdmin (pestaña **Importar**). **Atención:** el script borra la base `tecnitrack` si ya existe.
+En XAMPP también se puede importar desde phpMyAdmin (pestaña **Importar**). **Atención:** el script borra la base `tecnitrack` si ya existe. Para regenerarlo después de cambiar migraciones o seeders: `npm run db:reset` y luego `npm run db:sql`.
 
-Para regenerarlo después de cambiar migraciones o seeders:
+> Con la opción B las fechas "recientes" de los datos de ejemplo (la cotización lista para aprobar y las entregas del mes) quedan fijas en el día en que se generó el script. Con `npm run db:reset` se calculan respecto al momento de sembrar.
+
+## Ejecutar la aplicación
+
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Servidor con `node --watch`: se reinicia al guardar un archivo `.js` |
+| `npm start` | Servidor normal (sin reinicio automático) |
+
+La aplicación queda en <http://localhost:3000> (o el `PORT` de `.env`). Al arrancar muestra en la terminal si la conexión a MySQL es correcta.
+
+Otros comandos de base de datos: `npm run db:create:test` (crea la base de pruebas a mano; normalmente no hace falta) y `npm run db:sql` (regenera el script SQL).
+
+## Pruebas, cobertura y lint
 
 ```bash
-npm run db:reset
-npm run db:sql
+npm test                # 533 pruebas (Jest + Supertest) contra tecnitrack_test
+npm run test:coverage   # lo mismo y el reporte de cobertura (también en coverage/index.html)
+npm run lint            # ESLint
 ```
 
-`db:sql` ejecuta `mysqldump` y quita de los INSERT la columna generada `cotizaciones.pendiente_ticket_id`, para que el script también se pueda importar en MySQL 8. Busca `mysqldump` en la variable `MYSQLDUMP_PATH`, después en `C:\xampp\mysql\bin\` y, si no lo encuentra ahí, en el PATH. El comando equivalente sin limpiar es:
-
-```bash
-mysqldump -u root -p --databases tecnitrack --add-drop-database --skip-dump-date --default-character-set=utf8mb4 --routines --triggers --complete-insert > database/tecnitrack.sql
-```
-
-### Tablas
-
-`usuarios`, `clientes`, `equipos`, `catalogo_items`, `tickets`, `ticket_fotos`, `ticket_historiales`, `cotizaciones`, `cotizacion_items`, `notificaciones`, más la tabla técnica `folio_contadores` (contador de folios por año, RN-03). La relación con los requerimientos está en [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md).
-
-Además, `sesiones` guarda las sesiones de inicio de sesión (express-mysql-session). `npm run db:sql` exporta solo su estructura; si usas el comando `mysqldump` directo, agrega `--ignore-table=tecnitrack.sesiones` o ejecuta antes `npm run db:reset`.
-
-## Rutas
-
-Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. Ya funcionan el login, el portal (con la respuesta a la cotización), los dashboards, los módulos de administración (clientes y equipos, catálogo y usuarios), los tickets con su flujo de estados, las cotizaciones y las notificaciones. Solo reportes responde una página "en construcción" (ya protegida por sesión y rol).
-
-| Prefijo | Módulo | Acceso |
-|---|---|---|
-| `/` | Inicio (con sesión abierta lleva al panel del rol) | público |
-| `/login`, `/logout` | Inicio y cierre de sesión del personal | público |
-| `/portal` | Portal del cliente (folio + teléfono); `/portal/ticket` tras validar, con aprobar/rechazar la cotización | público |
-| `/admin` | Panel del administrador | admin |
-| `/tecnico` | Panel del técnico (mis tickets) | técnico (y admin) |
-| `/clientes`, `/equipos` | Clientes y sus equipos (`/equipos` redirige a `/clientes`) | admin (técnico: lectura) |
-| `/tickets` | Tickets: listado, nuevo ticket, detalle y cambios de estado | admin y técnico (solo los suyos) |
-| `/fotos/:id` | Fotos de un ticket (no son archivos públicos) | admin, técnico asignado o cliente con ese ticket |
-| `/cotizaciones` | Cotizaciones: listado (`?vencidas=1` = pendientes de respuesta), nueva y editar | admin y técnico (solo las de sus tickets) |
-| `/catalogo` | Servicios y repuestos | admin (técnico: lectura) |
-| `/usuarios` | Técnicos | admin |
-| `/reportes` | Reportes | admin |
-| `/notificaciones` | Notificaciones; `/notificaciones/no-leidas` (JSON) para el contador | admin y técnico (cada uno las suyas) |
-
-Sin sesión, las rutas protegidas redirigen a `/login` (o responden 401 si la petición es JSON); con un rol sin permiso responden 403 "No tienes permiso para acceder a esta sección".
-
-Los formularios envían el token CSRF en el campo oculto `_csrf` y simulan `PUT`, `PATCH` o `DELETE` con el campo oculto `_method`. En [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) están el orden de los middlewares y cómo se manejan los errores.
-
-## Módulos de administración
-
-Entra como **admin** (`admin@tecnitrack.com` / `Tecni2026!`). Todos los listados usan la misma tabla del prototipo, paginan de 10 en 10 en la consulta (RNF-04) y muestran migas de pan. Cada acción deja un mensaje de éxito o de error; si un formulario tiene errores, regresa con los datos escritos y el mensaje junto a cada campo. Eliminar o desactivar pide confirmación.
-
-| Módulo | Qué se puede hacer | Reglas que se pueden probar |
-|---|---|---|
-| **Clientes** (`/clientes`) | Buscar por nombre o teléfono (con o sin guion), crear un cliente con su primer equipo opcional, ver el detalle con sus equipos, editar y eliminar. | Teléfono de 8 dígitos (`7123-4567` o `71234567`); correo opcional pero válido; no se elimina un cliente con equipos (prueba con *Ana Lucía Martínez*). Si el equipo del nuevo cliente falla (por ejemplo, número de serie `DL-88291`, que ya existe), **no se guarda nada**. |
-| **Equipos** (desde el detalle del cliente) | Agregar, editar y eliminar. | Número de serie único; no se elimina un equipo con tickets (prueba con la *Dell Inspiron 15* de María). |
-| **Catálogo** (`/catalogo`) | Filtrar por tipo y buscar, crear, editar, desactivar/activar y eliminar. | Precio mayor a 0 con máximo 2 decimales; nombre único; los 6 ítems de ejemplo ya se usaron en cotizaciones, así que solo se pueden **desactivar** (un ítem nuevo sí se puede eliminar). Solo los activos se podrán cotizar. |
-| **Usuarios** (`/usuarios`, solo admin) | Crear técnicos con contraseña temporal, editar nombre y correo, activar/desactivar, restablecer la contraseña y eliminar cuentas sin historial. | Contraseña de al menos 8 caracteres con letra y número; correo único; el admin no puede desactivarse a sí mismo y siempre debe quedar un admin activo; un técnico desactivado no puede iniciar sesión y, si tenía la sesión abierta, sale en su siguiente clic. |
-
-Como **técnico** (`luis.fernandez@tecnitrack.com`), clientes y catálogo se ven sin botones de crear, editar ni eliminar; esas rutas responden 403, igual que `/usuarios`.
-
-## Tickets
-
-| Qué | Cómo probarlo |
-|---|---|
-| **Nuevo ticket** (`/tickets/nuevo`) | Elige un cliente (escribe en "Buscar cliente" para filtrar), su equipo aparece solo; o marca "Registrar cliente nuevo" / "Registrar equipo nuevo". Diagnóstico, fecha estimada opcional y de 1 a 5 fotos con vista previa. El técnico que lo crea queda asignado; el admin elige técnico o lo deja sin asignar. Folio automático `TT-2026-0044`, `0045`, … |
-| **Listado** (`/tickets`) | Filtro por estado y búsqueda por folio o cliente. El técnico solo ve sus tickets; si abre el de otro (ej. Luis en `/tickets/2`) recibe 403. |
-| **Detalle y flujo** | Solo se habilitan los botones válidos desde el estado actual. Ejemplos con los datos de ejemplo: *TT-2026-0041* (Luis, Diagnosticado) no puede pasar a "Listo" (422); *TT-2026-0037* (Jorge, En reparación) puede ir a "Esperando repuesto" y volver, o a "Listo"; *TT-2026-0039* (Jorge, Listo) pasa a "Entregado" y guarda la fecha de entrega. "Esperando aprobación" se alcanza solo al enviar una cotización y sale solo con la respuesta del cliente. |
-| **Admin** | En el detalle: reasignar a un técnico activo (le llega una notificación) y cancelar con motivo (no se puede cancelar un ticket entregado). Si el admin cambia el estado de un ticket, el técnico también recibe un aviso. |
-| **Historial** | El detalle del cliente y el de cada equipo (`/equipos/:id`) listan sus tickets. |
-| **Portal** | `TT-2026-0040` / `7345-6720` muestra el estado, la fecha estimada (18/09/2026) y el historial. |
-
-## Cotizaciones y notificaciones
-
-| Qué | Cómo probarlo |
-|---|---|
-| **Generar cotización** | En el detalle de un ticket *Diagnosticado* (ej. *TT-2026-0041* de Luis) → "Generar cotización": agrega ítems del catálogo activo; el total se ve en vivo, pero lo recalcula el servidor. Al enviar (pide confirmación) el ticket pasa a «Esperando aprobación». Desde *En reparación* o *Esperando repuesto* se puede enviar una **cotización adicional**. Mientras esté Pendiente se puede editar; solo puede haber una Pendiente por ticket (RN-09). |
-| **Pendiente de respuesta (RN-05)** | *TT-2026-0040* tiene una cotización de septiembre: el detalle muestra una alerta ámbar con los días, los listados la marcan y el dashboard del admin la cuenta. Nunca se cancela sola. |
-| **Respuesta del cliente** | En el portal, *TT-2026-0043* / `7456-1230` (José Antonio Pérez) tiene una cotización Pendiente reciente con "Aprobar cotización" y "Rechazar cotización" (motivo opcional). Aprobar → ticket «En reparación»; rechazar → «Cancelado». Una segunda respuesta da un error claro. |
-| **Notificaciones** | La campana de la barra muestra las no leídas y se actualiza sola cada 30 s. Cuando el cliente responde, le llega un aviso al técnico asignado y al admin, y el dashboard del técnico muestra una alerta. En `/notificaciones` se marcan como leídas una por una o todas. |
+- No hay que preparar la base de pruebas: antes de cada ejecución, `tests/setup/globalSetup.js` crea `tecnitrack_test` si no existe y reconstruye el esquema con las migraciones. Cada archivo de pruebas carga sus datos con los seeders.
+- Resultado actual: **533 pruebas en 23 archivos, todas pasan**; cobertura de **94 % de sentencias y 96 % de líneas**.
+- Estrategia, conteo por módulo, cobertura y pruebas manuales: [`docs/PRUEBAS.md`](docs/PRUEBAS.md).
 
 ## Usuarios de prueba
 
-Todos usan la contraseña **`Tecni2026!`**.
+Todos usan la contraseña **`Tecni2026!`**. Inicia sesión en <http://localhost:3000/login>.
 
-| Rol | Nombre | Correo | Estado |
+| Rol | Nombre | Correo | Qué ve |
 |---|---|---|---|
-| admin | Administrador Principal | `admin@tecnitrack.com` | Activo |
-| tecnico | Luis Fernández | `luis.fernandez@tecnitrack.com` | Activo |
-| tecnico | Jorge Pineda | `jorge.pineda@tecnitrack.com` | Activo |
-| tecnico | Óscar Meléndez | `oscar.melendez@tecnitrack.com` | **Inactivo** (no puede iniciar sesión, RN-07) |
+| admin | Administrador Principal | `admin@tecnitrack.com` | Todo: dashboard, clientes, tickets, catálogo, usuarios, reportes |
+| técnico | Luis Fernández | `luis.fernandez@tecnitrack.com` | Sus tickets y notificaciones; clientes y catálogo solo lectura |
+| técnico | Jorge Pineda | `jorge.pineda@tecnitrack.com` | Igual que Luis, con sus propios tickets |
+| técnico | Óscar Meléndez | `oscar.melendez@tecnitrack.com` | **Inactivo:** recibe "Cuenta desactivada, contacte al administrador" (RN-07) |
 
-### Cómo iniciar sesión
+Tras **5 intentos fallidos en 15 minutos** desde la misma IP, el login (y el portal) responden 429. Reiniciar el servidor vacía los contadores.
 
-1. Abre `http://localhost:3000/login`.
-2. Entra con el correo de la tabla y la contraseña `Tecni2026!`:
-   - **Administrador:** `admin@tecnitrack.com`. Llega a `/admin` y ve el menú completo (Dashboard, Clientes, Tickets, Catálogo, Usuarios, Reportes).
-   - **Técnico:** `luis.fernandez@tecnitrack.com` o `jorge.pineda@tecnitrack.com`. Llega a `/tecnico`; si intenta abrir `/admin`, `/usuarios` o `/reportes` recibe 403.
-   - **Técnico inactivo:** `oscar.melendez@tecnitrack.com` recibe "Cuenta desactivada, contacte al administrador".
-3. "Cerrar sesión" (barra superior) elimina la sesión y regresa a `/login`.
+## Folios de ejemplo para el portal
 
-Tras **5 intentos fallidos en 15 minutos** desde la misma IP, el login responde 429 hasta que pase la ventana (lo mismo para el portal). Se ajusta con `LIMITE_INTENTOS` y `VENTANA_INTENTOS_MIN` en `.env` (`LIMITE_INTENTOS=0` lo desactiva); reiniciar el servidor también vacía los contadores.
+Portal del cliente: <http://localhost:3000/portal>. El teléfono se acepta con o sin guion (`7345-6720` o `73456720`).
 
-### Cómo entrar al portal del cliente
+| Folio | Teléfono | Cliente | Estado | Para probar |
+|---|---|---|---|---|
+| **TT-2026-0043** | **7456-1230** | José Antonio Pérez | Esperando aprobación | Cotización Pendiente de $65.00 **lista para aprobar o rechazar** |
+| TT-2026-0040 | 7345-6720 | Ana Lucía Martínez | Esperando aprobación | Cotización **Pendiente de respuesta** (de septiembre, RN-05) |
+| TT-2026-0037 | 7345-6720 | Ana Lucía Martínez | En reparación | Cotización aprobada; historial con el paso por el cliente |
+| TT-2026-0039 | 7123-4567 | María Elena Hernández | Listo | Fecha estimada y historial |
+| TT-2026-0038 | 7234-8912 | Carlos Alberto Ramírez | Cancelado | Cotización rechazada |
+| TT-2026-0035 | 7123-4567 | María Elena Hernández | Entregado | Flujo completo |
 
-1. Abre `http://localhost:3000/portal` (o el botón "Consultar mi ticket (Cliente)" del login).
-2. Escribe un folio y el teléfono del cliente dueño del equipo, por ejemplo:
-   - Folio **`TT-2026-0040`**, teléfono **`7345-6720`** (Ana Lucía Martínez, *Esperando aprobación*).
-   - El teléfono se acepta con o sin guion o espacios (`73456720`, `7345 6720`).
-3. Con un teléfono o folio incorrecto el mensaje es siempre "No se encontró un ticket con esos datos".
+Con un folio o teléfono incorrecto el mensaje es siempre "No se encontró un ticket con esos datos". Otros tickets de ejemplo: *TT-2026-0041* (Luis, Diagnosticado, listo para cotizar), *TT-2026-0042* (Recibido, sin asignar) y *TT-2026-0028* a *0034*, *0044* y *0045* (entregados, para los reportes). El siguiente ticket que se cree será el **TT-2026-0046**.
 
-### Datos de ejemplo para el portal del cliente
+## Módulos implementados
 
-| Folio | Cliente (teléfono) | Equipo | Estado | Técnico | Cotización |
-|---|---|---|---|---|---|
-| TT-2026-0035 | María Elena Hernández (7123-4567) | Laptop Dell Inspiron 15 | Entregado | Luis Fernández | Aprobada $25.00 |
-| TT-2026-0037 | Ana Lucía Martínez (7345-6720) | Impresora Epson L3250 | En reparación | Jorge Pineda | Aprobada $45.00 |
-| TT-2026-0038 | Carlos Alberto Ramírez (7234-8912) | Computadora HP Pavilion TP01 | Cancelado | Jorge Pineda | Rechazada $85.00 |
-| TT-2026-0039 | María Elena Hernández (7123-4567) | Laptop Dell Inspiron 15 | Listo | Jorge Pineda | Aprobada $45.00 |
-| TT-2026-0040 | Ana Lucía Martínez (7345-6720) | Laptop Lenovo ThinkPad E14 | Esperando aprobación | Luis Fernández | **Pendiente** $60.00 (desde el 12/09/2026: **Pendiente de respuesta**, RN-05) |
-| TT-2026-0041 | Carlos Alberto Ramírez (7234-8912) | Computadora HP Pavilion TP01 | Diagnosticado | Luis Fernández | — |
-| TT-2026-0042 | María Elena Hernández (7123-4567) | Laptop Dell Inspiron 15 | Recibido | Sin asignar | — |
-| TT-2026-0043 | José Antonio Pérez (7456-1230) | Laptop HP 15-dy2021 | Esperando aprobación | Luis Fernández | **Pendiente** $65.00, enviada hace 2 horas al sembrar: **lista para aprobar** |
+| Módulo | Rutas | Historias | Resumen |
+|---|---|---|---|
+| Autenticación y roles | `/login`, `/logout` | HU-09 | Sesión en MySQL, `session.regenerate()`, mensaje genérico, rate limit, el usuario desactivado sale en su siguiente clic |
+| Portal del cliente | `/portal`, `/portal/ticket` | HU-04, HU-05 | Folio + teléfono; estado, fecha estimada, historial y la cotización con Aprobar / Rechazar |
+| Dashboards | `/admin`, `/tecnico` | HU-08, HU-10 | KPIs del prototipo, tickets recientes, alerta de respuestas de cotización |
+| Clientes y equipos | `/clientes`, `/equipos` | HU-01 | CRUD, búsqueda y paginación; nuevo cliente con su primer equipo en una transacción; historial de tickets |
+| Catálogo | `/catalogo` | HU-07 | Filtro por tipo, precio > 0 con 2 decimales, desactivar los ítems ya usados |
+| Usuarios | `/usuarios` | HU-09 | Crear técnicos con contraseña temporal, activar/desactivar, restablecer contraseña |
+| Tickets | `/tickets`, `/fotos/:id` | HU-02, HU-06 | Folio correlativo seguro, fotos protegidas, máquina de estados, reasignar y cancelar |
+| Cotizaciones | `/cotizaciones` | HU-03 | Ítems del catálogo activo, total en el servidor (centavos), cotización adicional, "Pendiente de respuesta" |
+| Notificaciones | `/notificaciones` | HU-10 | Bus de eventos después del commit, contador en vivo, marcar como leídas |
+| Reportes | `/reportes` | HU-08 | Tickets por técnico y tiempo promedio, servicios más solicitados, resumen por estado, CSV |
+
+Matriz de acceso: el **admin** puede todo; el **técnico** ve y modifica solo sus tickets y cotizaciones, consulta clientes y catálogo sin modificarlos y no entra a usuarios ni reportes (403); el **cliente** solo usa el portal. Detalle de cada historia, regla y prueba en [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md).
+
+## Estructura de carpetas
+
+```
+tecnitrack/
+├── app.js                 # Configuración de Express (middlewares en orden, rutas, errores)
+├── server.js              # Punto de entrada: prueba la conexión y levanta el puerto
+├── config/                # env.js (.env/.env.test), config.js (sequelize-cli), database.js, sesion.js
+├── routes/                # Un router por módulo; index.js los monta en su prefijo
+├── middlewares/           # auth (sesión y roles), csrf, validar, upload (Multer), errorHandler, logger…
+├── controllers/           # Reciben la petición, llaman al servicio y responden
+├── services/              # Lógica de negocio (clases): TicketService, CotizacionService, FolioService…
+│   └── eventos/           # Bus de eventos (EventEmitter) y NotificacionListener
+├── models/                # Modelos de Sequelize y sus asociaciones
+├── validators/            # Reglas de express-validator por módulo
+├── utils/                 # Errores propios, asyncHandler, constantes, paginación, cálculos…
+├── views/                 # EJS: layouts/, partials/, errores/ y una carpeta por módulo
+├── public/                # css/, img/, js/ (scripts del navegador)
+├── storage/               # Fotos subidas (no versionadas; fuera de public/)
+├── migrations/            # 15 migraciones (esquema)
+├── seeders/               # 6 seeders (datos de ejemplo)
+├── database/              # tecnitrack.sql y su generador
+├── tests/                 # unit/, integration/, helpers/ y setup/ (Jest)
+└── docs/                  # Documentación del proyecto y entregables de la Fase 1
+```
 
 ## Documentación
 
-- [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md): capas, carpetas y recorrido de una petición.
-- [`docs/DEPENDENCIAS.md`](docs/DEPENDENCIAS.md): para qué sirve cada dependencia.
-- [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md): historias de usuario, requerimientos, tablas, código y pruebas.
-- [`docs/SEGURIDAD.md`](docs/SEGURIDAD.md): cada medida de seguridad y qué riesgo mitiga.
-- [`docs/CAMBIOS_FASE2.md`](docs/CAMBIOS_FASE2.md): solicitudes de cambio respecto a la Fase 1.
-- [`docs/INCIDENCIAS.md`](docs/INCIDENCIAS.md): incidencias, limitaciones y pendientes.
-
-## Documentación de la Fase 1
-
-Los entregables de la Fase 1 se conservan como referencia en `docs/fase1/`:
-
-| Ruta | Contenido |
+| Documento | Contenido |
 |---|---|
-| [`docs/fase1/TecniTrack_Documento_Maestro.docx`](docs/fase1/TecniTrack_Documento_Maestro.docx) | Documento Maestro: requerimientos, historias de usuario, diagrama entidad-relación y diccionario de datos. |
-| [`docs/fase1/prototipo/`](docs/fase1/prototipo/) | Prototipo estático HTML/CSS (`index.html`, `admin/`, `tecnico/`, `cliente/`, `css/`, `img/`), referencia visual para las vistas EJS. |
+| [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) | Capas, carpetas, orden de los middlewares, manejo de errores, eventos y recorrido de una petición |
+| [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md) | HU-01 a HU-10, RF-01 a RF-12, RN-01 a RN-09 y RNF-01 a RNF-06 con su ruta, servicio y prueba |
+| [`docs/PRUEBAS.md`](docs/PRUEBAS.md) | Estrategia de pruebas, conteo por módulo, cobertura y pruebas manuales |
+| [`docs/SEGURIDAD.md`](docs/SEGURIDAD.md) | Cada medida de seguridad y el riesgo que mitiga |
+| [`docs/CAMBIOS_FASE2.md`](docs/CAMBIOS_FASE2.md) | Solicitudes de cambio al modelo de la Fase 1 (SC-01 a SC-06) y decisiones técnicas |
+| [`docs/INCIDENCIAS.md`](docs/INCIDENCIAS.md) | Incidencias resueltas, limitaciones conocidas y pendientes para el siguiente sprint |
+| [`docs/DEPENDENCIAS.md`](docs/DEPENDENCIAS.md) | Para qué sirve cada dependencia |
+| [`docs/fase1/`](docs/fase1/) | Documento Maestro y prototipo estático de la Fase 1 (abrir `docs/fase1/prototipo/index.html` en el navegador) |
 
-Para ver el prototipo basta con abrir `docs/fase1/prototipo/index.html` en el navegador; no lo sirve la aplicación Express. Los cambios introducidos en la Fase 2 respecto a estos documentos se registran en [`docs/CAMBIOS_FASE2.md`](docs/CAMBIOS_FASE2.md).
+## Problemas frecuentes
+
+| Síntoma | Solución |
+|---|---|
+| PowerShell: *"la ejecución de scripts está deshabilitada"* al usar `npm` | Usa `npm.cmd` o ejecuta una vez `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
+| `npm install` avisa que bloqueó los scripts de `bcrypt` (`allow-scripts`) | Es solo un aviso de npm 11: `bcrypt` 6 incluye binarios. Si en tu máquina falla al iniciar sesión, ejecuta `npm approve-scripts bcrypt` y `npm rebuild bcrypt` |
+| `Falta SESSION_SECRET en el archivo .env` | Revisa que `.env` exista en la raíz del proyecto y tenga `SESSION_SECRET` |
+| `ECONNREFUSED 127.0.0.1:3306` | MySQL no está encendido (XAMPP → Start) o el puerto de `.env` no es el correcto |
+| `Access denied for user 'root'` | La contraseña de MySQL de `.env` no coincide (en XAMPP suele estar vacía) |
+| El login responde "Demasiados intentos" (429) | Espera 15 minutos o reinicia el servidor (los contadores están en memoria) |
+| `npm test` dice que la base debe terminar en `_test` | Revisa `DB_NAME` en `.env.test` |

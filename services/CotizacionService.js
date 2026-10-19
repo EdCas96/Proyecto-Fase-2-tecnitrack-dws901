@@ -7,7 +7,7 @@ const {
 } = require('../utils/errors');
 const { diasLimiteCotizacion } = require('../config/env');
 const {
-  aCentavos, calcularTotalCentavos, centavosATexto, diasTranscurridos, estaVencida,
+  aCentavos, calcularTotalCentavos, centavosATexto, estaVencida,
 } = require('../utils/cotizaciones');
 const { textoOpcional } = require('../utils/texto');
 const { opcionesPaginacion, resultadoPaginado } = require('../utils/paginacion');
@@ -262,11 +262,6 @@ class CotizacionService {
     return Boolean(cotizacion) && cotizacion.estado === 'Pendiente' && estaVencida(cotizacion.fecha, dias, ahora);
   }
 
-  /** Días desde que se envió la cotización (para la alerta RN-05). */
-  static diasDesdeEnvio(cotizacion, ahora = new Date()) {
-    return diasTranscurridos(cotizacion.fecha, ahora);
-  }
-
   /**
    * Cuántas cotizaciones están "Pendiente de respuesta" (KPI del dashboard admin).
    * @implements RN-05
@@ -354,6 +349,17 @@ class CotizacionService {
     throw new BusinessRuleError(
       'Solo se puede cotizar un ticket Diagnosticado, o en reparación / esperando repuesto si es una cotización adicional.',
     );
+  }
+
+  /**
+   * ¿Puede este usuario editar la cotización vigente del ticket? Solo si está
+   * Pendiente y es el admin o el técnico asignado (botón del detalle).
+   * @implements RN-02
+   */
+  static puedeEditar(ticket, usuario) {
+    const vigente = (ticket.cotizaciones || [])[0];
+    const suyo = usuario.rol === 'admin' || ticket.tecnico_id === usuario.id;
+    return Boolean(vigente && vigente.estado === 'Pendiente' && suyo);
   }
 
   /** ¿Puede este usuario generar una cotización para el ticket ahora? (botón del detalle) */

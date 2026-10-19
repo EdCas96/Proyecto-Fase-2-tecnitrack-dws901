@@ -1,8 +1,14 @@
 # Incidencias, limitaciones y pendientes
 
-## Incidencias
+Registro del Sprint II (Fase 2): los problemas que aparecieron y cómo se resolvieron, lo que se acepta como limitación en esta entrega y lo que queda para el siguiente sprint.
 
-Problemas encontrados durante el desarrollo y cómo se resolvieron.
+1. [Incidencias resueltas](#1-incidencias-resueltas) (43)
+2. [Limitaciones conocidas](#2-limitaciones-conocidas)
+3. [Tareas pendientes para el siguiente sprint](#3-tareas-pendientes-para-el-siguiente-sprint)
+
+## 1. Incidencias resueltas
+
+Problemas encontrados durante el desarrollo, en orden, con su resolución. Varias las detectaron las pruebas automáticas (por ejemplo la 5, la 8, la 20 y la 26).
 
 | # | Fecha | Paso | Incidencia | Resolución |
 |---|---|---|---|---|
@@ -11,7 +17,7 @@ Problemas encontrados durante el desarrollo y cómo se resolvieron.
 | 3 | 18/10/2026 | 2 · Base de datos | Las bases creadas en el Paso 1 tenían cotejamiento `utf8mb4_general_ci`, porque se crearon antes de agregar `--collate` al script `db:create`. | Se borraron y recrearon (`db:drop` + `db:create`) con `utf8mb4_unicode_ci`. |
 | 4 | 18/10/2026 | 2 · Base de datos | El `sql_mode` por defecto de XAMPP no es estricto: un INSERT con un ENUM inválido o sin un campo NOT NULL se aceptaba con solo un aviso (guardaba `''`). | Hook `afterConnect` en `config/config.js` que fija `STRICT_ALL_TABLES` en cada conexión. Lo verifica la prueba «ENUM rechaza un estado inexistente». |
 | 5 | 18/10/2026 | 2 · Base de datos | `queryInterface.createTable` ignora en silencio `unique: 'nombre_indice'` (texto): correo, folio, número de serie y nombre de catálogo quedaron **sin índice único**. Lo detectaron las pruebas de duplicados. | Los índices únicos se crean con `addIndex(..., { unique: true, name })`. Se corrigieron las migraciones antes de fusionar a `main`. |
-| 6 | 18/10/2026 | 2 · Base de datos | `db:reset` no volvía a sembrar: `migrate:undo:all` borra las tablas pero no `sequelize_data`, donde se registran los seeders ya ejecutados. | `db:reset` ejecuta primero `db:seed:undo:all`. |
+| 6 | 18/10/2026 | 2 · Base de datos | `db:reset` no volvía a sembrar: `migrate:undo:all` borra las tablas pero no `sequelize_data`, donde se registran los seeders ya ejecutados. | `db:reset` ejecutaba primero `db:seed:undo:all`. *Reemplazado después por la solución de la incidencia 33.* |
 | 7 | 18/10/2026 | 2 · Base de datos | El `mysqldump` de MariaDB incluye la columna generada `cotizaciones.pendiente_ticket_id` en los INSERT; MySQL 8 rechaza valores explícitos en columnas generadas (error 3105). | `npm run db:sql` (`database/generar-sql.js`) envuelve `mysqldump`, quita esa columna de los INSERT y normaliza los fines de línea a LF. Se verificó importando el script en una base temporal. |
 | 8 | 18/10/2026 | 3 · Middlewares | `asyncHandler` solo atrapaba promesas rechazadas: si el controlador lanzaba un error **antes** de su primer `await` (o no era `async`), el error escapaba sin pasar por `next()`. Express 5 lo recogía igual, pero el contrato de `asyncHandler` no se cumplía. Lo detectó la prueba unitaria. | `asyncHandler` envuelve la llamada en `try/catch` y además devuelve la promesa. Se confirmó que la versión anterior fallaba la prueba. |
 | 9 | 18/10/2026 | 3 · Middlewares | En las pruebas manuales todas las rutas respondían 500 **sin ningún registro**: faltaba la tabla `sesiones` en `tecnitrack_test`, y el manejador de errores no registraba nada en el entorno de pruebas. | Se migró la base de pruebas (`npm test` ya lo hace en `globalSetup`). `errorHandler` ahora registra los 500 en **todos** los entornos, para que un fallo inesperado no pase en silencio. |
@@ -44,57 +50,70 @@ Problemas encontrados durante el desarrollo y cómo se resolvieron.
 | 36 | 20/10/2026 | 7 · Cotizaciones | La primera versión de `editar` pedía `FOR UPDATE` sobre una consulta con `include` del ticket usando la opción `lock.of`, que solo existe en PostgreSQL. | Se bloquea solo la fila de la cotización y el ticket se lee aparte. |
 | 37 | 20/10/2026 | 7 · Cotizaciones | `CotizacionService` necesita `TicketService` (permisos) y el listado de tickets necesitaba una subconsulta de cotizaciones: definirla en `CotizacionService` creaba una dependencia circular entre los dos módulos. | La subconsulta "Pendiente desde" (RN-05) vive en `TicketService`; el cálculo de vencimiento es una función pura en `utils/cotizaciones.js` que usan ambos y las vistas. |
 | 38 | 20/10/2026 | 7 · Cotizaciones | Para la demo hacía falta una cotización Pendiente que **no** estuviera vencida, pero los seeders usan fechas fijas de septiembre y cualquier Pendiente aparece como "Pendiente de respuesta". | El ticket nuevo TT-2026-0043 se siembra con fechas relativas al momento de ejecutar el seeder (cotización enviada "hace 2 horas"). Las pruebas que dependían de la cantidad de tickets, clientes y del primer folio libre se ajustaron. |
+| 39 | 21/10/2026 | 8 · Cierre | La demo de reportes no tenía datos: solo había un ticket Entregado (septiembre) y el reporte abre por defecto en el mes actual. | Seeder `20261021000106-tickets-entregados.js` con siete entregas de agosto y septiembre (fechas fijas, las usan las pruebas) y dos entregadas "hace unas horas" (fechas relativas). La prueba del KPI "Entregados este mes" calcula el valor esperado en lugar de fijarlo. |
+| 40 | 21/10/2026 | 8 · Cierre | `npm audit` reportó 26 vulnerabilidades (4 altas). Altas: `mysql2` 3.10.2 (fuga de credenciales con `mysql_clear_password` y descompresión sin límite), incluido como copia propia de `express-mysql-session`; y `braces` / `chokidar` / `nodemon` (dev). | `overrides` en `package.json` hace que `express-mysql-session` use el mismo `mysql2` 3.24.6 del proyecto (misma versión mayor). `nodemon` se reemplazó por `node --watch` (incluido en Node 20+), porque `braces` 3.0.3 ya es la última versión y no tiene corrección. Resultado: **0 altas y 0 críticas**; se repitieron todas las pruebas. |
+| 41 | 21/10/2026 | 8 · Cierre | ESLint marcó un carácter BOM literal dentro de `ReporteService` (invisible en el editor), dos variables sin usar en una prueba y un comentario `eslint-disable` innecesario. | El BOM se escribe con `String.fromCharCode(0xfeff)`; se quitaron las variables y el comentario. `npm run lint` queda sin errores ni avisos. |
+| 42 | 21/10/2026 | 8 · Cierre | Revisión final: `EnConstruccionController` y su vista ya no los usaba ninguna ruta; `CotizacionService.diasDesdeEnvio` no se usaba; el controlador de tickets decidía si una cotización se podía editar; la portada pública mostraba el entorno del servidor ("development") y el texto de prueba "TecniTrack funcionando". | Se eliminaron el código sin uso; la regla pasó a `CotizacionService.puedeEditar`; la portada muestra la descripción del sistema. No se encontraron `console.log` de depuración, TODOs, secretos rastreados ni rutas sin proteger (cada router declara `requireAuth` y su rol; las públicas son login y portal). |
+| 43 | 21/10/2026 | 8 · Cierre | **Verificación de reproducibilidad:** se clonó el repositorio en una carpeta temporal y se siguió el README paso a paso con bases distintas (`tecnitrack_repro` y `tecnitrack_repro_test`). Instalación, migraciones (15), seeders (6), arranque y login funcionaron, pero una prueba fallaba porque exigía que la base de pruebas se llamara exactamente `tecnitrack_test`. | La prueba compara con el `DB_NAME` de `.env.test` y verifica que termine en `_test`. Repetido en el clon: 533 pruebas pasan, `npm run lint` sin errores y la misma cobertura. Después se borraron la carpeta y las bases temporales. |
 
-## Limitaciones conocidas
+## 2. Limitaciones conocidas
 
-Comportamientos o restricciones que se aceptan en esta fase.
+Comportamientos o restricciones que se aceptan en esta entrega. Ninguna impide cumplir las historias de usuario.
 
-- **Rechazar una cotización adicional cancela el ticket completo,** igual que rechazar la primera (RN-06 tal como está escrita). Si el cliente solo rechaza el trabajo extra, hoy el admin tendría que crear otro ticket; una mejora sería volver a «En reparación» con la cotización anterior aprobada.
+### Reglas de negocio y funcionalidad
+
+- **Rechazar una cotización adicional cancela el ticket completo,** igual que rechazar la primera (RN-06 tal como está escrita). Si el cliente solo rechaza el trabajo extra, hoy habría que abrir otro ticket.
 - **Al editar una cotización Pendiente se toman los precios del catálogo de ese momento,** no los de la versión original.
-- **Las notificaciones solo son internas** (no hay correo ni SMS) y el contador se actualiza cada 30 segundos, no al instante.
-- **El aviso "Pendiente de respuesta" se calcula al mostrar la página:** no hay tareas programadas, porque RN-05 pide solo mostrarlo, nunca cancelar.
-- **`database/tecnitrack.sql` trae las fechas de TT-2026-0043 del momento en que se generó;** con `npm run db:reset` se siembran relativas a ese momento.
-
-- **La fecha estimada solo se captura al crear el ticket;** todavía no hay pantalla para cambiarla después.
-- **El select de clientes del nuevo ticket carga todos los clientes** y los filtra en el navegador. Es rápido para el tamaño de un taller (cientos de clientes); con miles convendría una búsqueda en el servidor.
-- **Las fotos no se redimensionan:** se guardan tal como se suben (máximo `MAX_FOTO_MB` cada una) y la galería las muestra reducidas con CSS.
-- **Una base de un paso anterior** queda con `fecha_estimada` vacía en los tickets de ejemplo después de `npm run db:migrate`; `npm run db:reset` carga las fechas de ejemplo.
-- **Un folio reservado en una transacción que se revierte no se pierde:** el incremento del contador también se revierte, así que no quedan huecos. Si se borran tickets a mano en la base, sus números no se reutilizan.
-
-- **Versiones mínimas del motor:** los `CHECK` solo se aplican desde MySQL 8.0.16 o MariaDB 10.2.1 (en versiones anteriores se ignoran, aunque las validaciones del modelo siguen activas). La columna generada que garantiza RN-09 requiere MySQL 5.7 o MariaDB 10.2 en adelante.
-- **`database/tecnitrack.sql` se generó con MariaDB 10.4.** Se probó su importación en MariaDB; en MySQL 8 no se ha probado en esta máquina.
-- **Datos de ejemplo fieles al prototipo:** la laptop Dell (DL-88291) tiene a la vez el ticket TT-2026-0039 en estado Listo y el TT-2026-0042 en Recibido, tal como aparece en las pantallas de la Fase 1. Ninguna regla de negocio lo impide.
-- **La cotización Pendiente de ejemplo (TT-2026-0040) es del 12/09/2026,** así que siempre superará `DIAS_LIMITE_COTIZACION` y servirá para demostrar RN-05.
-- **Tickets, cotizaciones, reportes y notificaciones siguen mostrando "en construcción",** pero ya están protegidos por sesión y rol según la matriz de permisos.
-- **El teléfono del cliente acepta solo 8 dígitos con guion opcional** (`7123-4567` o `71234567`), como pide el formato de El Salvador; no acepta espacios ni el prefijo `+503`. Se guarda siempre como `0000-0000`. El modelo conserva una validación más flexible para los datos ya existentes.
-- **La regla "siempre queda un admin activo" no se puede alcanzar desde la interfaz** mientras solo exista un admin, porque antes se aplica "no puedes desactivarte a ti mismo". Se prueba directamente en `UsuarioService`. Tampoco se pueden crear admins desde la interfaz (solo técnicos, como pide HU-09).
-- **Los errores de un formulario se muestran dos veces:** un resumen en el aviso rojo superior y el mensaje junto a cada campo. Es intencional (el resumen ayuda con lectores de pantalla y en formularios largos).
-- **La confirmación antes de eliminar o desactivar usa `window.confirm`** (`public/js/confirmar.js`). Sin JavaScript el formulario se envía sin preguntar; las reglas de negocio del servidor siguen aplicándose.
+- **La fecha estimada solo se captura al crear el ticket;** no hay pantalla para cambiarla después.
+- **La regla "siempre queda un admin activo" no se puede alcanzar desde la interfaz** mientras solo exista un admin, porque antes aplica "no puedes desactivarte a ti mismo"; se prueba directamente en `UsuarioService`. Desde la interfaz solo se crean técnicos (como pide HU-09).
+- **El reporte por técnico solo cuenta tickets con técnico asignado** y mide desde la primera entrada «Recibido» hasta la última «Entregado» del historial. "Servicios más solicitados" usa la fecha de la cotización (la de aprobación no se guarda aparte).
+- **"Pendiente de respuesta" (RN-05) se calcula al mostrar la página:** no hay tareas programadas, porque la regla solo pide mostrarlo, nunca cancelar.
+- **Las notificaciones son solo internas** (sin correo ni SMS) y el contador de la barra se actualiza cada 30 segundos.
+- **El teléfono del cliente acepta solo 8 dígitos con guion opcional** (`7123-4567` o `71234567`), sin espacios ni `+503`; se guarda siempre como `0000-0000`.
 - **`GET /equipos` no tiene listado propio:** redirige a `/clientes`, porque los equipos se administran dentro del detalle de cada cliente (como en el prototipo).
-- **El filtro "el técnico solo ve sus tickets" (RN-02) aún no se aplica a nivel de registro:** hoy el técnico entra a `/tickets` porque su rol lo permite; el filtro por `tecnico_id` se agrega con `TicketService`.
-- **El rate limit guarda los contadores en memoria** (por proceso). Si el servidor se reinicia, se vacían; con varias instancias detrás de un balanceador habría que usar un almacén compartido. En producción, `trust proxy` permite identificar la IP real del cliente.
-- **El personal y el portal comparten la cookie de sesión:** si en el mismo navegador alguien con sesión de técnico entra al portal, su sesión de técnico se cierra (la sesión se regenera con solo `clienteTicketId`), y viceversa.
-- **`requireAuth` consulta la base en cada petición** para revisar que el usuario siga activo (RN-07). Es una consulta por llave primaria, barata para el tamaño del taller.
-- **Tras cerrar sesión, la página de login vuelve a crear una sesión anónima** (necesaria para el token CSRF del formulario). No contiene datos del usuario anterior.
-- **Cada visitante que abre una página obtiene una sesión en MySQL,** aunque no inicie sesión. Es necesario porque el token CSRF se liga al id de sesión. Las sesiones vencidas (8 h) se borran automáticamente cada 15 minutos; los estáticos no crean sesión.
-- **`connect-flash` 0.1.1** (última versión, de 2013) usa `util.isArray`, y Node 24 muestra un aviso de deprecación (DEP0044) al ejecutar las pruebas. No afecta el funcionamiento; si una versión futura de Node elimina esa función, habrá que reemplazar la librería por un middleware propio de unas pocas líneas.
-- **El almacén de sesiones abre su propio pool de conexiones** (mysql2), separado del de Sequelize. En las pruebas, `cerrarConexiones()` cierra los dos.
-- **El token CSRF en la query string** (solo en formularios con fotos) podría quedar en registros de un proxy. Helmet envía `Referrer-Policy: no-referrer`, así que no se filtra a otros sitios, y el logger propio no registra la query string.
+- **Datos de ejemplo fieles al prototipo:** la laptop Dell (DL-88291) tiene a la vez TT-2026-0039 en Listo y TT-2026-0042 en Recibido, como en las pantallas de la Fase 1.
 
-## Pendientes
+### Interfaz
 
-Tareas identificadas que aún no se han realizado.
+- **El select de clientes del nuevo ticket carga todos los clientes** y los filtra en el navegador: rápido para cientos de clientes; con miles convendría una búsqueda en el servidor.
+- **Las fotos no se redimensionan:** se guardan como se suben (máximo `MAX_FOTO_MB`) y la galería las reduce con CSS.
+- **Los errores de un formulario se muestran dos veces** (resumen arriba y mensaje junto a cada campo). Es intencional.
+- **La confirmación antes de eliminar o desactivar usa `window.confirm`;** sin JavaScript el formulario se envía sin preguntar (las reglas del servidor siguen aplicándose).
+- **RNF-01, RNF-03 y RNF-06 se verifican solo de forma manual** (tiempo de registro de un ticket, navegadores y vista de tablet; ver `docs/PRUEBAS.md`).
 
-- [x] `FolioService` (RN-03): correlativo del año dentro de la transacción, sin duplicados ante creaciones simultáneas (SC-05).
-- [x] `MaquinaEstadosTicket` y `TicketService` (RN-01, RN-02, RN-04), registrando cada cambio en `ticket_historiales`.
-- [ ] Probar la importación de `database/tecnitrack.sql` en MySQL 8.
-- [x] Autenticación (Paso 4): `POST /login` y `POST /logout`, middlewares de sesión y rol, y rate limit en el login y el portal. `iniciarSesion()` y `crearAgenteAutenticado()` ya se usan en `tests/integration/auth.test.js`.
-- [x] CRUD de usuarios (HU-09): crear y restablecer contraseña usan `AuthService.hashPassword` (que aplica `validarFortaleza`).
-- [x] Usar `CatalogoService.listarActivos` en el formulario de cotización (paso 7, HU-03).
-- [x] Paso 7: cotizar pasa el ticket a Esperando aprobación y la respuesta del cliente lo lleva a En reparación o Cancelado (historial con `usuario_id` NULL).
-- [x] Pantalla de notificaciones (HU-10) con contador en la barra y alerta en el dashboard del técnico.
-- [ ] Permitir editar la fecha estimada de un ticket abierto.
-- [ ] Reportes (HU-08): tickets por técnico y tiempo promedio Recibido → Entregado (el historial ya tiene los datos).
-- [ ] Obligar al técnico a cambiar la contraseña temporal en su primer inicio de sesión (no lo pide la Fase 2; hoy el admin se la comunica).
-- [x] Portal: mostrar la cotización y aprobar o rechazar (HU-05).
-- [x] Versionar el prototipo y el Documento Maestro de la Fase 1: se movieron a `docs/fase1/prototipo/` y `docs/fase1/` para dejar limpia la raíz del proyecto.
+### Sesiones y seguridad
+
+- **El rate limit guarda los contadores en memoria** (por proceso): se vacían al reiniciar el servidor y no se comparten entre varias instancias.
+- **El personal y el portal comparten la cookie de sesión:** en un mismo navegador, entrar al portal cierra la sesión del técnico, y viceversa.
+- **Cada visitante obtiene una sesión en MySQL** aunque no inicie sesión (el token CSRF se liga al id de sesión); las vencidas (8 h) se borran cada 15 minutos. Tras cerrar sesión, el login crea una sesión anónima nueva, sin datos del usuario anterior.
+- **`requireAuth` consulta la base en cada petición** para revisar que el usuario siga activo (RN-07) y contar sus notificaciones: dos consultas por llave e índice, baratas para el tamaño de un taller.
+- **El token CSRF va en la query string en los formularios con fotos,** por lo que podría quedar en los registros de un proxy; `Referrer-Policy: no-referrer` evita que se filtre a otros sitios y el logger propio no registra la query string.
+- **El almacén de sesiones abre su propio pool de conexiones** (mysql2), separado del de Sequelize.
+
+### Dependencias y entorno
+
+- **Quedan 21 vulnerabilidades moderadas, ninguna alta ni crítica** (`npm audit`):
+  - *Cadena de Jest* (`js-yaml`, `argparse`, `babel-plugin-istanbul`…): solo se usan en las pruebas. La corrección propuesta es bajar a Jest 25, incompatible con el proyecto.
+  - *`uuid` < 11.1.1 dentro de Sequelize 6:* solo afecta a `v3/v5/v6` con buffer, que Sequelize no usa. La corrección propuesta es instalar Sequelize 3, incompatible.
+- **`connect-flash` 0.1.1** (de 2013) usa `util.isArray`: Node 24 muestra el aviso DEP0044 al correr las pruebas. No afecta el funcionamiento.
+- **Versiones mínimas del motor:** los `CHECK` se aplican desde MySQL 8.0.16 o MariaDB 10.2.1; la columna generada de RN-09 requiere MySQL 5.7 o MariaDB 10.2.
+- **`database/tecnitrack.sql` se generó y se probó con MariaDB 10.4;** no se ha probado su importación en MySQL 8. Sus fechas "recientes" (TT-2026-0043 a 0045) quedan fijas en el día en que se generó; `npm run db:reset` las calcula al momento.
+- **Un folio reservado en una transacción que se revierte no se pierde** (el contador también se revierte); los números de tickets borrados a mano en la base no se reutilizan.
+
+## 3. Tareas pendientes para el siguiente sprint
+
+Ordenadas por prioridad.
+
+| # | Tarea | Motivo |
+|---|---|---|
+| 1 | Probar la importación de `database/tecnitrack.sql` en **MySQL 8** | Solo se probó en MariaDB 10.4 (limitación conocida) |
+| 2 | Al rechazar una **cotización adicional**, volver a «En reparación» con la cotización anterior aprobada en lugar de cancelar el ticket | Mejora de RN-06 para el caso de trabajo extra |
+| 3 | Pantalla para **editar la fecha estimada** de un ticket abierto (y avisar al cliente en el portal) | Hoy solo se captura al crear el ticket |
+| 4 | Obligar al técnico a **cambiar la contraseña temporal** en su primer inicio de sesión | Hoy el admin se la comunica y el técnico la conserva |
+| 5 | Pruebas automáticas de interfaz (por ejemplo con Playwright) para **RNF-01, RNF-03 y RNF-06**: tiempo de registro, varios navegadores y vista de tablet | Hoy se verifican de forma manual |
+| 6 | **Notificaciones por correo o WhatsApp** al cliente cuando hay una cotización nueva o el equipo está listo | Fuera del alcance de la Fase 2 (solo notificaciones internas) |
+| 7 | Guardar los contadores del **rate limit** en un almacén compartido (MySQL o Redis) | Necesario si se usan varias instancias del servidor |
+| 8 | Búsqueda de clientes **en el servidor** para el formulario de nuevo ticket | Para cuando haya miles de clientes |
+| 9 | Reemplazar **`connect-flash`** por un middleware propio de pocas líneas | Librería sin mantenimiento (aviso DEP0044) |
+| 10 | Revisar `npm audit` cuando Sequelize y Jest publiquen versiones con `uuid` y `js-yaml` actualizados | Quedan 21 vulnerabilidades moderadas sin corrección compatible |
+| 11 | Redimensionar las fotos al subirlas (miniaturas) | Reducir espacio en disco y el peso de la galería |

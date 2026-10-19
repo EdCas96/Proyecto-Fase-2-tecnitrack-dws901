@@ -26,8 +26,10 @@
 
 | Paquete | Para qué sirve |
 |---|---|
-| `nodemon` | Reinicia el servidor automáticamente al guardar cambios. |
 | `sequelize-cli` | Crea la base de datos y ejecuta migraciones y seeders desde la terminal. |
 | `jest` | Framework de pruebas unitarias y de integración. |
 | `supertest` | Hace peticiones HTTP a `app.js` dentro de las pruebas sin levantar el puerto. |
 | `cross-env` | Define `NODE_ENV=test` en los scripts de forma compatible con Windows, macOS y Linux. |
+| `eslint`, `@eslint/js`, `globals` | Revisión estática del código (`npm run lint`); configuración en `eslint.config.js`. |
+
+`npm run dev` usa `node --watch` (incluido en Node 20+) para reiniciar el servidor al guardar; antes se usaba `nodemon`, que se quitó porque arrastraba una vulnerabilidad alta sin corrección (ver INCIDENCIAS).
