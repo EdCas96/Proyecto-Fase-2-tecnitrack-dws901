@@ -66,6 +66,7 @@ Sistema web de gestión de servicio técnico de computadoras. Permite registrar 
 | `SESSION_SECRET` | Secreto para firmar la cookie de sesión y los tokens CSRF. **Obligatorio:** sin él la aplicación no arranca | cadena aleatoria larga |
 | `DIAS_LIMITE_COTIZACION` | RN-05: días tras los que una cotización Pendiente se marca como "Pendiente de respuesta" | `7` |
 | `MAX_FOTO_MB` | Tamaño máximo de cada foto subida, en MB | `5` |
+| `DIRECTORIO_FOTOS` | (Opcional) carpeta donde se guardan las fotos. Por defecto `storage/fotos-tickets` (fuera de `public/`; las pruebas usan `storage/fotos-tickets-test`) | `storage/fotos-tickets` |
 | `LIMITE_INTENTOS` | Rate limit: intentos fallidos de login o portal permitidos por IP en la ventana (`0` lo desactiva) | `5` |
 | `VENTANA_INTENTOS_MIN` | Rate limit: duración de la ventana, en minutos | `15` |
 
@@ -92,11 +93,13 @@ Con `NODE_ENV=test` la aplicación lee `.env.test`; en cualquier otro caso, `.en
 
 ```bash
 npm run db:create     # crea la base tecnitrack (utf8mb4)
-npm run db:migrate    # crea las 10 tablas
+npm run db:migrate    # crea las tablas
 npm run db:seed       # carga los datos de ejemplo
 ```
 
 Para volver a empezar desde cero en cualquier momento: `npm run db:reset`.
+
+**Si ya tenías la base de un paso anterior**, ejecuta `npm run db:migrate`: agrega `tickets.fecha_estimada`, `ticket_historiales.comentario` y la tabla `folio_contadores` (SC-03 a SC-05 en [`docs/CAMBIOS_FASE2.md`](docs/CAMBIOS_FASE2.md)) sin borrar tus datos. Para ver también las fechas estimadas de ejemplo, usa `npm run db:reset`.
 
 No hace falta preparar la base de pruebas a mano: antes de cada `npm test`, `tests/setup/globalSetup.js` crea `tecnitrack_test` si no existe y reconstruye su esquema con las migraciones.
 
@@ -125,13 +128,13 @@ mysqldump -u root -p --databases tecnitrack --add-drop-database --skip-dump-date
 
 ### Tablas
 
-`usuarios`, `clientes`, `equipos`, `catalogo_items`, `tickets`, `ticket_fotos`, `ticket_historiales`, `cotizaciones`, `cotizacion_items`, `notificaciones`. La relación con los requerimientos está en [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md).
+`usuarios`, `clientes`, `equipos`, `catalogo_items`, `tickets`, `ticket_fotos`, `ticket_historiales`, `cotizaciones`, `cotizacion_items`, `notificaciones`, más la tabla técnica `folio_contadores` (contador de folios por año, RN-03). La relación con los requerimientos está en [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md).
 
 Además, `sesiones` guarda las sesiones de inicio de sesión (express-mysql-session). `npm run db:sql` exporta solo su estructura; si usas el comando `mysqldump` directo, agrega `--ignore-table=tecnitrack.sesiones` o ejecuta antes `npm run db:reset`.
 
 ## Rutas
 
-Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. Ya funcionan el login, el portal, los paneles de inicio y los módulos de administración (clientes y equipos, catálogo y usuarios). Tickets, cotizaciones, reportes y notificaciones responden una página "en construcción" (ya protegida por sesión y rol) y se implementan en los siguientes pasos.
+Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. Ya funcionan el login, el portal, los dashboards, los módulos de administración (clientes y equipos, catálogo y usuarios) y los tickets con su flujo de estados. Cotizaciones, reportes y notificaciones responden una página "en construcción" (ya protegida por sesión y rol) y se implementan en los siguientes pasos.
 
 | Prefijo | Módulo | Acceso |
 |---|---|---|
@@ -141,7 +144,8 @@ Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. Ya 
 | `/admin` | Panel del administrador | admin |
 | `/tecnico` | Panel del técnico (mis tickets) | técnico (y admin) |
 | `/clientes`, `/equipos` | Clientes y sus equipos (`/equipos` redirige a `/clientes`) | admin (técnico: lectura) |
-| `/tickets` | Tickets | admin y técnico (solo los suyos) |
+| `/tickets` | Tickets: listado, nuevo ticket, detalle y cambios de estado | admin y técnico (solo los suyos) |
+| `/fotos/:id` | Fotos de un ticket (no son archivos públicos) | admin, técnico asignado o cliente con ese ticket |
 | `/cotizaciones` | Cotizaciones | admin y técnico |
 | `/catalogo` | Servicios y repuestos | admin (técnico: lectura) |
 | `/usuarios` | Técnicos | admin |
@@ -164,6 +168,17 @@ Entra como **admin** (`admin@tecnitrack.com` / `Tecni2026!`). Todos los listados
 | **Usuarios** (`/usuarios`, solo admin) | Crear técnicos con contraseña temporal, editar nombre y correo, activar/desactivar, restablecer la contraseña y eliminar cuentas sin historial. | Contraseña de al menos 8 caracteres con letra y número; correo único; el admin no puede desactivarse a sí mismo y siempre debe quedar un admin activo; un técnico desactivado no puede iniciar sesión y, si tenía la sesión abierta, sale en su siguiente clic. |
 
 Como **técnico** (`luis.fernandez@tecnitrack.com`), clientes y catálogo se ven sin botones de crear, editar ni eliminar; esas rutas responden 403, igual que `/usuarios`.
+
+## Tickets
+
+| Qué | Cómo probarlo |
+|---|---|
+| **Nuevo ticket** (`/tickets/nuevo`) | Elige un cliente (escribe en "Buscar cliente" para filtrar), su equipo aparece solo; o marca "Registrar cliente nuevo" / "Registrar equipo nuevo". Diagnóstico, fecha estimada opcional y de 1 a 5 fotos con vista previa. El técnico que lo crea queda asignado; el admin elige técnico o lo deja sin asignar. Folio automático `TT-2026-0043`, `0044`, … |
+| **Listado** (`/tickets`) | Filtro por estado y búsqueda por folio o cliente. El técnico solo ve sus tickets; si abre el de otro (ej. Luis en `/tickets/2`) recibe 403. |
+| **Detalle y flujo** | Solo se habilitan los botones válidos desde el estado actual. Ejemplos con los datos de ejemplo: *TT-2026-0041* (Luis, Diagnosticado) no puede pasar a "Listo" (422); *TT-2026-0037* (Jorge, En reparación) puede ir a "Esperando repuesto" y volver, o a "Listo"; *TT-2026-0039* (Jorge, Listo) pasa a "Entregado" y guarda la fecha de entrega. "Esperando aprobación" y la salida de ese estado llegan con las cotizaciones (paso 7). |
+| **Admin** | En el detalle: reasignar a un técnico activo (le llega una notificación) y cancelar con motivo (no se puede cancelar un ticket entregado). |
+| **Historial** | El detalle del cliente y el de cada equipo (`/equipos/:id`) listan sus tickets. |
+| **Portal** | `TT-2026-0040` / `7345-6720` muestra el estado, la fecha estimada (18/09/2026) y el historial. |
 
 ## Usuarios de prueba
 
