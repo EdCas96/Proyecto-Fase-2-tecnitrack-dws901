@@ -82,7 +82,7 @@ Con `NODE_ENV=test` la aplicación lee `.env.test`; en cualquier otro caso, `.en
 | `npm run db:create:test` | Crea la base de datos de pruebas (`tecnitrack_test`) |
 | `npm run db:migrate` | Ejecuta las migraciones pendientes |
 | `npm run db:seed` | Carga todos los seeders |
-| `npm run db:reset` | Revierte seeders y migraciones, migra de nuevo y siembra (deja la base como recién instalada) |
+| `npm run db:reset` | Borra la base `tecnitrack`, la vuelve a crear, migra y siembra (deja la base como recién instalada; **se pierden los datos que hayas creado**) |
 | `npm run db:sql` | Regenera `database/tecnitrack.sql` a partir de la base de desarrollo |
 | `npm test` | Ejecuta las pruebas (Jest + Supertest) contra `tecnitrack_test` |
 | `npm run test:watch` | Ejecuta las pruebas en modo observación |

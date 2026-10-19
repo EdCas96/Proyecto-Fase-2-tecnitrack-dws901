@@ -10,7 +10,7 @@
     "db:create:test": "cross-env NODE_ENV=test sequelize-cli db:create --charset utf8mb4 --collate utf8mb4_unicode_ci",
     "db:migrate": "sequelize-cli db:migrate",
     "db:seed": "sequelize-cli db:seed:all",
-    "db:reset": "sequelize-cli db:seed:undo:all && sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && sequelize-cli db:seed:all",
+    "db:reset": "sequelize-cli db:drop && npm run db:create && sequelize-cli db:migrate && sequelize-cli db:seed:all",
     "db:sql": "node database/generar-sql.js",
     "test": "cross-env NODE_ENV=test jest --runInBand",
     "test:watch": "cross-env NODE_ENV=test jest --runInBand --watch"
