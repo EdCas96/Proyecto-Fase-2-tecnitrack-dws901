@@ -134,23 +134,23 @@ Además, `sesiones` guarda las sesiones de inicio de sesión (express-mysql-sess
 
 ## Rutas
 
-Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. Ya funcionan el login, el portal, los dashboards, los módulos de administración (clientes y equipos, catálogo y usuarios) y los tickets con su flujo de estados. Cotizaciones, reportes y notificaciones responden una página "en construcción" (ya protegida por sesión y rol) y se implementan en los siguientes pasos.
+Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. Ya funcionan el login, el portal (con la respuesta a la cotización), los dashboards, los módulos de administración (clientes y equipos, catálogo y usuarios), los tickets con su flujo de estados, las cotizaciones y las notificaciones. Solo reportes responde una página "en construcción" (ya protegida por sesión y rol).
 
 | Prefijo | Módulo | Acceso |
 |---|---|---|
 | `/` | Inicio (con sesión abierta lleva al panel del rol) | público |
 | `/login`, `/logout` | Inicio y cierre de sesión del personal | público |
-| `/portal` | Portal del cliente (folio + teléfono); `/portal/ticket` tras validar | público |
+| `/portal` | Portal del cliente (folio + teléfono); `/portal/ticket` tras validar, con aprobar/rechazar la cotización | público |
 | `/admin` | Panel del administrador | admin |
 | `/tecnico` | Panel del técnico (mis tickets) | técnico (y admin) |
 | `/clientes`, `/equipos` | Clientes y sus equipos (`/equipos` redirige a `/clientes`) | admin (técnico: lectura) |
 | `/tickets` | Tickets: listado, nuevo ticket, detalle y cambios de estado | admin y técnico (solo los suyos) |
 | `/fotos/:id` | Fotos de un ticket (no son archivos públicos) | admin, técnico asignado o cliente con ese ticket |
-| `/cotizaciones` | Cotizaciones | admin y técnico |
+| `/cotizaciones` | Cotizaciones: listado (`?vencidas=1` = pendientes de respuesta), nueva y editar | admin y técnico (solo las de sus tickets) |
 | `/catalogo` | Servicios y repuestos | admin (técnico: lectura) |
 | `/usuarios` | Técnicos | admin |
 | `/reportes` | Reportes | admin |
-| `/notificaciones` | Notificaciones | admin y técnico |
+| `/notificaciones` | Notificaciones; `/notificaciones/no-leidas` (JSON) para el contador | admin y técnico (cada uno las suyas) |
 
 Sin sesión, las rutas protegidas redirigen a `/login` (o responden 401 si la petición es JSON); con un rol sin permiso responden 403 "No tienes permiso para acceder a esta sección".
 
@@ -173,12 +173,21 @@ Como **técnico** (`luis.fernandez@tecnitrack.com`), clientes y catálogo se ven
 
 | Qué | Cómo probarlo |
 |---|---|
-| **Nuevo ticket** (`/tickets/nuevo`) | Elige un cliente (escribe en "Buscar cliente" para filtrar), su equipo aparece solo; o marca "Registrar cliente nuevo" / "Registrar equipo nuevo". Diagnóstico, fecha estimada opcional y de 1 a 5 fotos con vista previa. El técnico que lo crea queda asignado; el admin elige técnico o lo deja sin asignar. Folio automático `TT-2026-0043`, `0044`, … |
+| **Nuevo ticket** (`/tickets/nuevo`) | Elige un cliente (escribe en "Buscar cliente" para filtrar), su equipo aparece solo; o marca "Registrar cliente nuevo" / "Registrar equipo nuevo". Diagnóstico, fecha estimada opcional y de 1 a 5 fotos con vista previa. El técnico que lo crea queda asignado; el admin elige técnico o lo deja sin asignar. Folio automático `TT-2026-0044`, `0045`, … |
 | **Listado** (`/tickets`) | Filtro por estado y búsqueda por folio o cliente. El técnico solo ve sus tickets; si abre el de otro (ej. Luis en `/tickets/2`) recibe 403. |
-| **Detalle y flujo** | Solo se habilitan los botones válidos desde el estado actual. Ejemplos con los datos de ejemplo: *TT-2026-0041* (Luis, Diagnosticado) no puede pasar a "Listo" (422); *TT-2026-0037* (Jorge, En reparación) puede ir a "Esperando repuesto" y volver, o a "Listo"; *TT-2026-0039* (Jorge, Listo) pasa a "Entregado" y guarda la fecha de entrega. "Esperando aprobación" y la salida de ese estado llegan con las cotizaciones (paso 7). |
-| **Admin** | En el detalle: reasignar a un técnico activo (le llega una notificación) y cancelar con motivo (no se puede cancelar un ticket entregado). |
+| **Detalle y flujo** | Solo se habilitan los botones válidos desde el estado actual. Ejemplos con los datos de ejemplo: *TT-2026-0041* (Luis, Diagnosticado) no puede pasar a "Listo" (422); *TT-2026-0037* (Jorge, En reparación) puede ir a "Esperando repuesto" y volver, o a "Listo"; *TT-2026-0039* (Jorge, Listo) pasa a "Entregado" y guarda la fecha de entrega. "Esperando aprobación" se alcanza solo al enviar una cotización y sale solo con la respuesta del cliente. |
+| **Admin** | En el detalle: reasignar a un técnico activo (le llega una notificación) y cancelar con motivo (no se puede cancelar un ticket entregado). Si el admin cambia el estado de un ticket, el técnico también recibe un aviso. |
 | **Historial** | El detalle del cliente y el de cada equipo (`/equipos/:id`) listan sus tickets. |
 | **Portal** | `TT-2026-0040` / `7345-6720` muestra el estado, la fecha estimada (18/09/2026) y el historial. |
+
+## Cotizaciones y notificaciones
+
+| Qué | Cómo probarlo |
+|---|---|
+| **Generar cotización** | En el detalle de un ticket *Diagnosticado* (ej. *TT-2026-0041* de Luis) → "Generar cotización": agrega ítems del catálogo activo; el total se ve en vivo, pero lo recalcula el servidor. Al enviar (pide confirmación) el ticket pasa a «Esperando aprobación». Desde *En reparación* o *Esperando repuesto* se puede enviar una **cotización adicional**. Mientras esté Pendiente se puede editar; solo puede haber una Pendiente por ticket (RN-09). |
+| **Pendiente de respuesta (RN-05)** | *TT-2026-0040* tiene una cotización de septiembre: el detalle muestra una alerta ámbar con los días, los listados la marcan y el dashboard del admin la cuenta. Nunca se cancela sola. |
+| **Respuesta del cliente** | En el portal, *TT-2026-0043* / `7456-1230` (José Antonio Pérez) tiene una cotización Pendiente reciente con "Aprobar cotización" y "Rechazar cotización" (motivo opcional). Aprobar → ticket «En reparación»; rechazar → «Cancelado». Una segunda respuesta da un error claro. |
+| **Notificaciones** | La campana de la barra muestra las no leídas y se actualiza sola cada 30 s. Cuando el cliente responde, le llega un aviso al técnico asignado y al admin, y el dashboard del técnico muestra una alerta. En `/notificaciones` se marcan como leídas una por una o todas. |
 
 ## Usuarios de prueba
 
@@ -218,9 +227,10 @@ Tras **5 intentos fallidos en 15 minutos** desde la misma IP, el login responde 
 | TT-2026-0037 | Ana Lucía Martínez (7345-6720) | Impresora Epson L3250 | En reparación | Jorge Pineda | Aprobada $45.00 |
 | TT-2026-0038 | Carlos Alberto Ramírez (7234-8912) | Computadora HP Pavilion TP01 | Cancelado | Jorge Pineda | Rechazada $85.00 |
 | TT-2026-0039 | María Elena Hernández (7123-4567) | Laptop Dell Inspiron 15 | Listo | Jorge Pineda | Aprobada $45.00 |
-| TT-2026-0040 | Ana Lucía Martínez (7345-6720) | Laptop Lenovo ThinkPad E14 | Esperando aprobación | Luis Fernández | **Pendiente** $60.00 (desde el 12/09/2026, ya supera `DIAS_LIMITE_COTIZACION`) |
+| TT-2026-0040 | Ana Lucía Martínez (7345-6720) | Laptop Lenovo ThinkPad E14 | Esperando aprobación | Luis Fernández | **Pendiente** $60.00 (desde el 12/09/2026: **Pendiente de respuesta**, RN-05) |
 | TT-2026-0041 | Carlos Alberto Ramírez (7234-8912) | Computadora HP Pavilion TP01 | Diagnosticado | Luis Fernández | — |
 | TT-2026-0042 | María Elena Hernández (7123-4567) | Laptop Dell Inspiron 15 | Recibido | Sin asignar | — |
+| TT-2026-0043 | José Antonio Pérez (7456-1230) | Laptop HP 15-dy2021 | Esperando aprobación | Luis Fernández | **Pendiente** $65.00, enviada hace 2 horas al sembrar: **lista para aprobar** |
 
 ## Documentación
 

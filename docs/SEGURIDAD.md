@@ -49,6 +49,8 @@ Medidas de seguridad implementadas en TecniTrack, dónde están en el código y 
 | Acceso con folio **y** teléfono del dueño del equipo. El teléfono se normaliza (sin espacios, guiones ni paréntesis). | `AuthService.verificarAccesoCliente` | Que alguien vea un ticket ajeno solo con adivinar un folio correlativo. |
 | Mensaje genérico "No se encontró un ticket con esos datos" para folio inexistente o teléfono incorrecto. | `AuthService.verificarAccesoCliente` | Descubrir qué folios existen. |
 | Rate limit propio: 5 consultas fallidas por IP cada 15 minutos. | `middlewares/limitarIntentos.js` | Fuerza bruta de combinaciones folio + teléfono. |
+| Solo se responde la cotización Pendiente **del ticket de la sesión** (`CotizacionService.responder` compara `clienteTicketId`); otra responde 403. | `services/CotizacionService.js` | Que un cliente apruebe o rechace la cotización de otra persona cambiando el id en la URL. |
+| La respuesta bloquea la fila de la cotización (`FOR UPDATE`): un doble clic o dos pestañas no responden dos veces. | `services/CotizacionService.js` | Cambios duplicados o contradictorios (aprobar y rechazar a la vez). |
 | `session.regenerate()` y solo `clienteTicketId` en la sesión; `requireCliente` protege `/portal/ticket`. | `PortalController`, `middlewares/auth.js` | Fijación de sesión, y acceso del cliente a otro ticket o a las páginas del personal (el cliente no tiene `usuario` en sesión, así que `requireAuth` lo manda a `/login`). |
 
 ## 6. Formularios y peticiones
@@ -62,6 +64,8 @@ Medidas de seguridad implementadas en TecniTrack, dónde están en el código y 
 | Subida de fotos: solo JPG, PNG o WEBP (MIME, extensión y firma real del archivo), tamaño máximo, máximo 5, nombres aleatorios. | `middlewares/upload.js` | Subir scripts o ejecutables disfrazados de imagen, sobrescribir archivos o llenar el disco. |
 | **Fotos protegidas:** se guardan fuera de `public/` y solo se entregan con `GET /fotos/:id` al admin, al técnico asignado o al cliente que validó ese ticket, con `Cache-Control: private, no-store`. Se usa solo el nombre del archivo guardado (`path.basename`). | `services/FotoService.js`, `controllers/fotosController.js` | Que alguien vea fotos de equipos ajenos adivinando o compartiendo una URL, y que un valor manipulado lea archivos fuera de la carpeta (path traversal). |
 | **Tickets por técnico:** el filtro "solo sus tickets" se aplica en la consulta de `TicketService` (no en la vista), y el detalle o un cambio de estado de un ticket ajeno responde 403. | `services/TicketService.js` | Que un técnico vea o modifique tickets de otros cambiando el id en la URL (RN-02). |
+| **El servidor calcula el total y copia los precios** de las cotizaciones desde el catálogo activo; ignora cualquier `total` o `precio_unitario` enviado. | `services/CotizacionService.js` | Que alguien manipule el formulario (o use la consola del navegador) para cotizar a $0.01. |
+| Las notificaciones solo las ve y marca su dueño (`marcarLeida` busca por id **y** usuario). | `services/NotificacionService.js` | Leer o alterar avisos de otro usuario. |
 | Consultas con Sequelize (parámetros, nunca SQL concatenado con datos del usuario). | `services/` | **Inyección SQL.** |
 | EJS escapa todo lo que se imprime con `<%= %>`. | `views/` | **XSS** con datos ingresados por usuarios (nombres, diagnósticos). |
 
