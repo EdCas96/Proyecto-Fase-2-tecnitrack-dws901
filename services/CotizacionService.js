@@ -342,6 +342,20 @@ class CotizacionService {
     return resultadoPaginado(resultado, pagina);
   }
 
+  /**
+   * Para abrir el formulario: explica por qué el ticket no se puede cotizar ahora.
+   * @throws {BusinessRuleError}
+   */
+  static asegurarCotizable(ticket, usuario) {
+    if (CotizacionService.puedeCotizar(ticket, usuario)) return;
+    if ((ticket.cotizaciones || []).some((c) => c.estado === 'Pendiente')) {
+      throw new BusinessRuleError('El ticket ya tiene una cotización pendiente. Solo puede haber una a la vez (RN-09).');
+    }
+    throw new BusinessRuleError(
+      'Solo se puede cotizar un ticket Diagnosticado, o en reparación / esperando repuesto si es una cotización adicional.',
+    );
+  }
+
   /** ¿Puede este usuario generar una cotización para el ticket ahora? (botón del detalle) */
   static puedeCotizar(ticket, usuario) {
     const suyo = usuario.rol === 'admin' || ticket.tecnico_id === usuario.id;
