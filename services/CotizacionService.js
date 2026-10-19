@@ -115,14 +115,14 @@ class CotizacionService {
       });
       if (!ticket) throw new NotFoundError('El ticket no existe.');
       TicketService.verificarAcceso(ticket, usuario);
+      // RN-09 primero, para dar el motivo más claro; además lo garantiza el índice único uq_cotizaciones_una_pendiente
+      const pendientes = await Cotizacion.count({ where: { ticket_id: ticket.id, estado: 'Pendiente' }, transaction });
+      if (pendientes) throw new BusinessRuleError('El ticket ya tiene una cotización pendiente. Solo puede haber una a la vez (RN-09).');
       if (!ESTADOS_COTIZABLES.includes(ticket.estado)) {
         throw new BusinessRuleError(
           'Solo se puede cotizar un ticket Diagnosticado, o en reparación / esperando repuesto si es una cotización adicional.',
         );
       }
-      // RN-09: además lo garantiza el índice único uq_cotizaciones_una_pendiente
-      const pendientes = await Cotizacion.count({ where: { ticket_id: ticket.id, estado: 'Pendiente' }, transaction });
-      if (pendientes) throw new BusinessRuleError('El ticket ya tiene una cotización pendiente. Solo puede haber una a la vez (RN-09).');
 
       const { lineas, total } = await CotizacionService.prepararLineas(datos, transaction);
       const adicional = ticket.estado !== 'Diagnosticado';
