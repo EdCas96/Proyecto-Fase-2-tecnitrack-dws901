@@ -1,5 +1,6 @@
 const AuthService = require('../services/AuthService');
 const PortalService = require('../services/PortalService');
+const CotizacionService = require('../services/CotizacionService');
 const { AuthError, NotFoundError } = require('../utils/errors');
 const {
   COOKIE_SESION, regenerarSesion, guardarSesion, destruirSesion,
@@ -56,7 +57,26 @@ class PortalController {
       res.clearCookie(COOKIE_SESION, { path: '/' });
       return res.redirect(303, '/portal');
     }
-    return res.render('cliente/ticket', { titulo: `Ticket ${ticket.folio}`, ticket });
+    const cotizacion = await CotizacionService.vigenteDelTicket(req.session.clienteTicketId);
+    return res.render('cliente/ticket', { titulo: `Ticket ${ticket.folio}`, ticket, cotizacion });
+  }
+
+  /**
+   * POST /portal/cotizaciones/:id/aprobar y /rechazar — respuesta del cliente.
+   * Solo la cotización Pendiente del ticket de su sesión (lo verifica CotizacionService).
+   * @implements HU-05, RN-06
+   */
+  static responder(decision) {
+    return async (req, res) => {
+      await CotizacionService.responder(req.params.id, decision, {
+        clienteTicketId: req.session.clienteTicketId,
+        motivo: req.body.motivo,
+      });
+      req.flash('exito', decision === 'aprobar'
+        ? 'Gracias. Aprobaste la cotización: el técnico ya puede reparar tu equipo.'
+        : 'Registramos que rechazaste la cotización. Puedes pasar a retirar tu equipo.');
+      res.redirect(303, '/portal/ticket');
+    };
   }
 
   /** POST /portal/salir — Cierra el acceso del cliente. */
