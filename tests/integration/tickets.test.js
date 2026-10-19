@@ -9,6 +9,7 @@ const {
   Ticket, TicketHistorial, TicketFoto, Cliente, Notificacion, Cotizacion,
 } = require('../../models');
 const TicketService = require('../../services/TicketService');
+const NotificacionListener = require('../../services/eventos/NotificacionListener');
 const { directorioFotos } = require('../../config/env');
 const { sembrarDatos, cerrarConexiones } = require('../helpers/baseDatos');
 const {
@@ -121,6 +122,7 @@ describe('Crear tickets (HU-02, RF-03, RN-03)', () => {
     expect(cliente.equipos[0].numero_serie).toBe('AC-5001');
     const ticket = await Ticket.findOne({ where: { equipo_id: cliente.equipos[0].id } });
     expect(ticket.tecnico_id).toBe(USUARIOS.jorge.id);
+    await NotificacionListener.esperar();
     expect(await Notificacion.count({ where: { ticket_id: ticket.id, usuario_id: USUARIOS.jorge.id } })).toBe(1);
   });
 
@@ -404,6 +406,7 @@ describe('Cancelación (solo admin, con motivo)', () => {
     expect(ultimo).toMatchObject({
       estado_anterior: 'Diagnosticado', estado_nuevo: 'Cancelado', usuario_id: USUARIOS.admin.id, comentario: motivo,
     });
+    await NotificacionListener.esperar();
     expect(await Notificacion.count({ where: { ticket_id: 6, usuario_id: USUARIOS.luis.id } })).toBe(1);
   });
 
@@ -435,6 +438,7 @@ describe('Reasignación (solo admin, a técnicos activos)', () => {
     expect((await Ticket.findByPk(7)).tecnico_id).toBe(USUARIOS.luis.id);
     const ultimo = await TicketHistorial.findOne({ where: { ticket_id: 7 }, order: [['id', 'DESC']] });
     expect(ultimo).toMatchObject({ estado_anterior: 'Recibido', estado_nuevo: 'Recibido', comentario: 'Asignado a Luis Fernández.' });
+    await NotificacionListener.esperar();
     const aviso = await Notificacion.findOne({ where: { ticket_id: 7, usuario_id: USUARIOS.luis.id } });
     expect(aviso).toMatchObject({ mensaje: 'Se te asignó el ticket TT-2026-0042.', leida: false });
     // El técnico nuevo ya ve el ticket

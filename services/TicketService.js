@@ -1,6 +1,6 @@
 const { Op, fn, col, where: condicion } = require('sequelize');
 const {
-  sequelize, Ticket, Equipo, Cliente, Usuario, TicketFoto, TicketHistorial, Cotizacion, Notificacion,
+  sequelize, Ticket, Equipo, Cliente, Usuario, TicketFoto, TicketHistorial, Cotizacion,
 } = require('../models');
 const {
   ValidationError, ForbiddenError, NotFoundError, BusinessRuleError,
@@ -14,6 +14,7 @@ const MaquinaEstadosTicket = require('./MaquinaEstadosTicket');
 const FolioService = require('./FolioService');
 const ClienteService = require('./ClienteService');
 const EquipoService = require('./EquipoService');
+const { bus, EVENTOS } = require('./eventos/busEventos');
 
 const { ORIGENES } = MaquinaEstadosTicket;
 const ESTADOS_ABIERTOS = ESTADOS_TICKET.filter((estado) => !MaquinaEstadosTicket.esFinal(estado));
@@ -178,10 +179,11 @@ class TicketService {
           archivos.map((archivo) => ({ ticket_id: ticket.id, url_foto: archivo.filename })),
           { transaction, validate: true },
         );
+        // El admin asignó el ticket a un técnico: se le avisa cuando la transacción confirma
         if (tecnicoId && tecnicoId !== usuario.id) {
-          await Notificacion.create({
-            ticket_id: ticket.id, usuario_id: tecnicoId, mensaje: `Se te asignó el ticket ${folio}.`,
-          }, { transaction });
+          bus.emitirAlConfirmar(transaction, EVENTOS.TICKET_REASIGNADO, {
+            ticketId: ticket.id, folio, tecnicoId, anteriorId: null, actorId: usuario.id,
+          });
         }
         return ticket;
       });
@@ -311,13 +313,20 @@ class TicketService {
         fecha: ahora,
       }, { transaction });
 
-      // Si el admin cancela un ticket asignado, se avisa al técnico
-      if (cancelando && ticket.tecnico_id && ticket.tecnico_id !== usuario.id) {
-        await Notificacion.create({
-          ticket_id: ticket.id,
-          usuario_id: ticket.tecnico_id,
-          mensaje: `El administrador canceló el ticket ${ticket.folio}.`.slice(0, 255),
-        }, { transaction });
+      // Los avisos al técnico los decide NotificacionListener, solo si la transacción confirma
+      const evento = {
+        ticketId: ticket.id,
+        folio: ticket.folio,
+        tecnicoId: ticket.tecnico_id,
+        anterior,
+        nuevo: destino,
+        actorId: usuario.id,
+        actorRol: usuario.rol,
+      };
+      if (cancelando) {
+        bus.emitirAlConfirmar(transaction, EVENTOS.TICKET_CANCELADO, { ...evento, motivo: comentario });
+      } else {
+        bus.emitirAlConfirmar(transaction, EVENTOS.TICKET_ESTADO_CAMBIADO, evento);
       }
       return ticket;
     });
@@ -325,7 +334,7 @@ class TicketService {
 
   /**
    * Asigna el ticket a otro técnico activo (solo admin). Registra la nota en el
-   * historial y notifica al técnico asignado.
+   * historial y emite ticket.reasignado (NotificacionListener avisa al técnico).
    *
    * @implements HU-06, RN-02
    * @param {number|string} id
@@ -364,9 +373,13 @@ class TicketService {
         usuario_id: usuario.id,
         comentario: nota.slice(0, 255),
       }, { transaction });
-      await Notificacion.create({
-        ticket_id: ticket.id, usuario_id: tecnico.id, mensaje: `Se te asignó el ticket ${ticket.folio}.`,
-      }, { transaction });
+      bus.emitirAlConfirmar(transaction, EVENTOS.TICKET_REASIGNADO, {
+        ticketId: ticket.id,
+        folio: ticket.folio,
+        tecnicoId: tecnico.id,
+        anteriorId: ticket.tecnico ? ticket.tecnico.id : null,
+        actorId: usuario.id,
+      });
       return ticket;
     });
   }
