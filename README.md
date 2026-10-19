@@ -131,7 +131,7 @@ Además, `sesiones` guarda las sesiones de inicio de sesión (express-mysql-sess
 
 ## Rutas
 
-Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. El login, el portal y los paneles de inicio ya funcionan; los demás módulos responden una página "en construcción" (ya protegida por sesión y rol) y se implementan en los siguientes pasos.
+Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. Ya funcionan el login, el portal, los paneles de inicio y los módulos de administración (clientes y equipos, catálogo y usuarios). Tickets, cotizaciones, reportes y notificaciones responden una página "en construcción" (ya protegida por sesión y rol) y se implementan en los siguientes pasos.
 
 | Prefijo | Módulo | Acceso |
 |---|---|---|
@@ -140,7 +140,7 @@ Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. El 
 | `/portal` | Portal del cliente (folio + teléfono); `/portal/ticket` tras validar | público |
 | `/admin` | Panel del administrador | admin |
 | `/tecnico` | Panel del técnico (mis tickets) | técnico (y admin) |
-| `/clientes`, `/equipos` | Clientes y sus equipos | admin (técnico: lectura) |
+| `/clientes`, `/equipos` | Clientes y sus equipos (`/equipos` redirige a `/clientes`) | admin (técnico: lectura) |
 | `/tickets` | Tickets | admin y técnico (solo los suyos) |
 | `/cotizaciones` | Cotizaciones | admin y técnico |
 | `/catalogo` | Servicios y repuestos | admin (técnico: lectura) |
@@ -151,6 +151,19 @@ Cada módulo tiene su router en `routes/` y su prefijo en `routes/index.js`. El 
 Sin sesión, las rutas protegidas redirigen a `/login` (o responden 401 si la petición es JSON); con un rol sin permiso responden 403 "No tienes permiso para acceder a esta sección".
 
 Los formularios envían el token CSRF en el campo oculto `_csrf` y simulan `PUT`, `PATCH` o `DELETE` con el campo oculto `_method`. En [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) están el orden de los middlewares y cómo se manejan los errores.
+
+## Módulos de administración
+
+Entra como **admin** (`admin@tecnitrack.com` / `Tecni2026!`). Todos los listados usan la misma tabla del prototipo, paginan de 10 en 10 en la consulta (RNF-04) y muestran migas de pan. Cada acción deja un mensaje de éxito o de error; si un formulario tiene errores, regresa con los datos escritos y el mensaje junto a cada campo. Eliminar o desactivar pide confirmación.
+
+| Módulo | Qué se puede hacer | Reglas que se pueden probar |
+|---|---|---|
+| **Clientes** (`/clientes`) | Buscar por nombre o teléfono (con o sin guion), crear un cliente con su primer equipo opcional, ver el detalle con sus equipos, editar y eliminar. | Teléfono de 8 dígitos (`7123-4567` o `71234567`); correo opcional pero válido; no se elimina un cliente con equipos (prueba con *Ana Lucía Martínez*). Si el equipo del nuevo cliente falla (por ejemplo, número de serie `DL-88291`, que ya existe), **no se guarda nada**. |
+| **Equipos** (desde el detalle del cliente) | Agregar, editar y eliminar. | Número de serie único; no se elimina un equipo con tickets (prueba con la *Dell Inspiron 15* de María). |
+| **Catálogo** (`/catalogo`) | Filtrar por tipo y buscar, crear, editar, desactivar/activar y eliminar. | Precio mayor a 0 con máximo 2 decimales; nombre único; los 6 ítems de ejemplo ya se usaron en cotizaciones, así que solo se pueden **desactivar** (un ítem nuevo sí se puede eliminar). Solo los activos se podrán cotizar. |
+| **Usuarios** (`/usuarios`, solo admin) | Crear técnicos con contraseña temporal, editar nombre y correo, activar/desactivar, restablecer la contraseña y eliminar cuentas sin historial. | Contraseña de al menos 8 caracteres con letra y número; correo único; el admin no puede desactivarse a sí mismo y siempre debe quedar un admin activo; un técnico desactivado no puede iniciar sesión y, si tenía la sesión abierta, sale en su siguiente clic. |
+
+Como **técnico** (`luis.fernandez@tecnitrack.com`), clientes y catálogo se ven sin botones de crear, editar ni eliminar; esas rutas responden 403, igual que `/usuarios`.
 
 ## Usuarios de prueba
 
