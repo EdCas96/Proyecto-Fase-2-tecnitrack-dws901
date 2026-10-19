@@ -6,6 +6,7 @@
  *   GET    /equipos                     redirige a /clientes
  *   GET    /equipos/nuevo?cliente_id=   formulario                        [admin]
  *   POST   /equipos                     crea (número de serie único)      [admin]
+ *   GET    /equipos/:id                 detalle con el historial de tickets (RF-05)
  *   GET    /equipos/:id/editar          formulario de edición             [admin]
  *   PUT    /equipos/:id                 actualiza                         [admin]
  *   DELETE /equipos/:id                 elimina (solo si no tiene tickets) [admin]
@@ -27,6 +28,7 @@ router.use(requireAuth, soloLecturaPara('tecnico'));
 router.get('/', EquiposController.listar);
 router.get('/nuevo', soloAdmin, asyncHandler(EquiposController.nuevo));
 router.post('/', validar(reglasEquipo), asyncHandler(EquiposController.crear));
+router.get('/:id', asyncHandler(EquiposController.detalle));
 router.get('/:id/editar', soloAdmin, asyncHandler(EquiposController.editar));
 router.put('/:id', validar(reglasEquipo), asyncHandler(EquiposController.actualizar));
 router.delete('/:id', asyncHandler(EquiposController.eliminar));

@@ -1,4 +1,5 @@
 const ClienteService = require('../services/ClienteService');
+const TicketService = require('../services/TicketService');
 const { TIPOS_EQUIPO } = require('../utils/constantes');
 const { migasDe } = require('../utils/vistas');
 
@@ -38,13 +39,15 @@ class ClientesController {
     res.redirect(303, `/clientes/${cliente.id}`);
   }
 
-  /** GET /clientes/:id — datos del cliente y sus equipos. */
+  /** GET /clientes/:id — datos del cliente, sus equipos y su historial de tickets (RF-05). */
   static async detalle(req, res) {
     const cliente = await ClienteService.obtenerPorId(req.params.id, { conEquipos: true });
+    const tickets = await TicketService.listarPorCliente(cliente.id, req.usuario);
     res.render('clientes/detalle', {
       titulo: cliente.nombre,
       migas: migasDe(req.usuario, MIGA_CLIENTES, { texto: cliente.nombre }),
       cliente,
+      tickets,
     });
   }
 

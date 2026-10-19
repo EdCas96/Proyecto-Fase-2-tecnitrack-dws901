@@ -1,0 +1,39 @@
+<%#
+  Historial de tickets de un cliente o de un equipo (RF-05). El técnico solo ve los suyos (RN-02).
+  Uso: include('../partials/historialTickets', { tickets, mostrarEquipo: true })
+%>
+<div class="section-header">
+  <h2>Historial de tickets</h2>
+  <% if (!esAdmin(usuarioActual)) { %><p class="text-small">Solo se muestran los tickets asignados a ti.</p><% } %>
+</div>
+<div class="table-wrapper">
+  <table class="table-standard">
+    <thead>
+      <tr>
+        <th>Folio</th>
+        <% if (locals.mostrarEquipo) { %><th>Equipo</th><% } %>
+        <th>Estado</th>
+        <th>Técnico</th>
+        <th>Ingreso</th>
+        <th>Entrega</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% tickets.forEach((ticket) => { %>
+        <tr>
+          <td><%= ticket.folio %></td>
+          <% if (locals.mostrarEquipo) { %><td><%= descripcionEquipo(ticket.equipo) %></td><% } %>
+          <td><%- include('badgeEstado', { estado: ticket.estado }) %></td>
+          <td><%= ticket.tecnico ? ticket.tecnico.nombre : 'Sin asignar' %></td>
+          <td><%= formatoFecha(ticket.fecha_ingreso) %></td>
+          <td><%= formatoFecha(ticket.fecha_entrega) %></td>
+          <td><a class="btn btn-secondary" href="/tickets/<%= ticket.id %>">Ver ticket</a></td>
+        </tr>
+      <% }) %>
+      <% if (!tickets.length) { %>
+        <tr><td colspan="<%= locals.mostrarEquipo ? 7 : 6 %>" class="tabla-vacia">Sin tickets registrados.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
