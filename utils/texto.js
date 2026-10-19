@@ -3,7 +3,7 @@
  */
 
 /** Escapa % y _ para que una búsqueda con LIKE los trate como texto y no como comodines. */
-const escaparLike = (texto) => String(texto).replace(/[\%_]/g, '\$&');
+const escaparLike = (texto) => String(texto).replace(/[\\%_]/g, '\\$&');
 
 /** Texto recortado; null si queda vacío (campos opcionales del formulario). */
 function textoOpcional(valor) {
