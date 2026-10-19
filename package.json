@@ -13,7 +13,8 @@
     "db:reset": "sequelize-cli db:drop && npm run db:create && sequelize-cli db:migrate && sequelize-cli db:seed:all",
     "db:sql": "node database/generar-sql.js",
     "test": "cross-env NODE_ENV=test jest --runInBand",
-    "test:watch": "cross-env NODE_ENV=test jest --runInBand --watch"
+    "test:watch": "cross-env NODE_ENV=test jest --runInBand --watch",
+    "test:coverage": "cross-env NODE_ENV=test jest --runInBand --coverage"
   },
   "author": "",
   "license": "ISC",
@@ -53,7 +54,23 @@
     "testMatch": [
       "**/tests/**/*.test.js"
     ],
-    "globalSetup": "./tests/setup/globalSetup.js"
+    "globalSetup": "./tests/setup/globalSetup.js",
+    "collectCoverageFrom": [
+      "app.js",
+      "config/**/*.js",
+      "controllers/**/*.js",
+      "middlewares/**/*.js",
+      "models/**/*.js",
+      "routes/**/*.js",
+      "services/**/*.js",
+      "utils/**/*.js",
+      "validators/**/*.js"
+    ],
+    "coverageReporters": [
+      "text-summary",
+      "text",
+      "html"
+    ]
   },
   "nodemonConfig": {
     "ignore": [
