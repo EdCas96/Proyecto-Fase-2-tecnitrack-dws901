@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "node --watch server.js",
     "db:create": "sequelize-cli db:create --charset utf8mb4 --collate utf8mb4_unicode_ci",
     "db:create:test": "cross-env NODE_ENV=test sequelize-cli db:create --charset utf8mb4 --collate utf8mb4_unicode_ci",
     "db:migrate": "sequelize-cli db:migrate",
@@ -46,7 +46,6 @@
     "eslint": "^9.39.5",
     "globals": "^17.13.0",
     "jest": "^30.5.2",
-    "nodemon": "^3.1.14",
     "sequelize-cli": "^6.6.5",
     "supertest": "^7.3.1"
   },
@@ -77,11 +76,9 @@
       "html"
     ]
   },
-  "nodemonConfig": {
-    "ignore": [
-      "storage/*",
-      "tests/*",
-      "coverage/*"
-    ]
+  "overrides": {
+    "express-mysql-session": {
+      "mysql2": "$mysql2"
+    }
   }
 }

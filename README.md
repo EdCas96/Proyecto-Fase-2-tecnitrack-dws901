@@ -77,7 +77,7 @@ Con `NODE_ENV=test` la aplicación lee `.env.test`; en cualquier otro caso, `.en
 | Comando | Qué hace |
 |---|---|
 | `npm start` | Levanta el servidor en modo normal |
-| `npm run dev` | Levanta el servidor con nodemon (se reinicia al guardar) |
+| `npm run dev` | Levanta el servidor con `node --watch` (se reinicia al guardar un archivo .js) |
 | `npm run db:create` | Crea la base de datos de desarrollo |
 | `npm run db:create:test` | Crea la base de datos de pruebas (`tecnitrack_test`) |
 | `npm run db:migrate` | Ejecuta las migraciones pendientes |
