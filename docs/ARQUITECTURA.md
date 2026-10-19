@@ -16,13 +16,14 @@ routes  ->  middlewares  ->  controllers  ->  services  ->  models  ->  MySQL
 | `app.js` | Configura Express: vistas y la cadena de middlewares en un orden fijo (ver [Orden de los middlewares](#orden-de-los-middlewares)). Exporta `app` para que las pruebas lo usen sin abrir un puerto. |
 | `config/` | `env.js` carga `.env` o `.env.test`; `config.js` es la configuración que lee sequelize-cli (incluye zona horaria UTC-6 y `sql_mode` estricto en cada conexión); `database.js` crea la instancia única de Sequelize; `sesion.js` configura express-session con el almacén en MySQL (tabla `sesiones`). |
 | `routes/` | `index.js` monta un router por módulo en su prefijo (tabla en el propio archivo). Cada router asocia URL y método con sus middlewares y su controlador, y envuelve los controladores con `asyncHandler`. |
-| `middlewares/` | Lógica transversal antes del controlador: `logger.js`, `csrf.js`, `variablesVistas.js`, `validar.js` (express-validator), `upload.js` (Multer), `notFound.js` y `errorHandler.js`. En el Paso 4 se agregan autenticación, autorización por rol y rate limit. |
+| `middlewares/` | Lógica transversal antes del controlador: `logger.js`, `csrf.js`, `variablesVistas.js`, `validar.js` (express-validator), `upload.js` (Multer), `notFound.js`, `errorHandler.js`, `auth.js` (`requireAuth`, `checkRole`, `soloLecturaPara`, `requireCliente`, `redirectIfAuth`, `sinCache`) y `limitarIntentos.js` (rate limit del login y del portal). |
 | `controllers/` | Leen la petición (`req.params`, `req.body`, `req.session`), llaman al servicio y responden (render o redirección). **No** contienen reglas de negocio ni consultas a modelos. |
 | `services/` | Lógica de negocio como **clases** (`TicketService`, `CotizacionService`, `FolioService`, `AuthService`, `MaquinaEstadosTicket`…). Aplican las reglas RN-xx, abren transacciones y lanzan errores propios. |
+| `validators/` | Reglas de express-validator por módulo (ej. `authValidators.js`: login y portal), que las rutas pasan a `validar(...)`. |
 | `models/` | Modelos de Sequelize como clases (`static inicializar()` y `static asociar()`): columnas, validaciones con mensajes en español y asociaciones. `models/index.js` los registra y exporta junto con `sequelize`. |
 | `migrations/` | Cambios versionados del esquema de la base de datos (crear tablas, índices, llaves foráneas). |
 | `seeders/` | Datos iniciales y de ejemplo (usuarios de prueba, catálogo, etc.). |
-| `views/` | Plantillas EJS: `layouts/main.ejs` (estructura común), `partials/` (`head`, `navbar` con el menú según el rol, `breadcrumbs`, `flash`, `badgeEstado`, `footer`, `paginaError`), `errores/` (400, 403, 404, 422, 500) y una carpeta por área: `admin/`, `tecnico/`, `cliente/`, `auth/`. |
+| `views/` | Plantillas EJS: `layouts/main.ejs` (estructura común), `partials/` (`head`, `navbar` con el menú según el rol, `breadcrumbs`, `flash`, `badgeEstado`, `footer`, `paginaError`), `errores/` (400, 403, 404, 422, 429, 500) y una carpeta por área: `admin/`, `tecnico/`, `cliente/`, `auth/`. |
 | `public/` | Archivos estáticos servidos tal cual: `css/`, `js/` y `uploads/` (fotos subidas en `uploads/tickets/`, no versionadas). |
 | `utils/` | Utilidades sin estado: `asyncHandler.js`, `constantes.js` (estados, colores semánticos, roles, tipos, formato de folio), `vistas.js` (funciones disponibles en todas las vistas: color y etiqueta de estado, menú por rol), `traducirError.js` y las clases de error en `utils/errors/`. |
 | `tests/` | `unit/` prueba clases y funciones aisladas; `integration/` prueba modelos, middlewares y rutas completas con Supertest contra `tecnitrack_test`; `helpers/` tiene fábricas de datos, limpieza de tablas, el agente con sesión y CSRF (`agente.js`) y una mini app para probar middlewares sueltos (`appPrueba.js`); `setup/globalSetup.js` reconstruye el esquema de pruebas con las migraciones. |
@@ -45,7 +46,7 @@ routes  ->  middlewares  ->  controllers  ->  services  ->  models  ->  MySQL
 | 6 | `connect-flash` | Guarda los mensajes en la sesión, así que va después de ella. |
 | 7 | `csrf-csrf` | Necesita cookies, cuerpo y sesión. Rechaza con 403 cualquier `POST`, `PUT`, `PATCH` o `DELETE` sin un token válido **antes** de llegar a cualquier ruta. |
 | 8 | `variablesVistas` | Pone en `res.locals` el usuario de sesión (solo `id`, `nombre`, `correo` y `rol`), los mensajes flash, los errores y datos del formulario anterior, y el token CSRF. Va al final porque usa todo lo anterior. |
-| – | Rutas (`routes/index.js`) | Cada router agrega sus propios middlewares: `validar`, `subirFotos` y, desde el Paso 4, autenticación y rol. |
+| – | Rutas (`routes/index.js`) | Cada router agrega sus propios middlewares: `requireAuth` + `checkRole`/`soloLecturaPara` (con `router.use`, antes de todas sus rutas), `limitarLogin`/`limitarPortal`, `validar` y `subirFotos`. Las medidas de seguridad se explican en [`SEGURIDAD.md`](SEGURIDAD.md). |
 | 9 | `notFound` | Solo se ejecuta si ninguna ruta respondió. |
 | 10 | `errorHandler` | Siempre el último: Express solo envía a un middleware de 4 parámetros los errores que ocurren **antes** de él. |
 
@@ -92,7 +93,7 @@ Los servicios **lanzan** estos errores. `asyncHandler` los atrapa, también los 
 2. **Responde según quién pidió:**
    - **API o JavaScript** (`Accept: application/json`, `X-Requested-With` o una ruta `/api/…`): JSON `{ error, mensaje }`, más `errores` por campo cuando los hay.
    - **Formulario** (`POST`, `PUT`, `PATCH` o `DELETE`) con `ValidationError` o `BusinessRuleError`: redirige con 303 a la página anterior y deja en flash el mensaje, los errores por campo y los datos ingresados (sin contraseñas ni tokens). Solo redirige a un `Referer` del mismo sitio; si no, a `/`.
-   - **`AuthError` desde el navegador:** redirige a `/auth/login`.
+   - **`AuthError` desde el navegador:** deja el mensaje en flash y redirige a `/login`.
    - **Lo demás:** renderiza `views/errores/<código>.ejs` con el layout.
 3. **Nunca envía el stack** al navegador ni al cliente JSON, en ningún entorno. Los 500 se registran con su stack en consola (también en pruebas, para que un fallo no pase en silencio); los 4xx solo en desarrollo.
 
