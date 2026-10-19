@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TecniTrack - Cotización</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="navbar-brand" href="dashboard.html">TecniTrack</a>
+    <span class="navbar-role">Técnico · Luis Fernández</span>
+  </header>
+
+  <nav class="subnav">
+    <a href="dashboard.html" class="active">Mis tickets</a>
+  </nav>
+
+  <div class="section-header">
+    <p class="breadcrumb">Técnico / Mis tickets / TT-2026-0041 / Cotización</p>
+    <h1>Cotización — Ticket TT-2026-0041</h1>
+    <p class="text-small">Cliente: Carlos Alberto Ramírez · Equipo: Computadora de escritorio HP Pavilion TP01</p>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="table-standard">
+      <thead>
+        <tr>
+          <th>Ítem del catálogo</th>
+          <th>Cantidad</th>
+          <th>Precio unitario</th>
+          <th>Subtotal</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <select name="item-1">
+              <option value="diagnostico" selected>Diagnóstico general</option>
+              <option value="limpieza">Limpieza interna y cambio de pasta térmica</option>
+              <option value="so">Instalación de sistema operativo</option>
+              <option value="ram">Memoria RAM 8GB DDR4</option>
+              <option value="ssd">Disco SSD 480GB</option>
+              <option value="tinta">Cartucho de tinta genérico</option>
+            </select>
+          </td>
+          <td><input type="number" value="1" min="1"></td>
+          <td>$10.00</td>
+          <td>$10.00</td>
+          <td><a class="btn btn-destructive" href="#">Quitar</a></td>
+        </tr>
+        <tr>
+          <td>
+            <select name="item-2">
+              <option value="diagnostico">Diagnóstico general</option>
+              <option value="limpieza">Limpieza interna y cambio de pasta térmica</option>
+              <option value="so">Instalación de sistema operativo</option>
+              <option value="ram" selected>Memoria RAM 8GB DDR4</option>
+              <option value="ssd">Disco SSD 480GB</option>
+              <option value="tinta">Cartucho de tinta genérico</option>
+            </select>
+          </td>
+          <td><input type="number" value="1" min="1"></td>
+          <td>$35.00</td>
+          <td>$35.00</td>
+          <td><a class="btn btn-destructive" href="#">Quitar</a></td>
+        </tr>
+        <tr>
+          <td>
+            <select name="item-3">
+              <option value="diagnostico">Diagnóstico general</option>
+              <option value="limpieza">Limpieza interna y cambio de pasta térmica</option>
+              <option value="so">Instalación de sistema operativo</option>
+              <option value="ram">Memoria RAM 8GB DDR4</option>
+              <option value="ssd" selected>Disco SSD 480GB</option>
+              <option value="tinta">Cartucho de tinta genérico</option>
+            </select>
+          </td>
+          <td><input type="number" value="1" min="1"></td>
+          <td>$55.00</td>
+          <td>$55.00</td>
+          <td><a class="btn btn-destructive" href="#">Quitar</a></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" class="text-right"><strong>Total</strong></td>
+          <td><strong>$100.00</strong></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="page-actions">
+    <button type="button" class="btn btn-secondary">Agregar ítem</button>
+  </div>
+
+  <div class="state-actions">
+    <button type="button" class="btn btn-primary">Enviar cotización al cliente</button>
+    <a class="btn btn-secondary" href="ticket-detalle.html">Cancelar</a>
+  </div>
+</body>
+</html>

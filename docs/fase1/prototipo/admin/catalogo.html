@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TecniTrack - Catálogo</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="navbar-brand" href="dashboard.html">TecniTrack</a>
+    <span class="navbar-role">Administrador</span>
+  </header>
+
+  <nav class="subnav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="clientes.html">Clientes</a>
+    <a href="tickets.html">Tickets</a>
+    <a href="catalogo.html" class="active">Catálogo</a>
+    <a href="usuarios.html">Usuarios</a>
+    <a href="reportes.html">Reportes</a>
+  </nav>
+
+  <div class="section-header">
+    <p class="breadcrumb">Administrador / Catálogo</p>
+    <h1>Catálogo de servicios y repuestos</h1>
+  </div>
+
+  <div class="page-actions">
+    <p class="text-small">6 ítems registrados</p>
+    <button type="button" class="btn btn-primary">Nuevo ítem</button>
+  </div>
+
+  <!-- Formulario inline para agregar un ítem nuevo (solo UI, visible como referencia del flujo) -->
+  <form class="form-container">
+    <h2>Nuevo ítem</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="item-nombre">Nombre</label>
+        <input type="text" id="item-nombre" name="item-nombre" placeholder="Ej. Cambio de pantalla">
+      </div>
+      <div class="form-group">
+        <label for="item-tipo">Tipo</label>
+        <select id="item-tipo" name="item-tipo">
+          <option value="servicio">Servicio</option>
+          <option value="repuesto">Repuesto</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="item-precio">Precio de referencia</label>
+        <input type="number" id="item-precio" name="item-precio" placeholder="Ej. 25.00" step="0.01" min="0">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <button type="button" class="btn btn-secondary">Cancelar</button>
+    </div>
+  </form>
+
+  <div class="table-wrapper">
+    <table class="table-standard">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Precio de referencia</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Diagnóstico general</td>
+          <td><span class="badge badge-azul">Servicio</span></td>
+          <td>$10.00</td>
+          <td>
+            <a class="btn btn-secondary" href="#">Editar</a>
+            <a class="btn btn-destructive" href="#">Desactivar</a>
+          </td>
+        </tr>
+        <tr>
+          <td>Limpieza interna y cambio de pasta térmica</td>
+          <td><span class="badge badge-azul">Servicio</span></td>
+          <td>$15.00</td>
+          <td>
+            <a class="btn btn-secondary" href="#">Editar</a>
+            <a class="btn btn-destructive" href="#">Desactivar</a>
+          </td>
+        </tr>
+        <tr>
+          <td>Instalación de sistema operativo</td>
+          <td><span class="badge badge-azul">Servicio</span></td>
+          <td>$20.00</td>
+          <td>
+            <a class="btn btn-secondary" href="#">Editar</a>
+            <a class="btn btn-destructive" href="#">Desactivar</a>
+          </td>
+        </tr>
+        <tr>
+          <td>Memoria RAM 8GB DDR4</td>
+          <td><span class="badge badge-gris">Repuesto</span></td>
+          <td>$35.00</td>
+          <td>
+            <a class="btn btn-secondary" href="#">Editar</a>
+            <a class="btn btn-destructive" href="#">Desactivar</a>
+          </td>
+        </tr>
+        <tr>
+          <td>Disco SSD 480GB</td>
+          <td><span class="badge badge-gris">Repuesto</span></td>
+          <td>$55.00</td>
+          <td>
+            <a class="btn btn-secondary" href="#">Editar</a>
+            <a class="btn btn-destructive" href="#">Desactivar</a>
+          </td>
+        </tr>
+        <tr>
+          <td>Cartucho de tinta genérico</td>
+          <td><span class="badge badge-gris">Repuesto</span></td>
+          <td>$12.00</td>
+          <td>
+            <a class="btn btn-secondary" href="#">Editar</a>
+            <a class="btn btn-destructive" href="#">Desactivar</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-pagination">
+    <span>Página 1 de 1</span>
+  </div>
+</body>
+</html>

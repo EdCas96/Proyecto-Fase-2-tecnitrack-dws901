@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TecniTrack - Mis Tickets</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="navbar-brand" href="dashboard.html">TecniTrack</a>
+    <span class="navbar-role">Técnico · Luis Fernández</span>
+  </header>
+
+  <nav class="subnav">
+    <a href="dashboard.html" class="active">Mis tickets</a>
+  </nav>
+
+  <div class="section-header">
+    <p class="breadcrumb">Técnico / Mis tickets</p>
+    <h1>Mis tickets</h1>
+  </div>
+
+  <div class="page-actions">
+    <p class="text-small">3 tickets asignados</p>
+    <a class="btn btn-primary" href="ticket-nuevo.html">Nuevo ticket</a>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="table-standard">
+      <thead>
+        <tr>
+          <th>Folio</th>
+          <th>Cliente</th>
+          <th>Estado</th>
+          <th>Fecha de ingreso</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>TT-2026-0041</td>
+          <td>Carlos Alberto Ramírez</td>
+          <td><span class="badge badge-azul">Diagnosticado</span></td>
+          <td>11/09/2026</td>
+        </tr>
+        <tr>
+          <td>TT-2026-0040</td>
+          <td>Ana Lucía Martínez</td>
+          <td><span class="badge badge-ambar">Esperando aprobación</span></td>
+          <td>10/09/2026</td>
+        </tr>
+        <tr>
+          <td>TT-2026-0035</td>
+          <td>María Elena Hernández</td>
+          <td><span class="badge badge-verde">Entregado</span></td>
+          <td>01/09/2026</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-pagination">
+    <span>Página 1 de 1</span>
+  </div>
+</body>
+</html>

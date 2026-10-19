@@ -30,4 +30,4 @@ Tareas identificadas que aún no se han realizado.
 - [ ] `FolioService` (RN-03): generar el siguiente correlativo del año dentro de una transacción, sin duplicados ante peticiones simultáneas.
 - [ ] `MaquinaEstadosTicket` y `TicketService` (RN-01, RN-02, RN-04), registrando cada cambio en `ticket_historiales`.
 - [ ] Probar la importación de `database/tecnitrack.sql` en MySQL 8.
-- [ ] Decidir si los archivos del prototipo de la Fase 1 (`index.html`, `admin/`, `tecnico/`, `cliente/`, `css/`, `img/`) y `TecniTrack_Documento_Maestro.docx` se versionan en el repositorio.
+- [x] Versionar el prototipo y el Documento Maestro de la Fase 1: se movieron a `docs/fase1/prototipo/` y `docs/fase1/` para dejar limpia la raíz del proyecto.

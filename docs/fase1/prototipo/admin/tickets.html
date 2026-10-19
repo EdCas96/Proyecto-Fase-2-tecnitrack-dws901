@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TecniTrack - Tickets</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="navbar-brand" href="dashboard.html">TecniTrack</a>
+    <span class="navbar-role">Administrador</span>
+  </header>
+
+  <nav class="subnav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="clientes.html">Clientes</a>
+    <a href="tickets.html" class="active">Tickets</a>
+    <a href="catalogo.html">Catálogo</a>
+    <a href="usuarios.html">Usuarios</a>
+    <a href="reportes.html">Reportes</a>
+  </nav>
+
+  <div class="section-header">
+    <p class="breadcrumb">Administrador / Tickets</p>
+    <h1>Tickets</h1>
+  </div>
+
+  <div class="table-filters">
+    <div class="form-group">
+      <label for="filtro-estado">Filtrar por estado</label>
+      <select id="filtro-estado">
+        <option value="">Todos los estados</option>
+        <option value="recibido">Recibido</option>
+        <option value="diagnosticado">Diagnosticado</option>
+        <option value="en-proceso">En proceso / En reparación</option>
+        <option value="esperando-aprobacion">Esperando aprobación</option>
+        <option value="esperando-repuesto">Esperando repuesto</option>
+        <option value="listo">Listo para entrega</option>
+        <option value="entregado">Entregado</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="filtro-folio">Buscar por folio o cliente</label>
+      <input type="text" id="filtro-folio" placeholder="Ej. TT-2026-0037">
+    </div>
+    <button type="button" class="btn btn-secondary">Filtrar</button>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="table-standard">
+      <thead>
+        <tr>
+          <th>Folio</th>
+          <th>Cliente</th>
+          <th>Equipo</th>
+          <th>Estado</th>
+          <th>Técnico asignado</th>
+          <th>Fecha de ingreso</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>TT-2026-0042</td>
+          <td>María Elena Hernández</td>
+          <td>Laptop Dell Inspiron 15</td>
+          <td><span class="badge badge-gris">Recibido</span></td>
+          <td>Sin asignar</td>
+          <td>12/09/2026</td>
+          <td><a class="btn btn-secondary" href="ticket-detalle.html">Ver detalle</a></td>
+        </tr>
+        <tr>
+          <td>TT-2026-0041</td>
+          <td>Carlos Alberto Ramírez</td>
+          <td>Computadora de escritorio HP Pavilion TP01</td>
+          <td><span class="badge badge-azul">Diagnosticado</span></td>
+          <td>Luis Fernández</td>
+          <td>11/09/2026</td>
+          <td><a class="btn btn-secondary" href="ticket-detalle.html">Ver detalle</a></td>
+        </tr>
+        <tr>
+          <td>TT-2026-0040</td>
+          <td>Ana Lucía Martínez</td>
+          <td>Laptop Lenovo ThinkPad E14</td>
+          <td><span class="badge badge-ambar">Esperando aprobación</span></td>
+          <td>Luis Fernández</td>
+          <td>10/09/2026</td>
+          <td><a class="btn btn-secondary" href="ticket-detalle.html">Ver detalle</a></td>
+        </tr>
+        <tr>
+          <td>TT-2026-0039</td>
+          <td>María Elena Hernández</td>
+          <td>Laptop Dell Inspiron 15</td>
+          <td><span class="badge badge-verde">Listo para entrega</span></td>
+          <td>Jorge Pineda</td>
+          <td>08/09/2026</td>
+          <td><a class="btn btn-secondary" href="ticket-detalle.html">Ver detalle</a></td>
+        </tr>
+        <tr>
+          <td>TT-2026-0038</td>
+          <td>Carlos Alberto Ramírez</td>
+          <td>Computadora de escritorio HP Pavilion TP01</td>
+          <td><span class="badge badge-rojo">Cancelado</span></td>
+          <td>Jorge Pineda</td>
+          <td>05/09/2026</td>
+          <td><a class="btn btn-secondary" href="ticket-detalle.html">Ver detalle</a></td>
+        </tr>
+        <tr>
+          <td>TT-2026-0037</td>
+          <td>Ana Lucía Martínez</td>
+          <td>Impresora Epson L3250</td>
+          <td><span class="badge badge-azul">En reparación</span></td>
+          <td>Jorge Pineda</td>
+          <td>05/09/2026</td>
+          <td><a class="btn btn-secondary" href="ticket-detalle.html">Ver detalle</a></td>
+        </tr>
+        <tr>
+          <td>TT-2026-0035</td>
+          <td>María Elena Hernández</td>
+          <td>Laptop Dell Inspiron 15</td>
+          <td><span class="badge badge-verde">Entregado</span></td>
+          <td>Luis Fernández</td>
+          <td>01/09/2026</td>
+          <td><a class="btn btn-secondary" href="ticket-detalle.html">Ver detalle</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-pagination">
+    <span>Página 1 de 1</span>
+  </div>
+</body>
+</html>

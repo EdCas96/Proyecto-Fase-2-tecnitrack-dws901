@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TecniTrack - Reportes</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="navbar-brand" href="dashboard.html">TecniTrack</a>
+    <span class="navbar-role">Administrador</span>
+  </header>
+
+  <nav class="subnav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="clientes.html">Clientes</a>
+    <a href="tickets.html">Tickets</a>
+    <a href="catalogo.html">Catálogo</a>
+    <a href="usuarios.html">Usuarios</a>
+    <a href="reportes.html" class="active">Reportes</a>
+  </nav>
+
+  <div class="section-header">
+    <p class="breadcrumb">Administrador / Reportes</p>
+    <h1>Reportes</h1>
+  </div>
+
+  <div class="table-filters">
+    <div class="form-group">
+      <label for="fecha-desde">Desde</label>
+      <input type="date" id="fecha-desde" name="fecha-desde" value="2026-09-01">
+    </div>
+    <div class="form-group">
+      <label for="fecha-hasta">Hasta</label>
+      <input type="date" id="fecha-hasta" name="fecha-hasta" value="2026-09-12">
+    </div>
+    <button type="button" class="btn btn-secondary">Generar reporte</button>
+  </div>
+
+  <div class="section-header">
+    <h2>Tickets por técnico y tiempo promedio de reparación</h2>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="table-standard">
+      <thead>
+        <tr>
+          <th>Técnico</th>
+          <th>Tickets atendidos</th>
+          <th>Tiempo promedio de reparación</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Luis Fernández</td>
+          <td>15</td>
+          <td>2.5 días</td>
+        </tr>
+        <tr>
+          <td>Jorge Pineda</td>
+          <td>12</td>
+          <td>3.1 días</td>
+        </tr>
+        <tr>
+          <td>Óscar Meléndez</td>
+          <td>5</td>
+          <td>4.0 días</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="detail-grid">
+    <div class="detail-card">
+      <h2>Servicios y repuestos más solicitados</h2>
+      <ul class="progress-list">
+        <li class="progress-row">
+          <div class="progress-row-label">
+            <span>Diagnóstico general</span>
+            <span class="progress-count">42</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width: 100%;"></div>
+          </div>
+        </li>
+        <li class="progress-row">
+          <div class="progress-row-label">
+            <span>Limpieza interna y cambio de pasta térmica</span>
+            <span class="progress-count">30</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width: 71%;"></div>
+          </div>
+        </li>
+        <li class="progress-row">
+          <div class="progress-row-label">
+            <span>Memoria RAM 8GB DDR4</span>
+            <span class="progress-count">18</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width: 43%;"></div>
+          </div>
+        </li>
+        <li class="progress-row">
+          <div class="progress-row-label">
+            <span>Disco SSD 480GB</span>
+            <span class="progress-count">12</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width: 29%;"></div>
+          </div>
+        </li>
+        <li class="progress-row">
+          <div class="progress-row-label">
+            <span>Instalación de sistema operativo</span>
+            <span class="progress-count">10</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width: 24%;"></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

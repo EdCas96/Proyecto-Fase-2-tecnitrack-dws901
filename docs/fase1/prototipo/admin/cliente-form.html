@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TecniTrack - Formulario de Cliente</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="navbar-brand" href="dashboard.html">TecniTrack</a>
+    <span class="navbar-role">Administrador</span>
+  </header>
+
+  <nav class="subnav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="clientes.html" class="active">Clientes</a>
+    <a href="tickets.html">Tickets</a>
+    <a href="catalogo.html">Catálogo</a>
+    <a href="usuarios.html">Usuarios</a>
+    <a href="reportes.html">Reportes</a>
+  </nav>
+
+  <div class="section-header">
+    <p class="breadcrumb">Administrador / Clientes / Nuevo cliente</p>
+    <h1>Nuevo cliente</h1>
+  </div>
+
+  <!--
+    Referencia visual: banner de éxito a mostrar tras guardar el formulario
+    (en el prototipo estático permanece oculto/comentado, sin lógica real).
+
+    <div class="alert alert-exito">
+      Cliente guardado correctamente.
+    </div>
+  -->
+
+  <form class="form-container">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="nombre">Nombre completo</label>
+        <input type="text" id="nombre" name="nombre" placeholder="Ej. María Elena Hernández">
+      </div>
+      <div class="form-group">
+        <label for="telefono">Teléfono</label>
+        <input type="tel" id="telefono" name="telefono" placeholder="Ej. 7123-4567">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="correo">Correo electrónico</label>
+      <input type="email" id="correo" name="correo" placeholder="Ej. maria.hernandez@example.com">
+    </div>
+
+    <fieldset class="form-section">
+      <legend>Agregar equipo</legend>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="equipo-tipo">Tipo de equipo</label>
+          <select id="equipo-tipo" name="equipo-tipo">
+            <option value="">Seleccione un tipo</option>
+            <option value="laptop">Laptop</option>
+            <option value="escritorio">Computadora de escritorio</option>
+            <option value="impresora">Impresora</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="equipo-marca">Marca</label>
+          <input type="text" id="equipo-marca" name="equipo-marca" placeholder="Ej. Dell">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="equipo-modelo">Modelo</label>
+          <input type="text" id="equipo-modelo" name="equipo-modelo" placeholder="Ej. Inspiron 15">
+        </div>
+        <div class="form-group">
+          <label for="equipo-serie">Número de serie</label>
+          <input type="text" id="equipo-serie" name="equipo-serie" placeholder="Ej. DL-88291">
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a class="btn btn-secondary" href="clientes.html">Cancelar</a>
+    </div>
+  </form>
+</body>
+</html>

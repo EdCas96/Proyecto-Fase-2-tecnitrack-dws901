@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TecniTrack - Usuarios</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="navbar-brand" href="dashboard.html">TecniTrack</a>
+    <span class="navbar-role">Administrador</span>
+  </header>
+
+  <nav class="subnav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="clientes.html">Clientes</a>
+    <a href="tickets.html">Tickets</a>
+    <a href="catalogo.html">Catálogo</a>
+    <a href="usuarios.html" class="active">Usuarios</a>
+    <a href="reportes.html">Reportes</a>
+  </nav>
+
+  <div class="section-header">
+    <p class="breadcrumb">Administrador / Usuarios</p>
+    <h1>Usuarios</h1>
+  </div>
+
+  <div class="page-actions">
+    <p class="text-small">4 usuarios registrados</p>
+    <button type="button" class="btn btn-primary">Nuevo técnico</button>
+  </div>
+
+  <!-- Formulario para agregar un técnico nuevo (solo UI, visible como referencia del flujo) -->
+  <form class="form-container">
+    <h2>Nuevo técnico</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="tecnico-nombre">Nombre completo</label>
+        <input type="text" id="tecnico-nombre" name="tecnico-nombre" placeholder="Ej. Luis Fernández">
+      </div>
+      <div class="form-group">
+        <label for="tecnico-correo">Correo electrónico</label>
+        <input type="email" id="tecnico-correo" name="tecnico-correo" placeholder="Ej. luis.fernandez@tecnitrack.com">
+      </div>
+      <div class="form-group">
+        <label for="tecnico-password">Contraseña temporal</label>
+        <input type="password" id="tecnico-password" name="tecnico-password" placeholder="Contraseña temporal">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <button type="button" class="btn btn-secondary">Cancelar</button>
+    </div>
+  </form>
+
+  <div class="table-wrapper">
+    <table class="table-standard">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Administrador Principal</td>
+          <td>admin@tecnitrack.com</td>
+          <td>Administrador</td>
+          <td><span class="badge badge-verde">Activo</span></td>
+          <td><a class="btn btn-destructive" href="#">Desactivar</a></td>
+        </tr>
+        <tr>
+          <td>Luis Fernández</td>
+          <td>luis.fernandez@tecnitrack.com</td>
+          <td>Técnico</td>
+          <td><span class="badge badge-verde">Activo</span></td>
+          <td><a class="btn btn-destructive" href="#">Desactivar</a></td>
+        </tr>
+        <tr>
+          <td>Jorge Pineda</td>
+          <td>jorge.pineda@tecnitrack.com</td>
+          <td>Técnico</td>
+          <td><span class="badge badge-verde">Activo</span></td>
+          <td><a class="btn btn-destructive" href="#">Desactivar</a></td>
+        </tr>
+        <tr>
+          <td>Óscar Meléndez</td>
+          <td>oscar.melendez@tecnitrack.com</td>
+          <td>Técnico</td>
+          <td><span class="badge badge-gris">Inactivo</span></td>
+          <td><a class="btn btn-secondary" href="#">Activar</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-pagination">
+    <span>Página 1 de 1</span>
+  </div>
+</body>
+</html>

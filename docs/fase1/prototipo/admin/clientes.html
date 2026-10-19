@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TecniTrack - Clientes</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="navbar-brand" href="dashboard.html">TecniTrack</a>
+    <span class="navbar-role">Administrador</span>
+  </header>
+
+  <nav class="subnav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="clientes.html" class="active">Clientes</a>
+    <a href="tickets.html">Tickets</a>
+    <a href="catalogo.html">Catálogo</a>
+    <a href="usuarios.html">Usuarios</a>
+    <a href="reportes.html">Reportes</a>
+  </nav>
+
+  <div class="section-header">
+    <p class="breadcrumb">Administrador / Clientes</p>
+    <h1>Clientes</h1>
+  </div>
+
+  <div class="table-filters">
+    <div class="form-group">
+      <label for="filtro-nombre">Buscar por nombre</label>
+      <input type="text" id="filtro-nombre" placeholder="Ej. María Hernández">
+    </div>
+  </div>
+
+  <div class="page-actions">
+    <p class="text-small">3 clientes registrados</p>
+    <a class="btn btn-primary" href="cliente-form.html">Nuevo cliente</a>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="table-standard">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Correo</th>
+          <th>Equipos registrados</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>María Elena Hernández</td>
+          <td>7123-4567</td>
+          <td>maria.hernandez@example.com</td>
+          <td>1</td>
+          <td><a class="btn btn-secondary" href="#">Ver equipos</a></td>
+        </tr>
+        <tr>
+          <td>Carlos Alberto Ramírez</td>
+          <td>7234-8912</td>
+          <td>carlos.ramirez@example.com</td>
+          <td>1</td>
+          <td><a class="btn btn-secondary" href="#">Ver equipos</a></td>
+        </tr>
+        <tr>
+          <td>Ana Lucía Martínez</td>
+          <td>7345-6720</td>
+          <td>ana.martinez@example.com</td>
+          <td>2</td>
+          <td><a class="btn btn-secondary" href="#">Ver equipos</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-pagination">
+    <span>Página 1 de 1</span>
+  </div>
+</body>
+</html>

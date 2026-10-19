@@ -4,7 +4,7 @@ Sistema web de gestión de servicio técnico de computadoras. Permite registrar 
 
 **Fase 2:** back-end y persistencia (Node.js + Express + EJS + MySQL/Sequelize).
 
-> El prototipo estático de la Fase 1 sigue en `index.html`, `admin/`, `tecnico/`, `cliente/`, `css/` e `img/` como referencia visual.
+> El prototipo estático y el Documento Maestro de la Fase 1 están en [`docs/fase1/`](docs/fase1/) (ver [Documentación de la Fase 1](#documentación-de-la-fase-1)).
 
 ## Requisitos
 
@@ -155,3 +155,14 @@ Todos usan la contraseña **`Tecni2026!`**.
 - [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md): historias de usuario, requerimientos, tablas, código y pruebas.
 - [`docs/CAMBIOS_FASE2.md`](docs/CAMBIOS_FASE2.md): solicitudes de cambio respecto a la Fase 1.
 - [`docs/INCIDENCIAS.md`](docs/INCIDENCIAS.md): incidencias, limitaciones y pendientes.
+
+## Documentación de la Fase 1
+
+Los entregables de la Fase 1 se conservan como referencia en `docs/fase1/`:
+
+| Ruta | Contenido |
+|---|---|
+| [`docs/fase1/TecniTrack_Documento_Maestro.docx`](docs/fase1/TecniTrack_Documento_Maestro.docx) | Documento Maestro: requerimientos, historias de usuario, diagrama entidad-relación y diccionario de datos. |
+| [`docs/fase1/prototipo/`](docs/fase1/prototipo/) | Prototipo estático HTML/CSS (`index.html`, `admin/`, `tecnico/`, `cliente/`, `css/`, `img/`), referencia visual para las vistas EJS. |
+
+Para ver el prototipo basta con abrir `docs/fase1/prototipo/index.html` en el navegador; no lo sirve la aplicación Express. Los cambios introducidos en la Fase 2 respecto a estos documentos se registran en [`docs/CAMBIOS_FASE2.md`](docs/CAMBIOS_FASE2.md).

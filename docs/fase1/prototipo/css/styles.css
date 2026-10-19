@@ -1,0 +1,779 @@
+/* ==========================================================================
+   TecniTrack — Sistema de diseño base (prototipo estático Fase 1)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. VARIABLES CSS (:root)
+   -------------------------------------------------------------------------- */
+:root {
+  /* Colores de marca / neutros */
+  --color-bg: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-text: #1f2430;
+  --color-text-muted: #5b6270;
+  --color-border: #d7dae0;
+  --color-primary: #2455a4;
+  --color-primary-dark: #1a3d7c;
+
+  /* Paleta semántica de estados de ticket */
+  --color-gris: #6b7280;
+  --color-gris-bg: #e5e7eb;
+  --color-gris-text: #374151;
+
+  --color-azul: #2563eb;
+  --color-azul-bg: #dbeafe;
+  --color-azul-text: #1e40af;
+
+  --color-ambar: #d97706;
+  --color-ambar-bg: #fef3c7;
+  --color-ambar-text: #92400e;
+
+  --color-verde: #16a34a;
+  --color-verde-bg: #dcfce7;
+  --color-verde-text: #166534;
+
+  --color-rojo: #dc2626;
+  --color-rojo-bg: #fee2e2;
+  --color-rojo-text: #991b1b;
+
+  /* Tipografía */
+  --font-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-size-h1: 1.75rem;
+  --font-size-h2: 1.25rem;
+  --font-size-body: 1rem;
+  --font-size-small: 0.85rem;
+
+  /* Espaciado y bordes */
+  --radius: 6px;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* --------------------------------------------------------------------------
+   2. RESET BÁSICO Y TIPOGRAFÍA BASE
+   -------------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-base);
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  margin: 0 0 0.5rem;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  margin: 0 0 0.5rem;
+}
+
+small,
+.text-small {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+a {
+  color: var(--color-primary);
+}
+
+/* --------------------------------------------------------------------------
+   3. BARRA SUPERIOR (NAVBAR)
+   Nombre del sistema a la izquierda, rol activo a la derecha
+   -------------------------------------------------------------------------- */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-primary-dark);
+  color: #ffffff;
+  padding: 0.75rem 1.25rem;
+}
+
+.navbar-brand {
+  font-size: var(--font-size-h2);
+  font-weight: 700;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.navbar-role {
+  font-size: var(--font-size-small);
+  background-color: rgba(255, 255, 255, 0.15);
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius);
+}
+
+/* Encabezado de sección: indica en qué pantalla está el usuario */
+.section-header {
+  padding: 1rem 1.25rem 0;
+}
+
+.section-header .breadcrumb {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+/* Submenú de navegación (módulos del rol activo, debajo de la navbar) */
+.subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 1.25rem;
+}
+
+.subnav a {
+  display: inline-block;
+  padding: 0.85rem 0.9rem;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+}
+
+.subnav a:hover {
+  color: var(--color-primary);
+}
+
+.subnav a.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* --------------------------------------------------------------------------
+   4. TARJETA DE KPI (dashboards)
+   Número grande + etiqueta pequeña debajo
+   -------------------------------------------------------------------------- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.kpi-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 1rem;
+  text-align: center;
+}
+
+.kpi-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.kpi-label {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   5. TABLA ESTÁNDAR REUTILIZABLE
+   Encabezado con fondo oscuro, filas alternadas, padding consistente
+   -------------------------------------------------------------------------- */
+.table-wrapper {
+  overflow-x: auto;
+  margin: 0 1.25rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.table-standard {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--color-surface);
+}
+
+.table-standard thead {
+  background-color: var(--color-primary-dark);
+}
+
+.table-standard thead th {
+  color: #ffffff;
+  text-align: left;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  white-space: nowrap;
+}
+
+.table-standard tbody td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-body);
+}
+
+.table-standard tbody tr:nth-child(even) {
+  background-color: var(--color-bg);
+}
+
+/* Celdas editables dentro de una tabla (ej. cantidad en cotización) */
+.table-standard input[type="number"] {
+  width: 70px;
+}
+
+.table-standard select {
+  min-width: 200px;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.table-standard tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Espaciado entre botones de acción cuando una fila tiene más de uno */
+.table-standard td .btn + .btn {
+  margin-left: 0.5rem;
+}
+
+/* Filtros arriba de la tabla y paginación abajo */
+.table-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  margin: 0 1.25rem 1rem;
+}
+
+.table-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0 1.25rem 1.5rem;
+  font-size: var(--font-size-small);
+}
+
+/* --------------------------------------------------------------------------
+   6. BADGE / PILL DE ESTADO
+   Una clase por color de estado
+   -------------------------------------------------------------------------- */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-gris {
+  background-color: var(--color-gris-bg);
+  color: var(--color-gris-text);
+}
+
+.badge-azul {
+  background-color: var(--color-azul-bg);
+  color: var(--color-azul-text);
+}
+
+.badge-ambar {
+  background-color: var(--color-ambar-bg);
+  color: var(--color-ambar-text);
+}
+
+.badge-verde {
+  background-color: var(--color-verde-bg);
+  color: var(--color-verde-text);
+}
+
+.badge-rojo {
+  background-color: var(--color-rojo-bg);
+  color: var(--color-rojo-text);
+}
+
+/* Modificador: badge grande (ej. estado destacado en el portal de cliente) */
+.badge-lg {
+  font-size: 1.1rem;
+  padding: 0.5rem 1.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   7. BOTONES: primario / secundario / destructivo
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-block;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-destructive {
+  background-color: var(--color-rojo);
+  border-color: var(--color-rojo);
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   8. BANNER DE ALERTA (éxito, error, confirmación)
+   -------------------------------------------------------------------------- */
+.alert {
+  margin: 1rem 1.25rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius);
+  border-left: 4px solid;
+  font-size: var(--font-size-body);
+}
+
+.alert-exito {
+  background-color: var(--color-verde-bg);
+  border-color: var(--color-verde);
+  color: var(--color-verde-text);
+}
+
+.alert-error {
+  background-color: var(--color-rojo-bg);
+  border-color: var(--color-rojo);
+  color: var(--color-rojo-text);
+}
+
+.alert-confirmacion {
+  background-color: var(--color-ambar-bg);
+  border-color: var(--color-ambar);
+  color: var(--color-ambar-text);
+}
+
+/* --------------------------------------------------------------------------
+   9. LÍNEA DE TIEMPO VERTICAL (historial de estados de un ticket)
+   -------------------------------------------------------------------------- */
+.timeline {
+  list-style: none;
+  margin: 1rem 1.25rem;
+  padding: 0;
+  border-left: 2px solid var(--color-border);
+}
+
+.timeline-item {
+  position: relative;
+  padding: 0 0 1.25rem 1.25rem;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  border: 2px solid var(--color-surface);
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-date {
+  display: block;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.timeline-title {
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   10. PANTALLA DE BIENVENIDA / SELECTOR DE ROL (index.html)
+   -------------------------------------------------------------------------- */
+.role-select-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.role-select-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 2.5rem 2rem;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+
+.role-select-logo {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-bottom: 0.25rem;
+}
+
+.role-select-subtitle {
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
+}
+
+.role-select-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.role-select-options .btn {
+  padding: 0.9rem 1.1rem;
+  font-size: var(--font-size-body);
+}
+
+/* --------------------------------------------------------------------------
+   11. BARRA DE ACCIONES DE PÁGINA
+   Título de listado + botón de acción principal (ej. "Nuevo cliente")
+   -------------------------------------------------------------------------- */
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 1.25rem 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   12. FORMULARIOS
+   Grupos de campo, secciones (fieldset) y fila de acciones
+   -------------------------------------------------------------------------- */
+.form-container {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  margin: 0 1.25rem 1.5rem;
+  padding: 1.5rem;
+  max-width: 720px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  font-family: var(--font-base);
+  font-size: var(--font-size-body);
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.form-section {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  margin: 0 0 1.25rem;
+  padding: 1rem 1rem 0.25rem;
+}
+
+.form-section legend {
+  font-size: var(--font-size-h2);
+  font-weight: 600;
+  padding: 0 0.4rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* --------------------------------------------------------------------------
+   13. DETALLE DE TICKET
+   Tarjetas de datos (cliente / equipo / cotización) y galería de fotos
+   -------------------------------------------------------------------------- */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 0 1.25rem 1.5rem;
+}
+
+.detail-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 1.25rem;
+}
+
+.detail-card h2 {
+  margin-top: 0;
+}
+
+.detail-list {
+  margin: 0;
+}
+
+.detail-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.detail-list div:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.detail-value {
+  font-weight: 600;
+  text-align: right;
+}
+
+.photo-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0 1.25rem 1.5rem;
+}
+
+.photo-thumb {
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-bg);
+}
+
+/* --------------------------------------------------------------------------
+   14. BARRA DE PROGRESO SIMPLE (CSS puro, sin librerías de gráficos)
+   Para comparar valores en reportes: div con width en %
+   -------------------------------------------------------------------------- */
+.progress-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.progress-row {
+  margin-bottom: 1rem;
+}
+
+.progress-row:last-child {
+  margin-bottom: 0;
+}
+
+.progress-row-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-small);
+  margin-bottom: 0.3rem;
+}
+
+.progress-row-label .progress-count {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 10px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: 999px;
+}
+
+/* --------------------------------------------------------------------------
+   15. ZONA DE CARGA DE FOTOS
+   Dropzone visual para input[type=file] (sin lógica de subida real)
+   -------------------------------------------------------------------------- */
+.file-dropzone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  background-color: var(--color-bg);
+}
+
+.file-dropzone p {
+  margin: 0 0 0.6rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+/* --------------------------------------------------------------------------
+   16. STEPPER DE FLUJO DE ESTADOS
+   Muestra el flujo completo del ticket; solo el siguiente paso es accionable
+   (restricción visual: no se puede saltar estados)
+   -------------------------------------------------------------------------- */
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 1.25rem 1rem;
+}
+
+.stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.stepper-step.is-done {
+  background-color: var(--color-verde-bg);
+  border-color: var(--color-verde);
+  color: var(--color-verde-text);
+}
+
+.stepper-step.is-current {
+  background-color: var(--color-azul-bg);
+  border-color: var(--color-azul);
+  color: var(--color-azul-text);
+}
+
+.stepper-step.is-locked {
+  opacity: 0.6;
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0 1.25rem 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   17. PORTAL DE CLIENTE
+   Encabezado destacado con el estado actual del ticket
+   -------------------------------------------------------------------------- */
+.status-hero {
+  text-align: center;
+  padding: 2rem 1.25rem 1rem;
+}
+
+.status-hero .breadcrumb {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.status-hero .badge-lg {
+  margin-top: 0.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   18. RESPONSIVE BÁSICO
+   Punto de quiebre pensado para tablet (~768px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+
+  .table-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .role-select-card {
+    padding: 2rem 1.25rem;
+  }
+
+  .subnav {
+    padding: 0 0.5rem;
+    overflow-x: auto;
+  }
+
+  .form-container {
+    margin: 0 1rem 1.5rem;
+    padding: 1.25rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .photo-thumb {
+    width: 130px;
+    height: 100px;
+  }
+}

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 0 320 240">
+  <rect width="320" height="240" fill="#e5e7eb"/>
+  <rect x="1" y="1" width="318" height="238" fill="none" stroke="#d7dae0" stroke-width="2"/>
+  <text x="160" y="125" font-family="sans-serif" font-size="16" fill="#5b6270" text-anchor="middle">Foto del equipo 1</text>
+  <text x="160" y="148" font-family="sans-serif" font-size="12" fill="#5b6270" text-anchor="middle">(placeholder)</text>
+</svg>

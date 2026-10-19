@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TecniTrack - Detalle de Ticket</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="navbar-brand" href="dashboard.html">TecniTrack</a>
+    <span class="navbar-role">Técnico · Luis Fernández</span>
+  </header>
+
+  <nav class="subnav">
+    <a href="dashboard.html" class="active">Mis tickets</a>
+  </nav>
+
+  <div class="section-header">
+    <p class="breadcrumb">Técnico / Mis tickets / TT-2026-0041</p>
+    <h1>Ticket TT-2026-0041 <span class="badge badge-azul">Diagnosticado</span></h1>
+  </div>
+
+  <div class="detail-grid">
+    <div class="detail-card">
+      <h2>Datos del cliente</h2>
+      <div class="detail-list">
+        <div><span class="detail-label">Nombre</span><span class="detail-value">Carlos Alberto Ramírez</span></div>
+        <div><span class="detail-label">Teléfono</span><span class="detail-value">7234-8912</span></div>
+        <div><span class="detail-label">Correo</span><span class="detail-value">carlos.ramirez@example.com</span></div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h2>Datos del equipo</h2>
+      <div class="detail-list">
+        <div><span class="detail-label">Tipo</span><span class="detail-value">Computadora de escritorio</span></div>
+        <div><span class="detail-label">Marca</span><span class="detail-value">HP</span></div>
+        <div><span class="detail-label">Modelo</span><span class="detail-value">Pavilion TP01</span></div>
+        <div><span class="detail-label">Número de serie</span><span class="detail-value">HP-55210</span></div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h2>Cotización asociada</h2>
+      <p class="text-small">Aún no se ha generado una cotización para este ticket.</p>
+      <a class="btn btn-primary" href="cotizacion-form.html">Generar cotización</a>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <h2>Historial de estados</h2>
+  </div>
+
+  <ul class="timeline">
+    <li class="timeline-item">
+      <span class="timeline-date">11/09/2026</span>
+      <span class="timeline-title">Recibido</span>
+    </li>
+    <li class="timeline-item">
+      <span class="timeline-date">12/09/2026</span>
+      <span class="timeline-title">Diagnosticado</span>
+    </li>
+  </ul>
+
+  <div class="section-header">
+    <h2>Fotos del equipo</h2>
+  </div>
+
+  <div class="photo-gallery">
+    <img class="photo-thumb" src="../img/equipo-placeholder-1.svg" alt="Foto del equipo al ingreso">
+    <img class="photo-thumb" src="../img/equipo-placeholder-2.svg" alt="Foto del equipo durante el diagnóstico">
+  </div>
+
+  <div class="section-header">
+    <h2>Avanzar estado del ticket</h2>
+    <p class="text-small">El flujo debe respetarse en orden: solo se puede avanzar al siguiente estado.</p>
+  </div>
+
+  <div class="stepper">
+    <span class="stepper-step is-done">✓ Recibido</span>
+    <span class="stepper-step is-current">● Diagnosticado</span>
+    <span class="stepper-step is-locked">Esperando aprobación</span>
+    <span class="stepper-step is-locked">En reparación</span>
+    <span class="stepper-step is-locked">Esperando repuesto</span>
+    <span class="stepper-step is-locked">Listo</span>
+    <span class="stepper-step is-locked">Entregado</span>
+  </div>
+
+  <div class="state-actions">
+    <button type="button" class="btn btn-primary">Avanzar a "Esperando aprobación"</button>
+    <button type="button" class="btn btn-secondary" disabled>En reparación</button>
+    <button type="button" class="btn btn-secondary" disabled>Esperando repuesto</button>
+    <button type="button" class="btn btn-secondary" disabled>Listo</button>
+    <button type="button" class="btn btn-secondary" disabled>Entregado</button>
+  </div>
+</body>
+</html>
