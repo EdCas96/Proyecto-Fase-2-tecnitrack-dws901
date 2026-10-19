@@ -24,7 +24,8 @@ routes  ->  middlewares  ->  controllers  ->  services  ->  models  ->  MySQL
 | `migrations/` | Cambios versionados del esquema de la base de datos (crear tablas, índices, llaves foráneas). |
 | `seeders/` | Datos iniciales y de ejemplo (usuarios de prueba, catálogo, etc.). |
 | `views/` | Plantillas EJS: `layouts/main.ejs` (estructura común), `partials/` (`head`, `navbar` con el menú según el rol, `breadcrumbs`, `flash`, `badgeEstado`, `footer`, `paginaError`), `errores/` (400, 403, 404, 422, 429, 500) y una carpeta por área o módulo: `admin/`, `tecnico/`, `cliente/`, `auth/`, `clientes/`, `equipos/`, `catalogo/`, `usuarios/`. Parciales de los CRUD: `paginacion`, `errorCampo`, `botonAccion` (formulario POST con CSRF, `_method` y confirmación) y `camposEquipo`. |
-| `public/` | Archivos estáticos servidos tal cual: `css/`, `js/` y `uploads/` (fotos subidas en `uploads/tickets/`, no versionadas). |
+| `public/` | Archivos estáticos servidos tal cual: `css/`, `img/` y `js/` (`confirmar.js`, `nuevo-ticket.js`). |
+| `storage/` | Fotos subidas de los tickets (`fotos-tickets/`, no versionadas). Está **fuera** de `public/`: las fotos solo se entregan con `GET /fotos/:id`, que verifica permisos. |
 | `utils/` | Utilidades sin estado: `asyncHandler.js`, `constantes.js` (estados, colores semánticos, roles, tipos, formato de folio), `vistas.js` (funciones disponibles en todas las vistas: color y etiqueta de estado, menú por rol), `traducirError.js` y las clases de error en `utils/errors/`. |
 | `tests/` | `unit/` prueba clases y funciones aisladas; `integration/` prueba modelos, middlewares y rutas completas con Supertest contra `tecnitrack_test`; `helpers/` tiene fábricas de datos, limpieza de tablas, el agente con sesión y CSRF (`agente.js`) y una mini app para probar middlewares sueltos (`appPrueba.js`); `setup/globalSetup.js` reconstruye el esquema de pruebas con las migraciones. |
 | `database/` | `tecnitrack.sql`: script completo (base, tablas y datos de ejemplo) generado con `npm run db:sql` (`generar-sql.js`) a partir de las migraciones y seeders. |
@@ -59,7 +60,8 @@ routes  ->  middlewares  ->  controllers  ->  services  ->  models  ->  MySQL
 
 - **Tipos permitidos:** JPG, PNG y WEBP. Se comprueban tres cosas: el tipo MIME, que la extensión le corresponda y la firma real del archivo (sus primeros bytes). El MIME y la extensión los decide el cliente, así que un `.txt` renombrado a `.png` pasaría sin la tercera comprobación.
 - **Límites:** `MAX_FOTO_MB` por foto y hasta 5 fotos por envío.
-- **Nombres:** los archivos se guardan con un nombre único, fecha + UUID, en `public/uploads/tickets/`.
+- **Nombres y carpeta:** los archivos se guardan con un nombre único, fecha + UUID, en `storage/fotos-tickets/` (fuera de `public/`). La base guarda solo el nombre; `FotoService` decide quién puede verla (admin, técnico asignado o cliente con ese ticket en el portal).
+- **Limpieza:** si la creación del ticket falla después de subir las fotos (validación, regla de negocio o error de la transacción), `limpiarFotosSiFalla` y `TicketService.crear` las borran del disco.
 - **Errores:** si el envío se rechaza, se borran los archivos que alcanzaron a guardarse. Los errores de Multer se convierten en `ValidationError` con mensajes en español.
 
 ## Errores

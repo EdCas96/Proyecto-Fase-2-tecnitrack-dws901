@@ -60,6 +60,8 @@ Medidas de seguridad implementadas en TecniTrack, dónde están en el código y 
 | Validación de entradas con express-validator (correo, campos obligatorios, folio `TT-AAAA-NNNN`, teléfono). | `validators/authValidators.js`, `middlewares/validar.js` | Datos mal formados que lleguen a los servicios o a la base. |
 | Límite de 100 kb para formularios y JSON. | `app.js` | Peticiones enormes que agoten la memoria del servidor. |
 | Subida de fotos: solo JPG, PNG o WEBP (MIME, extensión y firma real del archivo), tamaño máximo, máximo 5, nombres aleatorios. | `middlewares/upload.js` | Subir scripts o ejecutables disfrazados de imagen, sobrescribir archivos o llenar el disco. |
+| **Fotos protegidas:** se guardan fuera de `public/` y solo se entregan con `GET /fotos/:id` al admin, al técnico asignado o al cliente que validó ese ticket, con `Cache-Control: private, no-store`. Se usa solo el nombre del archivo guardado (`path.basename`). | `services/FotoService.js`, `controllers/fotosController.js` | Que alguien vea fotos de equipos ajenos adivinando o compartiendo una URL, y que un valor manipulado lea archivos fuera de la carpeta (path traversal). |
+| **Tickets por técnico:** el filtro "solo sus tickets" se aplica en la consulta de `TicketService` (no en la vista), y el detalle o un cambio de estado de un ticket ajeno responde 403. | `services/TicketService.js` | Que un técnico vea o modifique tickets de otros cambiando el id en la URL (RN-02). |
 | Consultas con Sequelize (parámetros, nunca SQL concatenado con datos del usuario). | `services/` | **Inyección SQL.** |
 | EJS escapa todo lo que se imprime con `<%= %>`. | `views/` | **XSS** con datos ingresados por usuarios (nombres, diagnósticos). |
 
